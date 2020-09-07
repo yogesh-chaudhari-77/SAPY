@@ -282,9 +282,9 @@ public class Applicant extends User {
 	
 	
 	//Reactivating the blacklisted user
-	public void removeBlacklistStatus(String type)
+	public void removeBlacklistStatus()
 	{
-		blacklist.setBlacklistStatus(type);
+		blacklist.removeBlacklistStatus();
 	}
 
 }

@@ -345,9 +345,9 @@ public class Employer extends User {
 
 
 	//Reactivating the blacklisted employer
-	public void removeBlacklistStatus(String type)
+	public void removeBlacklistStatus()
 	{
-		blacklistStatus.setBlacklistStatus(type);
+		blacklistStatus.removeBlacklistStatus();
 	}
 	
 	

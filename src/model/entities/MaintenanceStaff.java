@@ -68,12 +68,12 @@ public class MaintenanceStaff extends User{
 		
 		if (user instanceof Employer)
 		{
-			((Employer) user).removeBlacklistStatus("");
+			((Employer) user).removeBlacklistStatus();
 			return true;
 		}
 		else if (user instanceof Applicant)
 		{
-			((Applicant) user).removeBlacklistStatus("");
+			((Applicant) user).removeBlacklistStatus();
 			return true;
 		}
 		else

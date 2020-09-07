@@ -31,7 +31,7 @@ public class Blacklist {
 	
 	
 	//Reactivating an user
-	public void removeBlacklistStatus(String type)
+	public void removeBlacklistStatus()
 	{
 		this.blacklistStatus = blacklistStatus.NOT_BLACKLISTED;
 		endDate = new Date();

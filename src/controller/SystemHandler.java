@@ -354,6 +354,18 @@ public class SystemHandler {
 				}
 					//registerMaintenanceStaff();
 					break;
+				
+				case "4":
+				{
+					String user;
+					System.out.println("Enter the id of the user to be blacklisted:  ");
+					user = input.nextLine();
+
+					staff.revertBlacklistedUser(allUsersList.get(user));
+					 
+				}
+					//registerMaintenanceStaff();
+					break;
 
 				case "Q":
 					quit = true;
