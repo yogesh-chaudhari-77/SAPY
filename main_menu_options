@@ -1,0 +1,7 @@
+# main menu for the entire system
+# comments begin with # and empty lines are ignored
+
+
+1 = Register
+2 = Login
+Q = quit

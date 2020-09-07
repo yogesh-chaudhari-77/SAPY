@@ -1,0 +1,8 @@
+# main menu for the entire system
+# comments begin with # and empty lines are ignored
+
+
+1 = Applicant
+2 = Employer
+3 = Maintenance Staff
+Q = quit
