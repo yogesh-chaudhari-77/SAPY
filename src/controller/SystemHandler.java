@@ -4,10 +4,11 @@ import global.*;
 import view.*;
 import customUtils.*;
 import model.entities.*;
-import model.enums.*;
 import model.exceptions.*;
 
 import java.io.FileNotFoundException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -55,7 +56,7 @@ public class SystemHandler {
 	
 
 		
-	public void run() {
+	public void run() throws BadQualificationException, DuplicateEntryException {
 		Menu menu = null;
 		boolean quit = false;
 		
@@ -63,12 +64,12 @@ public class SystemHandler {
 		blacklistedUsers.put("S1", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123",""));
 		allUsersList.put("Staff001", staff);
 
-	//	
-		try {
+		System.out.println("====Student Casual Employment System====\n");
 
+		try {
 			menu = new Menu("main_menu_options");
 		} catch (FileNotFoundException e) {
-			System.out.println("Exception heres");
+			System.out.println("Main Menu File Missing");
 		} catch (Exception e) {
 			System.out.println(e);
 		}
@@ -100,6 +101,7 @@ public class SystemHandler {
 				case "Q":
 					quit = true;
 					System.out.println("Exiting program gracefully");
+					break;
 
 				default:
 					System.out.println("Wrong option please check and enter again");
@@ -112,6 +114,8 @@ public class SystemHandler {
 		boolean quit = false;
 		Menu menu = null;
 
+
+
 		try {
 			menu = new Menu("register_menu_options");
 		} catch (Exception e) {
@@ -119,6 +123,7 @@ public class SystemHandler {
 		}
 
 		do{
+			System.out.println("====Registration Menu====");
 			String choice = menu.show();
 			choice = choice.toUpperCase();
 
@@ -166,6 +171,7 @@ public class SystemHandler {
 				Applicant applicant = new Applicant(id, userEmail, password, firstName, lastName, phoneNumber, applicantType);
 				allUsersList.put(id, applicant);
 				allApplicantsList.put(id, applicant);
+				System.out.println("Applicant account created successfully\n"+applicant.toString());
 				exitLoop = true;
 
 			} else {
@@ -176,27 +182,32 @@ public class SystemHandler {
 	}
 
 	public void setUserDetails(){
+		boolean idFound = false;
 		do {
-			System.out.print("\nEnter the User id: ");
+			System.out.print("Enter the User id: ");
 			id = Global.scanner.nextLine();
-		}while (!freeIdCheck(id));
+			if (!freeIdCheck(id)){
+				System.out.println("This user id is already taken");
+				idFound = true;
+			}
+		}while(idFound);
 
 
 		do {
-			System.out.print("\nEnter the email: ");
+			System.out.print("Enter the email: ");
 			userEmail = Global.scanner.nextLine();
 		} while (!freeEmailCheck(userEmail));
 
-		System.out.print("\nEnter the password: ");
+		System.out.print("Enter the password: ");
 		password = Global.scanner.nextLine();
 
-		System.out.print("\nEnter the First Name: ");
+		System.out.print("Enter the First Name: ");
 		firstName = Global.scanner.nextLine();
 
-		System.out.print("\nEnter the Last Name: ");
+		System.out.print("Enter the Last Name: ");
 		lastName = Global.scanner.nextLine();
 
-		System.out.print("\nEnter the Phone Number: ");
+		System.out.print("Enter the Phone Number: ");
 		phoneNumber = Global.scanner.nextLine();
 	}
 
@@ -207,7 +218,6 @@ public class SystemHandler {
 		while(iterator.hasNext()){
 			String key = (String)iterator.next();
 			if ( key.equals(id)){
-				System.out.println("This is already taken!!");
 				return false;
 			}
 		}
@@ -244,7 +254,7 @@ public class SystemHandler {
 
 	}
 
-	public void login () {
+	public void login () throws BadQualificationException, DuplicateEntryException {
 
 		String id;
 		String password;
@@ -266,7 +276,7 @@ public class SystemHandler {
 		}
 	}
 
-	public void showUserMenu(User user){
+	public void showUserMenu(User user) throws BadQualificationException, DuplicateEntryException {
 		if (user instanceof Applicant){
 			showApplicantMenu(((Applicant) user));
 		} else if (user instanceof Employer){
@@ -276,9 +286,11 @@ public class SystemHandler {
 		}
 	}
 
-	public void showApplicantMenu(Applicant applicant){
+	public void showApplicantMenu(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
 		boolean quit = false;
 		Menu menu = null;
+
+		System.out.println("===Menu of various options to check===");
 
 		try {
 			menu = new Menu("applicant_menu_options");
@@ -292,15 +304,11 @@ public class SystemHandler {
 
 			switch(choice){
 				case "1":
-					registerApplicant();
+					addUpdateQualification(applicant);
 					break;
 
 				case "2":
 					registerEmployer();
-					break;
-
-				case "3":
-					//registerMaintenanceStaff();
 					break;
 
 				case "Q":
@@ -310,8 +318,117 @@ public class SystemHandler {
 		} while (!quit);
 
 	}
+
+	public void addUpdateQualification(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+		String operation = subMenu();
+
+		if (operation.equals("add")){
+			addQualification(applicant);
+		} else if (operation.equals("update")){
+			//updateQualification(applicant);
+		} else if (operation.equals("view")){
+			//showQualification(applicant);
+		} else {
+			System.out.println("Exiting Sub Menu");
+			return ;
+		}
+	}
+
+	public String subMenu(){
+		Menu menu = null;
+
+		System.out.println("Kindly Select an operation to perform");
+
+		try {
+			menu = new Menu("sub_menu_options");
+		} catch (Exception e) {
+			System.out.println();
+		}
+
+		boolean wrongOption = false;
+
+		do {
+			String choice = menu.show();
+			choice = choice.toUpperCase();
+
+			switch (choice) {
+				case "1":
+					return "add";
+
+				case "2":
+					return "update";
+
+				case "3":
+					return "view";
+
+				case "4":
+					return "exit";
+
+				default:
+					System.out.println("!! Wrong Option !! Kindly select the correct one");
+					wrongOption = true;
+			}
+		} while(wrongOption);
+
+		return null;
+	}
 	
-	
+	public void addQualification(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+
+		String qualificationLevel;
+		Date startDate;
+		Date endDate;
+		String fieldOfStudy;
+		double marksObtained;
+
+		System.out.print("Enter Below details for adding qualification\n");
+		System.out.print("Qualification Level: ");
+		qualificationLevel = Global.scanner.nextLine();
+		System.out.print("Start Date(YYYY/MM/DD): ");
+		startDate = getDateInput();
+		System.out.print("End Date(YYYY/MM/DD): ");
+		endDate = getDateInput();
+		System.out.print("Field of Study: ");
+		fieldOfStudy = Global.scanner.nextLine();
+		System.out.print("Marks Obtained(in percentage): ");
+		marksObtained = Global.scanner.nextDouble();
+
+		Qualification qualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marksObtained);
+		if (applicant.addQualifications(qualification)){
+			System.out.println("Qualification add successfully");
+		} else {
+			System.out.println("!! Adding qualification failed !!");
+		}
+
+	}
+
+	public Date getDateInput(){
+
+		String datePattern = "((19|20)[0-9]{2})/((0?[1-9])|1[012])/((0?[1-9])|(1[0-9])|(2[0-9])|(3[01]))";
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+		Pattern pattern = Pattern.compile(datePattern);
+
+		Date date = null;
+		boolean wrongDate;
+		do {
+			String dateUserInput = Global.scanner.nextLine();
+
+			if(pattern.matcher(dateUserInput).matches()){
+				wrongDate = false;
+				try	{
+					date = dateFormat.parse(dateUserInput);
+				} catch (ParseException e){
+					System.out.println(e);
+				}
+			} else {
+				System.out.println("Wrong date format");
+				wrongDate = true;
+			}
+		} while (wrongDate);
+
+		return date;
+	}
+
 	public void showMaintenanceStaffMenu(MaintenanceStaff staff){
 		boolean quit = false;
 		Menu menu = null;
@@ -612,6 +729,25 @@ public class SystemHandler {
 	//		Complaints tempComplaint = new Complaints(this, applcnt, message);
 	//		return tempComplaint;
 	//	}
+
+
+// Written by Abhishek
+//	SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+//	Date date = null;
+//	boolean wrongDate = false;
+//		do {
+//		String dateUserInput = Global.scanner.nextLine();
+//
+//		try {
+//			date = dateFormat.parse(dateUserInput);
+//		} catch (ParseException e){
+//			System.out.println("Wrong date format");
+//			wrongDate = true;
+//		}
+//
+//	} while (wrongDate);
+//
+//		return date;
 
 }
 

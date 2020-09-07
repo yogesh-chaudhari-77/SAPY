@@ -9,22 +9,6 @@ import model.exceptions.*;
 
 public class Applicant extends User {
 
-//    private static int idCount = 0;
-//    private String applicantType;
-//    private String cvPath;
-//    private AvailabilityType availabilityType;
-//    private Date availabilityPeriodStart;
-//    private Date availabilityPeriodEnd;
-//    private int availabilityPerWeekInHours;
-//    private EmploymentStatus employmentStatus;
-//    private BlacklistStatus blacklistStatus;
-//    private int complaintsCount;
-//    private List<String> jobPreferences;
-//    private List<License> licenses;
-//    private List<Reference> references;
-//    private List<EmploymentRecord> employmentRecords;
-//    private List<Qualification> qualifications;
-//    private Blacklist blacklist = new Blacklist();
     private List<EmploymentRecord> employmentHistory;
     private List <UserAvailability> userAvailability;
     private int complaintCount;
@@ -51,7 +35,6 @@ public class Applicant extends User {
             this.applicantType = ApplicantType.INTERNATIONAL;
         }
         this.cvPath = "";
-
     }
 
     public boolean addEmploymentRecords(EmploymentRecord record) throws BadEmployeeRecordException, DuplicateEntryException {
@@ -60,6 +43,7 @@ public class Applicant extends User {
             if (currentRecord.getCompanyName().equals(record.getCompanyName())
             && currentRecord.getStartDate().equals(record.getStartDate())) {
                 employmentRecordFound = true;
+                break;
             }
         }
         if (!employmentRecordFound) {
@@ -70,7 +54,7 @@ public class Applicant extends User {
                 return true;
             }
         } else{
-                throw new DuplicateEntryException("This Employment record is already present");
+            throw new DuplicateEntryException("This Employment record is already present");
         }
     }
 
@@ -85,15 +69,16 @@ public class Applicant extends User {
         return false;
     }
 
-    public boolean updateQualifications(Qualification qualification) throws BadQualificationException, DuplicateEntryException {
-        boolean flag = true;
+    public boolean addQualifications(Qualification qualification) throws BadQualificationException, DuplicateEntryException {
+        boolean qualificationFound = false;
 
         for(Qualification currentQual:qualifications){
             if(currentQual.getQualificationLevel().equals(qualification.getQualificationLevel())){
-                flag = true;
+                qualificationFound = true;
+                break;
             }
         }
-        if (flag) {
+        if (!qualificationFound) {
             if (qualification.getStartDate().after(qualification.getEndDate()) || qualification.getStartDate().equals(qualification.getEndDate())) {
                 throw new BadQualificationException("Start Date should be less then end date");
             } else {
@@ -106,14 +91,17 @@ public class Applicant extends User {
 
     }
 
-    public boolean updateReferences(Reference reference) throws DuplicateEntryException{
-        boolean flag = true;
+    public boolean addReferences(Reference reference) throws DuplicateEntryException{
+        boolean referenceFound = false;
+
         for(Reference currentReference : references){
             if (currentReference.getEmail().equals(reference.getEmail())){
-                flag = false;
+                referenceFound = true;
+                break;
             }
         }
-        if (flag){
+
+        if (!referenceFound){
             references.add(reference);
             return true;
         } else {
@@ -122,16 +110,17 @@ public class Applicant extends User {
 
     }
 
-    public boolean updateLicenses(License license) throws DuplicateEntryException {
-        boolean flag = true;
+    public boolean addLicenses(License license) throws DuplicateEntryException {
+        boolean licenseFound = true;
 
         for(License currentLicense : licenses) {
             if ( currentLicense.getId().equals(license.getId())){
-                flag = false;
+                licenseFound = false;
+                break;
             }
         }
 
-        if(flag){
+        if(!licenseFound){
             licenses.add(license);
             return true;
         } else {
@@ -287,4 +276,5 @@ public class Applicant extends User {
     public void setCvPath(String cvPath) {
         this.cvPath = cvPath;
     }
+
 }
