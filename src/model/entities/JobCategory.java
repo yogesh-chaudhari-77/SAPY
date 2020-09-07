@@ -17,7 +17,8 @@ public class JobCategory {
 		this.status = status;
 		idNo++;
 	}
-	
-	
-	
+
+	public String getCategoryTitle() {
+		return categoryTitle;
+	}
 }

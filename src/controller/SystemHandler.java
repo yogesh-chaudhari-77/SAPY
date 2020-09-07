@@ -154,22 +154,22 @@ public class SystemHandler {
 
 		setUserDetails();
 
-		boolean exitLoop = true;
+		boolean exitLoop = false;
 
 		do{
-			System.out.print("\nP --> Permanent" +
-					"\nT --> Temporary" +
-					"\nEnter the type of residency: ");
+			System.out.print("\nL --> Local" +
+					"\nI --> International" +
+					"\nEnter the type of applicant: ");
 			applicantType = Global.scanner.nextLine();
-			if (applicantType.equalsIgnoreCase("P") || applicantType.equalsIgnoreCase("T")
+			if (applicantType.equalsIgnoreCase("L") || applicantType.equalsIgnoreCase("I")
 			) {
-
 				Applicant applicant = new Applicant(id, userEmail, password, firstName, lastName, phoneNumber, applicantType);
 				allUsersList.put(id, applicant);
 				allApplicantsList.put(id, applicant);
+				exitLoop = true;
 
 			} else {
-				exitLoop = false;
+				System.out.println("Wrong choice. Please try again");
 			}
 		} while(!exitLoop);
 

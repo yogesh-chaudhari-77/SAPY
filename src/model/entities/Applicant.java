@@ -9,60 +9,80 @@ import model.exceptions.*;
 
 public class Applicant extends User {
 
-    private static int idCount = 0;
-    private String applicantType;
-    private String cvPath;
-    private AvailabilityType availabilityType;
-    private Date availabilityPeriodStart;
-    private Date availabilityPeriodEnd;
-    private int availabilityPerWeekInHours;
-    private EmploymentStatus employmentStatus;
-    private BlacklistStatus blacklistStatus;
-    private int complaintsCount;
-    private List<String> jobPreferences;
+//    private static int idCount = 0;
+//    private String applicantType;
+//    private String cvPath;
+//    private AvailabilityType availabilityType;
+//    private Date availabilityPeriodStart;
+//    private Date availabilityPeriodEnd;
+//    private int availabilityPerWeekInHours;
+//    private EmploymentStatus employmentStatus;
+//    private BlacklistStatus blacklistStatus;
+//    private int complaintsCount;
+//    private List<String> jobPreferences;
+//    private List<License> licenses;
+//    private List<Reference> references;
+//    private List<EmploymentRecord> employmentRecords;
+//    private List<Qualification> qualifications;
+//    private Blacklist blacklist = new Blacklist();
+    private List<EmploymentRecord> employmentHistory;
+    private List <UserAvailability> userAvailability;
+    private int complaintCount;
     private List<License> licenses;
     private List<Reference> references;
-    private List<EmploymentRecord> employmentRecords;
     private List<Qualification> qualifications;
-    private Blacklist blacklist = new Blacklist();
+    private Blacklist blacklistStatus;
+    private ApplicantType applicantType;
+    private String cvPath;
+
 
     public Applicant(String id,String email, String password, String firstName, String lastName, String phoneNumber, String applicantType) {
         super(id, email, password, firstName, lastName, phoneNumber);
-        this.applicantType = applicantType;
-        this.cvPath="";
-        this.availabilityType= AvailabilityType.NOT_SET;
-        this.availabilityPeriodStart= new Date();
-        this.availabilityPeriodEnd= new Date();
-        this.availabilityPerWeekInHours= -1;
-        this.employmentStatus = EmploymentStatus.UNKNOWN;
-        this.blacklistStatus= BlacklistStatus.NOT_BLACKLISTED;
-        this.complaintsCount=0;
-        this.jobPreferences= new ArrayList<>();
-        licenses= new ArrayList<>();
-        references= new ArrayList<>();
-        employmentRecords= new ArrayList<>();
-        qualifications= new ArrayList<>();
+        this.employmentHistory = new ArrayList<>();
+        this.userAvailability = new ArrayList<>();
+        this.complaintCount = 0;
+        this.licenses = new ArrayList<>();
+        this.references = new ArrayList<>();
+        this.qualifications = new ArrayList<>();
+        this.blacklistStatus = null;
+        if(applicantType.equalsIgnoreCase("l")){
+            this.applicantType = ApplicantType.LOCAL;
+        }else {
+            this.applicantType = ApplicantType.INTERNATIONAL;
+        }
+        this.cvPath = "";
 
     }
 
-    public boolean updateEmploymentRecords(EmploymentRecord record) throws BadEmployeeRecordException, DuplicateEntryException {
-        boolean flag = true;
-        for (EmploymentRecord currentRecord : employmentRecords){
+    public boolean addEmploymentRecords(EmploymentRecord record) throws BadEmployeeRecordException, DuplicateEntryException {
+        boolean employmentRecordFound = false;
+        for (EmploymentRecord currentRecord : employmentHistory){
             if (currentRecord.getCompanyName().equals(record.getCompanyName())
             && currentRecord.getStartDate().equals(record.getStartDate())) {
-                flag = false;
+                employmentRecordFound = true;
             }
         }
-        if (flag) {
+        if (!employmentRecordFound) {
             if (record.getStartDate().after(record.getEndDate()) || record.getStartDate().equals(record.getEndDate())) {
                 throw new BadEmployeeRecordException("Start Date should be less then end date");
             } else {
-                employmentRecords.add(record);
+                employmentHistory.add(record);
                 return true;
             }
         } else{
                 throw new DuplicateEntryException("This Employment record is already present");
         }
+    }
+
+    public boolean updateEmploymentRecords(EmploymentRecord oldRecord, EmploymentRecord newRecord){
+        for(int i=0; i<employmentHistory.size();i++){
+            if (employmentHistory.get(i).getCompanyName().equals(oldRecord.getCompanyName())) {
+                employmentHistory.remove(i);
+                employmentHistory.set(i,newRecord);
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean updateQualifications(Qualification qualification) throws BadQualificationException, DuplicateEntryException {
@@ -158,92 +178,70 @@ public class Applicant extends User {
         return false;
     }
 
-    public static int getIdCount() {
-        return idCount;
+    public List<Qualification> getQualifications() {
+        return qualifications;
     }
 
-    public static void setIdCount(int idCount) {
-        Applicant.idCount = idCount;
-    }
 
-    public String getApplicantType() {
-        return applicantType;
-    }
+		
+	//Blacklisting an user by setting type to 'P' or 'F'
+	public void setBlacklistStatus(String type)
+	{
+		blacklistStatus.setBlacklistStatus(type);
+	}
+	
+	
+	//Reactivating the blacklisted user
+	public void removeBlacklistStatus()
+	{
+		blacklistStatus.removeBlacklistStatus();
+	}
 
-    public void setApplicantType(String applicantType) {
-        this.applicantType = applicantType;
-    }
+    /**
+     * Extra function to preserve functionality
+     * Must be removed later
+     */
+    public List<String> getJobPreferences(){
+        List<String> jobPreferences= new ArrayList<>();
+        for(UserAvailability availability : userAvailability){
+            if(availability.getAvailabilityType() != AvailabilityType.UNKNOWN) {
+                String preference = availability.getApplicableJobCategory().getCategoryTitle();
+                if(!jobPreferences.contains(preference)){
+                    jobPreferences.add(preference);
+                }
+            }
+        }
 
-    public String getCvPath() {
-        return cvPath;
-    }
-
-    public void setCvPath(String cvPath) {
-        this.cvPath = cvPath;
-    }
-
-    public AvailabilityType getAvailabilityType() {
-        return availabilityType;
-    }
-
-    public void setAvailabilityType(AvailabilityType availabilityType) {
-        this.availabilityType = availabilityType;
-    }
-
-    public Date getAvailabilityPeriodStart() {
-        return availabilityPeriodStart;
-    }
-
-    public void setAvailabilityPeriodStart(Date availabilityPeriodStart) {
-        this.availabilityPeriodStart = availabilityPeriodStart;
-    }
-
-    public Date getAvailabilityPeriodEnd() {
-        return availabilityPeriodEnd;
-    }
-
-    public void setAvailabilityPeriodEnd(Date availabilityPeriodEnd) {
-        this.availabilityPeriodEnd = availabilityPeriodEnd;
-    }
-
-    public int getAvailabilityPerWeekInHours() {
-        return availabilityPerWeekInHours;
-    }
-
-    public void setAvailabilityPerWeekInHours(int availabilityPerWeekInHours) {
-        this.availabilityPerWeekInHours = availabilityPerWeekInHours;
-    }
-
-    public EmploymentStatus getEmploymentStatus() {
-        return employmentStatus;
-    }
-
-    public void setEmploymentStatus(EmploymentStatus employmentStatus) {
-        this.employmentStatus = employmentStatus;
-    }
-
-    public BlacklistStatus getBlacklistStatus() {
-        return blacklistStatus;
-    }
-
-    public void setBlacklistStatus(BlacklistStatus blacklistStatus) {
-        this.blacklistStatus = blacklistStatus;
-    }
-
-    public int getComplaintsCount() {
-        return complaintsCount;
-    }
-
-    public void setComplaintsCount(int complaintsCount) {
-        this.complaintsCount = complaintsCount;
-    }
-
-    public List<String> getJobPreferences() {
         return jobPreferences;
     }
 
-    public void setJobPreferences(List<String> jobPreferences) {
-        this.jobPreferences = jobPreferences;
+
+    /**
+     * Getters and Setters beyond this point
+     * No Functions Beyond this point
+     */
+    public List<EmploymentRecord> getEmploymentHistory() {
+        return employmentHistory;
+    }
+
+    public void setEmploymentHistory(List<EmploymentRecord> employmentHistory) {
+        this.employmentHistory = employmentHistory;
+    }
+
+    public List<UserAvailability> getUserAvailability() {
+        return userAvailability;
+    }
+
+    public void setUserAvailability(List<UserAvailability> userAvailability) {
+        this.userAvailability = userAvailability;
+    }
+
+    public int getComplaintCount() {
+        return complaintCount;
+    }
+
+    public void setComplaintCount(int complaintCount) {
+        this.complaintCount = complaintCount;
     }
 
     public List<License> getLicenses() {
@@ -258,33 +256,35 @@ public class Applicant extends User {
         return references;
     }
 
-
-
-    public List<EmploymentRecord> getEmploymentRecords() {
-        return employmentRecords;
+    public void setReferences(List<Reference> references) {
+        this.references = references;
     }
 
-    public void setEmploymentRecords(List<EmploymentRecord> employmentRecords) {
-        this.employmentRecords = employmentRecords;
+    public void setQualifications(List<Qualification> qualifications) {
+        this.qualifications = qualifications;
     }
 
-    public List<Qualification> getQualifications() {
-        return qualifications;
+    public Blacklist getBlacklistStatus() {
+        return blacklistStatus;
     }
 
+    public void setBlacklistStatus(Blacklist blacklistStatus) {
+        this.blacklistStatus = blacklistStatus;
+    }
 
-		
-	//Blacklisting an user by setting type to 'P' or 'F'
-	public void setBlacklistStatus(String type)
-	{
-		blacklist.setBlacklistStatus(type);
-	}
-	
-	
-	//Reactivating the blacklisted user
-	public void removeBlacklistStatus()
-	{
-		blacklist.removeBlacklistStatus();
-	}
+    public ApplicantType getApplicantType() {
+        return applicantType;
+    }
 
+    public void setApplicantType(ApplicantType applicantType) {
+        this.applicantType = applicantType;
+    }
+
+    public String getCvPath() {
+        return cvPath;
+    }
+
+    public void setCvPath(String cvPath) {
+        this.cvPath = cvPath;
+    }
 }
