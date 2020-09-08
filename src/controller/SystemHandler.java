@@ -254,7 +254,7 @@ public class SystemHandler {
 
 	}
 
-	public void login () throws BadQualificationException, DuplicateEntryException {
+	public void login (){
 
 		String id;
 		String password;
@@ -276,7 +276,7 @@ public class SystemHandler {
 		}
 	}
 
-	public void showUserMenu(User user) throws BadQualificationException, DuplicateEntryException {
+	public void showUserMenu(User user) {
 		if (user instanceof Applicant){
 			showApplicantMenu(((Applicant) user));
 		} else if (user instanceof Employer){
@@ -286,7 +286,7 @@ public class SystemHandler {
 		}
 	}
 
-	public void showApplicantMenu(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+	public void showApplicantMenu(Applicant applicant) {
 		boolean quit = false;
 		Menu menu = null;
 
@@ -297,7 +297,7 @@ public class SystemHandler {
 		}
 
 		do{
-			System.out.println("===Applicant Menu of various options to check===");
+			System.out.println("\n===Applicant Menu of various options to check===");
 			String choice = menu.show();
 			choice = choice.toUpperCase();
 
@@ -310,6 +310,10 @@ public class SystemHandler {
 					registerEmployer();
 					break;
 
+				case "4":
+					addUpdateLicenses(applicant);
+					break;
+
 				case "Q":
 					quit = true;
 
@@ -318,7 +322,7 @@ public class SystemHandler {
 
 	}
 
-	public void addUpdateQualification(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+	public void addUpdateQualification(Applicant applicant) {
 		String operation = subMenu();
 
 		if (operation.equals("add")){
@@ -326,7 +330,7 @@ public class SystemHandler {
 		} else if (operation.equals("update")){
 			//updateQualification(applicant);
 		} else if (operation.equals("view")){
-			//showQualification(applicant);
+			showQualification(applicant);
 		} else {
 			System.out.println("Exiting Sub Menu");
 			return ;
@@ -372,7 +376,7 @@ public class SystemHandler {
 		return null;
 	}
 	
-	public void addQualification(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+	public void addQualification(Applicant applicant) {
 
 		String qualificationLevel;
 		Date startDate;
@@ -383,29 +387,95 @@ public class SystemHandler {
 		System.out.print("Enter Below details for adding qualification\n");
 		System.out.print("Qualification Level: ");
 		qualificationLevel = Global.scanner.nextLine();
-		System.out.print("Start Date(YYYY/MM/DD): ");
+		System.out.print("Start Date(DD/MM/YYYY): ");
 		startDate = getDateInput();
-		System.out.print("End Date(YYYY/MM/DD): ");
+		System.out.print("End Date(DD/MM/YYYY): ");
 		endDate = getDateInput();
 		System.out.print("Field of Study: ");
 		fieldOfStudy = Global.scanner.nextLine();
 		System.out.print("Marks Obtained(in percentage): ");
 		marksObtained = Global.scanner.nextDouble();
 
-		Qualification qualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marksObtained);
-		if (applicant.addQualifications(qualification)){
-			System.out.println("Qualification add successfully");
-			Global.scanner.nextLine();
-		} else {
+
+			Qualification qualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marksObtained);
+
+
+		try{
+			applicant.addQualifications(qualification);
+			System.out.println("Qualification added successfully");
+		} catch (BadQualificationException e){
+			System.out.println(e);
 			System.out.println("!! Adding qualification failed !!");
+		} catch (DuplicateEntryException e){
+			System.out.println(e);
+			System.out.println("!! Adding qualification failed !!");
+		}
+	}
+
+	public void showQualification(Applicant applicant){
+		List<Qualification> qualifications = new ArrayList<Qualification>();
+		qualifications = applicant.getQualifications();
+
+		int i =1;
+		for (Qualification qualification: qualifications){
+			System.out.println("Qualification "+ i++ + ". " + qualification);
+		}
+	}
+
+	public void addUpdateLicenses(Applicant applicant){
+		String operation = subMenu();
+
+		if (operation.equals("add")){
+			addLicense(applicant);
+		} else if (operation.equals("update")){
+			//updateLicense(applicant);
+		} else if (operation.equals("view")){
+			showLicenses(applicant);
+		} else {
+			System.out.println("Exiting Sub Menu");
+			return ;
 		}
 
 	}
 
+	public void addLicense(Applicant applicant){
+		String type;
+		String id;
+		Date validTill;
+
+		System.out.println("Enter the below details for adding License");
+		System.out.print("License Type: ");
+		type = Global.scanner.nextLine();
+		System.out.print("License ID: ");
+		id = Global.scanner.nextLine();
+		System.out.print("Validity(DD/MM/YYYY): ");
+		validTill = getDateInput();
+
+		License license = new License (type, id, validTill);
+
+		try{
+			applicant.addLicenses(license);
+			System.out.println("License added successfully");
+		} catch (DuplicateEntryException e){
+			System.out.println(e);
+			System.out.println("!! Adding License failed !!");
+		}
+	}
+
+	public void showLicenses(Applicant applicant){
+		List<License> licenses = new ArrayList<License>();
+		licenses = applicant.getLicenses();
+
+		int i =1;
+		for (License license: licenses){
+			System.out.println("License "+ i++ + ". " + license);
+		}
+	}
+
 	public Date getDateInput(){
 
-		String datePattern = "((19|20)[0-9]{2})/((0?[1-9])|1[012])/((0?[1-9])|(1[0-9])|(2[0-9])|(3[01]))";
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+		String datePattern = "((0?[1-9])|(1[0-9])|(2[0-9])|(3[01]))/((0?[1-9])|1[012])/(19|20)[0-9]{2}";
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 		Pattern pattern = Pattern.compile(datePattern);
 
 		Date date = null;

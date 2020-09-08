@@ -111,11 +111,11 @@ public class Applicant extends User {
     }
 
     public boolean addLicenses(License license) throws DuplicateEntryException {
-        boolean licenseFound = true;
+        boolean licenseFound = false;
 
         for(License currentLicense : licenses) {
             if ( currentLicense.getId().equals(license.getId())){
-                licenseFound = false;
+                licenseFound = true;
                 break;
             }
         }
