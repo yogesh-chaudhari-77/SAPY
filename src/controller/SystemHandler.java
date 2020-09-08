@@ -64,8 +64,6 @@ public class SystemHandler {
 		blacklistedUsers.put("S1", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123",""));
 		allUsersList.put("Staff001", staff);
 
-		System.out.println("====Student Casual Employment System====\n");
-
 		try {
 			menu = new Menu("main_menu_options");
 		} catch (FileNotFoundException e) {
@@ -75,6 +73,7 @@ public class SystemHandler {
 		}
 
 		do {
+			System.out.println("====Student Casual Employment System====");
 
 			String choice = menu.show();
 			// read a value from the user
@@ -162,9 +161,10 @@ public class SystemHandler {
 		boolean exitLoop = false;
 
 		do{
-			System.out.print("\nL --> Local" +
+			System.out.print("Enter the type of applicant: " +
 					"\nI --> International" +
-					"\nEnter the type of applicant: ");
+					"\nL --> Local" +
+					"\nChoice: ");
 			applicantType = Global.scanner.nextLine();
 			if (applicantType.equalsIgnoreCase("L") || applicantType.equalsIgnoreCase("I")
 			) {
@@ -290,8 +290,6 @@ public class SystemHandler {
 		boolean quit = false;
 		Menu menu = null;
 
-		System.out.println("===Menu of various options to check===");
-
 		try {
 			menu = new Menu("applicant_menu_options");
 		} catch (Exception e) {
@@ -299,6 +297,7 @@ public class SystemHandler {
 		}
 
 		do{
+			System.out.println("===Applicant Menu of various options to check===");
 			String choice = menu.show();
 			choice = choice.toUpperCase();
 
@@ -340,7 +339,7 @@ public class SystemHandler {
 		System.out.println("Kindly Select an operation to perform");
 
 		try {
-			menu = new Menu("sub_menu_options");
+			menu = new Menu("sub_menu_options\n");
 		} catch (Exception e) {
 			System.out.println();
 		}
@@ -396,6 +395,7 @@ public class SystemHandler {
 		Qualification qualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marksObtained);
 		if (applicant.addQualifications(qualification)){
 			System.out.println("Qualification add successfully");
+			Global.scanner.nextLine();
 		} else {
 			System.out.println("!! Adding qualification failed !!");
 		}
