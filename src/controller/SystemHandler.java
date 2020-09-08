@@ -449,7 +449,7 @@ public class SystemHandler {
 					String title;
 					System.out.println("Enter the title of the Job category: ");
 					title = input.nextLine();
-					staff.addJobCategory(title);
+					allJobCategories.put(title, staff.addJobCategory(title));
 				}
 					break;
 
