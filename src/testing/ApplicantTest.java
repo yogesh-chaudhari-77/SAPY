@@ -88,33 +88,38 @@ public class ApplicantTest {
     }
 
     //passing two licenses and then getting count of complaints
-    @Test
-    public void testLicenseCount() throws Exception {
-        applicants.get(1).updateLicenses(new License("Driving", "Test123",
+    @Test (expected = DuplicateEntryException.class)
+    public void testInValidLicense() throws Exception {
+        applicants.get(1).addLicenses(new License("Driving", "Test123",
                 new Date (2025,04, 25)));
-        applicants.get(1).updateLicenses(new License("Cooking", "Test321",
+        applicants.get(1).addLicenses(new License("Cooking", "Test123",
                 new Date (2025,04, 25)));
 
-        assertEquals(2,applicants.get(1).getLicenses().size());
     }
 
     //passing correct qualification
     @Test
     public void testValidQualification() throws Exception {
-        applicants.get(1).updateQualifications(new Qualification("B.Tech",
-                new Date(2012, 07, 10), new Date(2016, 05, 31), "Test Field", 93.3));
+        SimpleDateFormat parser = new SimpleDateFormat("dd/MM/yyyy");
+        assertEquals(0, applicants.get(1).getQualifications().size());
+        applicants.get(1).addQualifications(new Qualification("B.Tech",
+                parser.parse("21/03/2012"), parser.parse("17/03/2016"), "Test Field", 93.3));
+        assertEquals(1, applicants.get(1).getQualifications().size());
+
     }
 
     //passing qualification with start date greater than end date
     @Test(expected = BadQualificationException.class)
     public void testSameStartAndEndDateQualification() throws Exception {
-        applicants.get(1).updateQualifications(new Qualification("B.Tech",
-                new Date(2012, 07, 10), new Date(2011, 05, 31), "Test Field", 93.3));
+        SimpleDateFormat parser = new SimpleDateFormat("dd/MM/yyyy");
+        applicants.get(1).addQualifications(new Qualification("B.Tech",
+                parser.parse("21/03/2012"), parser.parse("21/03/2012"), "Test Field", 93.3));
     }
 
     //passing complaint (this test case will fail as this functionality is not developed.
     @Test
     public void complaint() {
+
         assertTrue(applicants.get(1).registerComplaint(new Complaints(new Employer("E1", "testEmail", "testPassword", "TestFirstName", "testLastName", "023456777"),
                 applicants.get(1), "Test Complaint Message")));
     }
