@@ -273,6 +273,10 @@ public class Applicant extends User {
     }
 
 
+    public BlacklistStatus getBlacklistStat()
+	{
+		return this.blacklistStatus;
+	}
 		
 	//Blacklisting an user by setting type to 'P' or 'F'
 	public void setBlacklistStatus(String type)
@@ -287,4 +291,9 @@ public class Applicant extends User {
 		blacklist.removeBlacklistStatus();
 	}
 
+	
+	public Date getStartDate()
+	{
+		return blacklist.getStartDate();
+	}
 }

@@ -24,6 +24,7 @@ public class SystemHandler {
 	HashMap<String, User> blacklistedUsers = new HashMap<String, User>();
 	HashMap<String, JobCategory> allJobCategories = new HashMap<String, JobCategory>();
 
+
 	String id;
 	String userEmail;
 	String password;
@@ -33,6 +34,7 @@ public class SystemHandler {
 	
 	Scanner input = new Scanner(System.in);
 	ScannerUtil customScanner = ScannerUtil.createInstance().consoleReader();
+	Date date = new Date();
 	
 	MaintenanceStaff staff = new MaintenanceStaff("Staff001", "maintenancestaff@mail.com", "test123", "System", "Admin", "415414478");
 	
@@ -59,9 +61,9 @@ public class SystemHandler {
 		Menu menu = null;
 		boolean quit = false;
 		
-		blacklistedUsers.put("E1", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
-		blacklistedUsers.put("S1", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123",""));
+		
 		allUsersList.put("Staff001", staff);
+		
 
 	//	
 		try {
@@ -100,6 +102,7 @@ public class SystemHandler {
 				case "Q":
 					quit = true;
 					System.out.println("Exiting program gracefully");
+					break;
 
 				default:
 					System.out.println("Wrong option please check and enter again");
@@ -321,18 +324,46 @@ public class SystemHandler {
 		} catch (Exception e) {
 			System.out.println();
 		}
-
+		
+		BlacklistStatus blacklistStatus = BlacklistStatus.NOT_BLACKLISTED ;
+		blacklistedUsers.put("E1", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
+		blacklistedUsers.put("S1", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123",""));
+		((Applicant)blacklistedUsers.get("S1")).setBlacklistStatus(blacklistStatus.PROVISIONAL_BLACKLISTED);
+		((Employer)blacklistedUsers.get("E1")).setBlacklistStatus(blacklistStatus.FULL_BLACKLISTED);
+		allUsersList.put("E001", blacklistedUsers.get("E1"));
+		allUsersList.put("S001", blacklistedUsers.get("S1"));
+		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2", "Test" ,"Employer2", "123"));
+		
 		do{
 			String choice = menu.show();
 			choice = choice.toUpperCase();
-
+			
+			//mock testing
+			
+			
+			
+			
 			switch(choice){
 				case "1":
 				{
 					String title;
+					
+					System.out.println("Job categories avaialable in the System\n-------------------------------------------------------");
+					for (String s: allJobCategories.keySet())
+					{
+						System.out.println (allJobCategories.get(s));
+					}
+					
 					System.out.println("Enter the title of the Job category: ");
 					title = input.nextLine();
-					staff.addJobCategory(title);
+					
+					allJobCategories.put(title,staff.addJobCategory(title));
+					
+					System.out.println("Job categories avaialable in the System\n-------------------------------------------------------");
+					for (String s: allJobCategories.keySet())
+					{
+						System.out.println (allJobCategories.get(s));
+					}
 				}
 					break;
 
@@ -349,8 +380,8 @@ public class SystemHandler {
 					System.out.println("Blacklisting Types('P' - Provisional Blacklist, 'F' - Full Blacklist ");
 					System.out.println("Enter the type (P/F) : ");
 					type = input.nextLine();
-					staff.blacklistUser(allUsersList.get(user), type);
-					
+					if(staff.blacklistUser(allUsersList.get(user), type))
+						blacklistedUsers.put("E2", allUsersList.get(user));
 				}
 					//registerMaintenanceStaff();
 					break;
@@ -358,10 +389,11 @@ public class SystemHandler {
 				case "4":
 				{
 					String user;
-					System.out.println("Enter the id of the user to be blacklisted:  ");
+					System.out.println("Enter the id of the user to be reactivated:  ");
 					user = input.nextLine();
 
-					staff.revertBlacklistedUser(allUsersList.get(user));
+					if(staff.revertBlacklistedUser((User)(allUsersList.get("E001"))))
+						blacklistedUsers.remove("E1");
 					 
 				}
 					//registerMaintenanceStaff();

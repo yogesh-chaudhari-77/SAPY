@@ -7,8 +7,8 @@ import java.util.HashMap;
 public class MaintenanceStaff extends User{
 	
 	
-	
-	
+	private int catgId = 0;
+
 	public MaintenanceStaff(String id, String userEmail, String password, String firstName, String lastName, String phoneNumber)
 	{
 		super(id, userEmail, password, firstName, lastName, phoneNumber);
@@ -18,28 +18,29 @@ public class MaintenanceStaff extends User{
 	//Adding a new job category to the system
 	public JobCategory addJobCategory(String newCategory)
 	{
-		return new JobCategory(newCategory,"Active");
+		catgId++;
+		return new JobCategory(newCategory,"Active", catgId);
 	}
 	
 	
 	//Viewing the list of all Blacklisted Users
 	public void viewBlackListedMembers(HashMap<String, User> blacklistedUsers)
 	{
-		System.out.format("\n%60s\n","|----------------------------------------------------------|");
-		System.out.format("|%-20s%-38s|\n","","BlackListed Users");
-		System.out.format("%60s\n","|----------------------------------------------------------|");
-		System.out.format("|%-20s|%-20s|%-16s|\n","User Id", "User Type", "Blacklisted Type");
-		System.out.format("%20s%20s%16s\n","|--------------------|","--------------------|","----------------|");
+		System.out.format("\n%111s\n","|-------------------------------------------------------------------------------------------------------------|");
+		System.out.format("|%-20s%-89s|\n","","BlackListed Users");
+		System.out.format("%111s\n","|-------------------------------------------------------------------------------------------------------------|");
+		System.out.format("|%-20s|%-20s|%-36s|%-30s|\n","User Id", "User Type", "Blacklisted Type", "Blacklisted Date");
+		System.out.format("%20s%20s%36s%30s\n","|--------------------|","--------------------|","------------------------------------|","------------------------------|");
 		
 		
 		for (String s : blacklistedUsers.keySet())
 		{
 			if(blacklistedUsers.get(s) instanceof Employer)
-				System.out.format("|%-20s|%-20s|%-16s|\n",blacklistedUsers.get(s).getId(), "Employer", "Provisional");
+				System.out.format("|%-20s|%-20s|%-36s|%-30s|\n",blacklistedUsers.get(s).getId(), "Employer", ((Employer)blacklistedUsers.get(s)).getBlacklistStat(),((Employer)blacklistedUsers.get(s)).getStartDate());
 			else
-				System.out.format("|%-20s|%-20s|%-16s|\n",blacklistedUsers.get(s).getId(), "Applicant", "Full");
+				System.out.format("|%-20s|%-20s|%-36s|%-30s|\n",blacklistedUsers.get(s).getId(), "Applicant", ((Applicant)blacklistedUsers.get(s)).getBlacklistStat(),((Applicant)blacklistedUsers.get(s)).getStartDate());
 		}
-		System.out.format("%20s%20s%16s\n","|--------------------|","--------------------|","----------------|");
+		System.out.format("%20s%20s%36s%30s\n","|--------------------|","--------------------|","------------------------------------|","------------------------------|");
 	}
 	
 	
@@ -68,16 +69,25 @@ public class MaintenanceStaff extends User{
 		
 		if (user instanceof Employer)
 		{
+			System.out.println("Before\n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
 			((Employer) user).removeBlacklistStatus();
+			System.out.println("After \n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
 			return true;
 		}
 		else if (user instanceof Applicant)
 		{
+			System.out.println("Before\n Applicant ID: " + ((Applicant)user).getId() + " Blacklist Status: " + ((Applicant)user).getBlacklistStat());
 			((Applicant) user).removeBlacklistStatus();
+			System.out.println("After\n Applicant ID: " + ((Applicant)user).getId() + " Blacklist Status: " + ((Applicant)user).getBlacklistStat());
+
 			return true;
 		}
 		else
+		{
+			System.out.println("False");
 			return false;
+
+		}
 	}
 
 }

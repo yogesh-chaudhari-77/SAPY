@@ -10,14 +10,17 @@ public class JobCategory {
 	private int idNo = 1;
 	private String status;
 	
-	public JobCategory(String newCategory, String status)
+	public JobCategory(String newCategory, String status, int id)
 	{
-		this.id = "C"+idNo;
+		this.id = "C"+id;
 		this.categoryTitle = newCategory;
 		this.status = status;
 		idNo++;
 	}
 	
 	
-	
+	public String toString()
+	{
+		return "Category id:\t " + this.id + "\t\tCategory Title:\t " + this.categoryTitle ;
+	}
 }
