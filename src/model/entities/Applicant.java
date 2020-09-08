@@ -28,7 +28,8 @@ public class Applicant extends User {
         this.licenses = new ArrayList<>();
         this.references = new ArrayList<>();
         this.qualifications = new ArrayList<>();
-        this.blacklistStatus = null;
+        //this.blacklistStatus = null;
+        this.blacklistStatus = new Blacklist();
         if(applicantType.equalsIgnoreCase("l")){
             this.applicantType = ApplicantType.LOCAL;
         }else {

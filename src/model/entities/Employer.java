@@ -138,29 +138,42 @@ public class Employer extends User {
 	 * A employer can create a job and candidates will shortlisted
 	 * @param newJob
 	 * @return
+	 * @throws DuplicateJobIdException 
 	 */
-	public void createJob(Job newJob) {
+	public Job createJob(Job newJob) throws DuplicateJobIdException {
 
+		if(this.getPostedJobs().containsKey( newJob.getJobId() ) ){
+			throw new DuplicateJobIdException();
+		}
+		
+		
 		this.getPostedJobs().put(newJob.getJobId(), newJob);
+
+		// Returning newly created job
+		return this.getPostedJobs().get(newJob.getJobId());
 	}
 
 	/*
 	 * Employer shortlists candidates by looking at their credentials and availability schedule
 	 */
 
-	public boolean shortListCandidate(Applicant applicant) throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException {
+	public boolean shortListCandidate(Job jobRef, Applicant applicant) throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException {
 
 		// Basic error checking. 
 		// TODO : Needs to perform more validations here like blacklisted status, current employment staus
 		if(applicant == null) {
 			throw new NullApplicantException();
 		}
+		
+		if(jobRef == null) {
+			throw new NullJobReferenceException();
+		}
 
 
-		HashMap<String, Applicant> shortListedApplicants = this.getMyApplicantsList();
+		HashMap<String, Applicant> shortListedApplicants = jobRef.getShortListedApplicants();
 
 		// If an applicant is blacklisted, he/she should not be allowed to be shortlisted
-		if( applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.FULL_BLACKLISTED)
+		if(applicant.getBlacklistStatus() != null && applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.FULL_BLACKLISTED)
 		{
 			throw new ApplicantIsBlackListedException();
 		}
@@ -349,6 +362,5 @@ public class Employer extends User {
 	{
 		blacklistStatus.removeBlacklistStatus();
 	}
-	
 	
 }

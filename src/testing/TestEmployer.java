@@ -1,5 +1,7 @@
 package testing;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -26,8 +28,17 @@ public class TestEmployer {
 
 	@Before
 	public void setUp() throws Exception {
+		
+		// Creating an employer
 		employer = new Employer("E1", "employer@gmail.com", "qwerty", "Sample", "Employer", "123456789");
-		//applicant = new Applicant("Sample", "User", "sampleuser@gmail.com", "international");
+		
+		// With certain jobs
+		employer.createJob(new Job("job1", "Developer", "Developer Desc"));
+		employer.createJob(new Job("job2", "Analyst", "Analyst Required"));
+		employer.createJob(new Job("job3", "Designer", "Designer Required"));
+		
+		// Creating an applicant
+		applicant = new Applicant("A1", "a@gmail.com", "123", "John", "Doe", "048888888", "l");
 	}
 
 	@After
@@ -41,17 +52,18 @@ public class TestEmployer {
 	 */
 	
 	@Test
-	public void test_shortListApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException {
+	public void test_shortListApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException {
 		
-		applicant.setId("A1");
+		Applicant applicntRef = this.applicant;
+		Job jobRef = employer.getPostedJobs().get("job1");
 		
 		// Making sure that there were no Applicant in the list
-		Assert.assertEquals(0, this.employer.getMyApplicantsList().size());
+		int initialSize = jobRef.getShortListedApplicants().size();
 		
-		this.employer.shortListCandidate(applicant);
+		this.employer.shortListCandidate(jobRef, applicant);
 		
-		// Testing whether the employer has been added to the list
-		Assert.assertEquals(1, this.employer.getMyApplicantsList().size());
+		// Testing if the applicant has really been added to shortlisted list
+		Assert.assertEquals(initialSize + 1, jobRef.getShortListedApplicants().size());
 	}
 	
 	
@@ -62,15 +74,18 @@ public class TestEmployer {
 	 */
 	
 	@Test (expected = ApplicantIsBlackListedException.class)
-	public void test_shortListBlackListedApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException {
+	public void test_shortListBlackListedApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException {
 		
-		applicant.setId("A1");
-		/*
-		Change this assignment as Blacklist status is a class in Applicant
-		 */
-		//applicant.setBlacklistStatus(BlacklistStatus.FULL_BLACKLISTED);
+		// Job Reference Against which we are shortlisting
+		Job jobRef = employer.getPostedJobs().get("job1");
 		
-		this.employer.shortListCandidate(applicant);
+		// Fully blacklisting an applicant
+		Blacklist b = new Blacklist();
+		b.setBlacklistStatus("F");
+		
+		applicant.setBlacklistStatus( b );
+			
+		this.employer.shortListCandidate(jobRef, applicant);
 	}
 	
 	
@@ -81,55 +96,20 @@ public class TestEmployer {
 	 */
 	
 	@Test (expected = AlreadyPresentInYourShortListedListException.class)
-	public void test_shortListAlreadyPresentApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException {
+	public void test_shortListAlreadyPresentApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException {
 		
-		// A1 is being shortlisted. 
-		applicant.setId("A1");
-		System.out.println(applicant.getId());
-		this.employer.shortListCandidate(applicant);
+		Applicant applicntRef = this.applicant;
+		Job jobRef = employer.getPostedJobs().get("job1");
 		
-		// Pushing A1 again. Throws exception
-		this.employer.shortListCandidate(applicant);
+		
+		System.out.println(applicntRef.getId());
+		
+		this.employer.shortListCandidate(jobRef, applicant);
+		
+		// Pushing same applicant again. Throws exception
+		this.employer.shortListCandidate(jobRef, applicant);
 	}
 	
-	
-	/*
-	 * Positive test case
-	 * An email notication will be sent to the applicant.
-	 * Expecting true status if no problem occured while sending the mail
-	 */
-	@Test
-	public void test_sendEmailNotification() {
-		
-		applicant.setId("A1");
-		boolean status = this.employer.sendEmailNotification(applicant, EmailNotificationType.SUCCESSFULLY_HIRED);
-		Assert.assertTrue( status );
-	}
-	
-	
-	/*
-	 * Positive test case
-	 * Applicant be hired. 
-	 */
-	@Test
-	public void test_hireApplicant() throws ApplicantNotPresentInMyApplicantsException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException {
-		
-		applicant.setId("A1");
-		employer.shortListCandidate(applicant);
-		employer.changeApplicantStatus(applicant, EmploymentStatus.EMPLOYED);
-	}
-	
-	
-	/*
-	 * Negative test case
-	 * Applicant is not present in employer's list. 
-	 * Exception will be thrown as employer does not have access to this applicant
-	 */
-	@Test (expected = ApplicantNotPresentInMyApplicantsException.class)
-	public void test_changeApplicantStatus() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException {
-		applicant.setId("A1");
-		employer.changeApplicantStatus(applicant, EmploymentStatus.EMPLOYED);
-	}
 	
 
 	/*
@@ -137,61 +117,64 @@ public class TestEmployer {
 	 * Testing error checking for null applicant object is passed to employer methods
 	 */
 	@Test (expected = NullApplicantException.class)
-	public void test_changeApplicantStatusOfNullApplicant() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException {
+	public void test_changeApplicantStatusOfNullApplicant() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullJobReferenceException {
 		
-		employer.shortListCandidate(null);
+		Job jobRef = employer.getPostedJobs().get("job1");
+		Applicant applicntRef = null; 
+		
+		employer.shortListCandidate(null, applicntRef);
 		employer.changeApplicantStatus(null, EmploymentStatus.EMPLOYED);
 	}
 	
 	
-	/*
-	 * Negative Test Case
-	 * Calling scheduling interview time.
-	 * TODO : Logic of this method yet to be implementated
+	/**
+	 * @author Yogeshwar Chaudhari
+	 * Employer can post a job against which employer can interview/hire the applicants
+	 * Test case Type : Positive
+	 * @throws DuplicateJobIdException 
 	 */
 	@Test
-	public void test_setInterviewTime() {
+	public void test_createJob() throws DuplicateJobIdException {
 		
-		boolean status = employer.setInterviewTime();
-		Assert.assertTrue(false);
+		// Creating a job job
+		Job j1 = new Job("j1","Test Job", "Test Job Description");
+		
+		// Validating the state before the
+		Assert.assertEquals("Validating Posted Jobs List Count Before : ", 3, this.employer.getPostedJobs().size());
+		
+		this.employer.createJob(j1);
+		
+		Assert.assertEquals("Validating Posted Jobs List Count Before : ", 4, this.employer.getPostedJobs().size());
+		
+		// Also validate that the added job that is being added is exactly what is being supplied
+		Assert.assertEquals("validating Obj", j1, this.employer.getPostedJobs().get("j1"));
 	}
 	
 	
-	/*
-	 * Negative Test Case
-	 * Saving interview results
-	 * TODO : Logic of this method yet to be implementated
+	/**
+	 * @author Yogeshwar Chaudhari
+	 * Employer accidently supplies duplicate job id, Making sure that employer does not accidcently overrwrite exisiting job
+	 * Test case Type : Positive
+	 * @throws DuplicateJobIdException 
 	 */
-	@Test
-	public void test_saveInterviewResults() {
+	@Test (expected = DuplicateJobIdException.class)
+	public void test_createJobDuplicateId() throws DuplicateJobIdException {
 		
-		boolean status = employer.saveInterviewResults();
-		Assert.assertTrue(false);
+		// Creating a job job
+		Job j1 = new Job("j1","Test Job", "Test Job Description");
+		
+		// Validating the state before the
+		Assert.assertEquals("Jobs Count Before : ", 3, this.employer.getPostedJobs().size());
+		
+		this.employer.createJob(j1);
+		
+		Assert.assertEquals("Jobs Count After: ", 4, this.employer.getPostedJobs().size());
+		
+		Job j2 = new Job("j1","Test Job 2", "Test Job Description 2");
+		
+		// Expecting exception because IDs are same
+		this.employer.createJob(j2); 
+		
 	}
 	
-	
-	/*
-	 * Positive Test Case
-	 * Calling scheduling interview time.
-	 * TODO : Logic of this method yet to be implementated
-	 */
-	@Test
-	public void test_setInterviewTimeP() {
-		
-		boolean status = employer.setInterviewTime();
-		Assert.assertTrue(true);
-	}
-	
-	
-	/*
-	 * Positive Test Case
-	 * Saving interview results
-	 * TODO : Logic of this method yet to be implementated
-	 */
-	@Test
-	public void test_saveInterviewResultsP() {
-		
-		boolean status = employer.saveInterviewResults();
-		Assert.assertTrue(true);
-	}
 }
