@@ -5,6 +5,8 @@ import view.*;
 import customUtils.*;
 import model.entities.*;
 import model.exceptions.*;
+import model.enums.*;
+
 
 import java.io.FileNotFoundException;
 import java.text.ParseException;

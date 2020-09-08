@@ -22,6 +22,7 @@ public class JobCategory {
 	public String toString()
 	{
 		return "Category id:\t " + this.id + "\t\tCategory Title:\t " + this.categoryTitle ;
+	}
 
 	public String getCategoryTitle() {
 		return categoryTitle;

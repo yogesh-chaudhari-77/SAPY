@@ -257,8 +257,8 @@ public class Applicant extends User {
         return blacklistStatus;
     }
 
-    public void setBlacklistStatus(Blacklist blacklistStatus) {
-        this.blacklistStatus = blacklistStatus;
+    public void setBlacklistStatus(BlacklistStatus blacklistStatus) {
+        this.blacklistStatus.setBlacklistStatus(blacklistStatus);
     }
 
     public ApplicantType getApplicantType() {
@@ -280,25 +280,14 @@ public class Applicant extends User {
 
     public BlacklistStatus getBlacklistStat()
 	{
-		return this.blacklistStatus;
+		return this.blacklistStatus.getBlacklistStatus();
 	}
 		
-	//Blacklisting an user by setting type to 'P' or 'F'
-	public void setBlacklistStatus(String type)
-	{
-		blacklist.setBlacklistStatus(type);
-	}
 	
-	
-	//Reactivating the blacklisted user
-	public void removeBlacklistStatus()
-	{
-		blacklist.removeBlacklistStatus();
-	}
 
 	
 	public Date getStartDate()
 	{
-		return blacklist.getStartDate();
+		return blacklistStatus.getStartDate();
 	}
 }
