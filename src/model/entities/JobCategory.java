@@ -7,7 +7,7 @@ public class JobCategory {
 
 	private String id;
 	private String categoryTitle;
-	private int idNo = 1;
+	private static int idNo = 1;
 	private String status;
 	
 	public JobCategory(String newCategory, String status, int id)
@@ -22,5 +22,8 @@ public class JobCategory {
 	public String toString()
 	{
 		return "Category id:\t " + this.id + "\t\tCategory Title:\t " + this.categoryTitle ;
+
+	public String getCategoryTitle() {
+		return categoryTitle;
 	}
 }

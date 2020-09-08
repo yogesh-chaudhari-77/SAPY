@@ -101,7 +101,7 @@ public class Menu {
 				System.out.printf(format, option);
 				System.out.println(menu.get(option));
 			}
-			System.out.print("Choice :");
+			System.out.print("Choice: ");
 			choice = Global.scanner.nextLine();
 			System.out.println();
 		} while (!caseIgnoreContains(keys, choice));

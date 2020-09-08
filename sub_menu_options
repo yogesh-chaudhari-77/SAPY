@@ -2,6 +2,7 @@
 # comments begin with # and empty lines are ignored
 
 
-1 = Applicant
-2 = Employer
-Q = Go back to previous Menu
+1 = Add
+2 = Update
+3 = View
+4 = Go back to previous menu

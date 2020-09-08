@@ -1,0 +1,14 @@
+# main menu for the entire system
+# comments begin with # and empty lines are ignored
+
+
+1 = Qualifications
+2 = References
+3 = Employment Record
+4 = Licenses
+5 = Upload CV
+6 = Availability
+7 = Change Applicant Type
+8 = Complaint about Employer
+9 = Respond to Job Offer
+Q = Go back to previous Menu
