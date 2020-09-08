@@ -35,7 +35,7 @@ public class Applicant extends User {
         }else {
             this.applicantType = ApplicantType.INTERNATIONAL;
         }
-        this.cvPath = "";
+        this.cvPath = null;
     }
 
     public boolean addEmploymentRecords(EmploymentRecord record) throws BadEmployeeRecordException, DuplicateEntryException {
@@ -48,7 +48,8 @@ public class Applicant extends User {
             }
         }
         if (!employmentRecordFound) {
-            if (record.getStartDate().after(record.getEndDate()) || record.getStartDate().equals(record.getEndDate())) {
+            System.out.println();
+            if (!record.getCurrentCompany() && (record.getStartDate().after(record.getEndDate()) || record.getStartDate().equals(record.getEndDate()))) {
                 throw new BadEmployeeRecordException("Start Date should be less then end date");
             } else {
                 employmentHistory.add(record);
@@ -112,11 +113,11 @@ public class Applicant extends User {
     }
 
     public boolean addLicenses(License license) throws DuplicateEntryException {
-        boolean licenseFound = true;
+        boolean licenseFound = false;
 
         for(License currentLicense : licenses) {
             if ( currentLicense.getId().equals(license.getId())){
-                licenseFound = false;
+                licenseFound = true;
                 break;
             }
         }
@@ -258,8 +259,8 @@ public class Applicant extends User {
         return blacklistStatus;
     }
 
-    public void setBlacklistStatus(Blacklist blacklistStatus) {
-        this.blacklistStatus = blacklistStatus;
+    public void setBlacklistStatus(BlacklistStatus blacklistStatus) {
+        this.blacklistStatus.setBlacklistStatus(blacklistStatus);
     }
 
     public ApplicantType getApplicantType() {
@@ -278,4 +279,17 @@ public class Applicant extends User {
         this.cvPath = cvPath;
     }
 
+
+    public BlacklistStatus getBlacklistStat()
+	{
+		return this.blacklistStatus.getBlacklistStatus();
+	}
+		
+	
+
+	
+	public Date getStartDate()
+	{
+		return blacklistStatus.getStartDate();
+	}
 }

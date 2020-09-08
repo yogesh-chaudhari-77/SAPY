@@ -4,6 +4,7 @@ import model.enums.*;
 import model.exceptions.*;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -350,6 +351,16 @@ public class Employer extends User {
 	}
 
 
+	public BlacklistStatus getBlacklistStat()
+	{
+		return this.blacklistStatus.getBlacklistStatus();
+	}
+	
+	
+	public void setBlacklistStatus(BlacklistStatus blacklistStatus) 
+	{
+	        this.blacklistStatus.setBlacklistStatus(blacklistStatus);
+    }
 	//Blacklisting the employer by setting type to 'P' or 'F'
 	public void setBlacklistStatus(String type)
 	{
@@ -363,4 +374,9 @@ public class Employer extends User {
 		blacklistStatus.removeBlacklistStatus();
 	}
 	
+	public Date getStartDate()
+	{
+		return blacklistStatus.getStartDate();
+	}
+
 }
