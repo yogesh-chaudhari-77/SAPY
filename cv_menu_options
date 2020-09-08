@@ -1,0 +1,6 @@
+# CV menu options
+# comments begin with # and empty lines are ignored
+
+
+1 = Upload new CV
+Q = Go back to previous menu

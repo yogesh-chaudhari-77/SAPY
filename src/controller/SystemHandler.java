@@ -60,7 +60,7 @@ public class SystemHandler {
 	
 
 		
-	public void run() throws BadQualificationException, DuplicateEntryException {
+	public void run() {
 		Menu menu = null;
 		boolean quit = false;
 		
@@ -258,7 +258,7 @@ public class SystemHandler {
 
 	}
 
-	public void login () throws BadQualificationException, DuplicateEntryException {
+	public void login () {
 
 		String id;
 		String password;
@@ -280,7 +280,7 @@ public class SystemHandler {
 		}
 	}
 
-	public void showUserMenu(User user) throws BadQualificationException, DuplicateEntryException {
+	public void showUserMenu(User user) {
 		if (user instanceof Applicant){
 			showApplicantMenu(((Applicant) user));
 		} else if (user instanceof Employer){
@@ -290,7 +290,7 @@ public class SystemHandler {
 		}
 	}
 
-	public void showApplicantMenu(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+	public void showApplicantMenu(Applicant applicant) {
 		boolean quit = false;
 		Menu menu = null;
 
@@ -301,7 +301,7 @@ public class SystemHandler {
 		}
 
 		do{
-			System.out.println("===Applicant Menu of various options to check===");
+			System.out.println("\n===Applicant Menu of various options to check===");
 			String choice = menu.show();
 			choice = choice.toUpperCase();
 
@@ -314,6 +314,19 @@ public class SystemHandler {
 					registerEmployer();
 					break;
 
+				case "3":
+					//employmentRecords
+					addUpdateEmploymentHistory(applicant);
+					break;
+
+				case "4":
+					addUpdateLicenses(applicant);
+					break;
+
+				case "5":
+					uploadApplicantCV(applicant);
+					break;
+
 				case "Q":
 					quit = true;
 
@@ -322,7 +335,8 @@ public class SystemHandler {
 
 	}
 
-	public void addUpdateQualification(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+	public void addUpdateQualification(Applicant applicant){
+		System.out.println("****** Qualifications ******");
 		String operation = subMenu();
 
 		if (operation.equals("add")){
@@ -330,11 +344,99 @@ public class SystemHandler {
 		} else if (operation.equals("update")){
 			//updateQualification(applicant);
 		} else if (operation.equals("view")){
-			//showQualification(applicant);
+			showQualification(applicant);
 		} else {
 			System.out.println("Exiting Sub Menu");
 			return ;
 		}
+	}
+	public void addUpdateEmploymentHistory(Applicant applicant){
+		boolean continueMessageDisplay = true;
+		do {
+			try {
+				System.out.println("****** Employment Records ******");
+				String operation = subMenu();
+				if (operation.equals("add")) {
+					addEmploymentHistory(applicant);
+				} else if (operation.equals("update")) {
+					//updateQualification(applicant);
+				} else if (operation.equals("view")) {
+					showEmploymentRecords(applicant);
+				} else {
+					System.out.println("Exiting Sub Menu");
+					return;
+				}
+			} catch (DuplicateEntryException duplicate) {
+				System.out.println("Employment Record Already exists. Please try again.");
+				//continueMessageDisplay= true;
+			}
+		}while (continueMessageDisplay);
+	}
+
+	public void uploadApplicantCV(Applicant applicant){
+		System.out.println("***** Upload CV *****");
+		String currentCV = applicant.getCvPath();
+		if(currentCV == null){
+			System.out.println("No CV uploaded.");
+		}else{
+			System.out.println("Current CV in the system: "+currentCV);
+		}
+		try {
+			Menu menu = new Menu("cv_menu_options");
+			boolean wrongOption = false;
+
+			do {
+				String choice = menu.show();
+				choice = choice.toUpperCase();
+
+				switch (choice) {
+					case "1":
+						if(addCVPathToApplicant(applicant)){
+							System.out.println("CV uploaded successfully!!");
+							return;
+						}else {
+							System.out.println("Path to CV does not exist. Please enter valid path");
+							wrongOption = true;
+						}
+						break;
+
+					case "Q":
+						return;
+
+					default:
+						System.out.println("!! Wrong Option !! Kindly select the correct one");
+						wrongOption = true;
+				}
+			} while(wrongOption);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	private boolean addCVPathToApplicant(Applicant applicant){
+		System.out.print("Enter system path to your CV: ");
+		String path= Global.scanner.nextLine();
+		try {
+			applicant.uploadCV(path);
+			return true;
+		} catch (InvalidCVPathException e) {
+			return false;
+		}
+	}
+
+	private void showEmploymentRecords(Applicant applicant){
+		List<EmploymentRecord> allEmploymentHistory = applicant.getEmploymentHistory();
+
+		if(allEmploymentHistory.size() == 0){
+			System.out.println("No Employment Records present.");
+		}else{
+			for(int i=0; i<allEmploymentHistory.size();i++){
+				System.out.println("Employment Record "+(i+1)+":");
+				System.out.println(allEmploymentHistory.get(i).toString());
+			}
+		}
+
 	}
 
 	public String subMenu(){
@@ -376,7 +478,7 @@ public class SystemHandler {
 		return null;
 	}
 	
-	public void addQualification(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+	public void addQualification(Applicant applicant) {
 
 		String qualificationLevel;
 		Date startDate;
@@ -387,29 +489,133 @@ public class SystemHandler {
 		System.out.print("Enter Below details for adding qualification\n");
 		System.out.print("Qualification Level: ");
 		qualificationLevel = Global.scanner.nextLine();
-		System.out.print("Start Date(YYYY/MM/DD): ");
+		System.out.print("Start Date(DD/MM/YYYY): ");
 		startDate = getDateInput();
-		System.out.print("End Date(YYYY/MM/DD): ");
+		System.out.print("End Date(DD/MM/YYYY): ");
 		endDate = getDateInput();
 		System.out.print("Field of Study: ");
 		fieldOfStudy = Global.scanner.nextLine();
 		System.out.print("Marks Obtained(in percentage): ");
 		marksObtained = Global.scanner.nextDouble();
 
-		Qualification qualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marksObtained);
-		if (applicant.addQualifications(qualification)){
-			System.out.println("Qualification add successfully");
-			Global.scanner.nextLine();
-		} else {
+
+			Qualification qualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marksObtained);
+
+
+		try{
+			applicant.addQualifications(qualification);
+			System.out.println("Qualification added successfully");
+		} catch (BadQualificationException e){
+			System.out.println(e);
 			System.out.println("!! Adding qualification failed !!");
+		} catch (DuplicateEntryException e){
+			System.out.println(e);
+			System.out.println("!! Adding qualification failed !!");
+		}
+	}
+
+	public void showQualification(Applicant applicant){
+		List<Qualification> qualifications = new ArrayList<Qualification>();
+		qualifications = applicant.getQualifications();
+
+		int i =1;
+		for (Qualification qualification: qualifications){
+			System.out.println("Qualification "+ i++ + ". " + qualification);
+		}
+	}
+
+	public void addUpdateLicenses(Applicant applicant){
+		String operation = subMenu();
+
+		if (operation.equals("add")){
+			addLicense(applicant);
+		} else if (operation.equals("update")){
+			//updateLicense(applicant);
+		} else if (operation.equals("view")){
+			showLicenses(applicant);
+		} else {
+			System.out.println("Exiting Sub Menu");
+			return ;
+		}
+
+	}
+
+	public void addLicense(Applicant applicant) {
+		String type;
+		String id;
+		Date validTill;
+
+		System.out.println("Enter the below details for adding License");
+		System.out.print("License Type: ");
+		type = Global.scanner.nextLine();
+		System.out.print("License ID: ");
+		id = Global.scanner.nextLine();
+		System.out.print("Validity(DD/MM/YYYY): ");
+		validTill = getDateInput();
+
+		License license = new License(type, id, validTill);
+
+		try {
+			applicant.addLicenses(license);
+			System.out.println("License added successfully");
+		} catch (DuplicateEntryException e) {
+			System.out.println(e);
+			System.out.println("!! Adding License failed !!");
+		}
+	}
+
+	public void showLicenses(Applicant applicant){
+		List<License> licenses = new ArrayList<License>();
+		licenses = applicant.getLicenses();
+
+		int i =1;
+		for (License license: licenses){
+			System.out.println("License "+ i++ + ". " + license);
+		}
+	}
+
+	public void addEmploymentHistory(Applicant applicant) throws DuplicateEntryException{
+
+		String companyName;
+		String designation;
+		Date startDate;
+		Date endDate;
+		boolean currentCompany;
+
+		System.out.println("Enter Below details for adding Employment Record\n");
+		System.out.print("Company Name: ");
+		companyName = Global.scanner.nextLine();
+		System.out.print("Designation: ");
+		designation = Global.scanner.nextLine();
+		System.out.print("Start Date(DD/MM/YYYY): ");
+		startDate = getDateInput();
+		System.out.println("Are you still working in this company?(Y/N): ");
+		String answer= Global.scanner.nextLine();
+		if(answer.equalsIgnoreCase("y")){
+			currentCompany= true;
+			endDate= null;
+		}else {
+			currentCompany = false;
+			System.out.print("End Date(DD/MM/YYYY): ");
+			endDate = getDateInput();
+		}
+
+		EmploymentRecord newRecord= new EmploymentRecord(companyName, designation, startDate, endDate, currentCompany);
+
+		try {
+			applicant.addEmploymentRecords(newRecord);
+			System.out.println("Employment Record added successfully");
+		} catch (BadEmployeeRecordException e) {
+			System.out.println(e.getMessage());
+			System.out.println("Failed to add employment record. Please try again.");
 		}
 
 	}
 
 	public Date getDateInput(){
 
-		String datePattern = "((19|20)[0-9]{2})/((0?[1-9])|1[012])/((0?[1-9])|(1[0-9])|(2[0-9])|(3[01]))";
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+		String datePattern = "((0?[1-9])|(1[0-9])|(2[0-9])|(3[01]))/((0?[1-9])|1[012])/(19|20)[0-9]{2}";
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 		Pattern pattern = Pattern.compile(datePattern);
 
 		Date date = null;

@@ -3,6 +3,8 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Qualification {
@@ -31,5 +33,20 @@ public class Qualification {
 
     public Date getEndDate() {
         return endDate;
+    }
+
+    @Override
+    public String toString() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+
+        String sDate = dateFormat.format(startDate);
+        String eDate = dateFormat.format(endDate);
+
+        return
+                "\nQualification Level = " + qualificationLevel +
+                "\nStart Date = " + sDate +
+                "\nEnd Date = " + eDate +
+                "\nField Of Study = " + fieldOfStudy +
+                "\nMarks Obtained = " + marksObtained;
     }
 }
