@@ -2,14 +2,13 @@
 # comments begin with # and empty lines are ignored
 
 
-1 = Add/Update Qualifications
-2 = Add/Update References
-3 = Add/Update Employment Record
-4 = Add/Update CV
-5 = Add/Update Licenses
-6 = Add/Update Availability
-7 = Change Visa/Residency Type
-8 = Add/Update Job Preferences
-9 = Complaint about Employer
-10 = Accept/Reject Job Offer
-Q = Quit
+1 = Qualifications
+2 = References
+3 = Employment Record
+4 = Licenses
+5 = Upload CV
+6 = Availability
+7 = Change Applicant Type
+8 = Complaint about Employer
+9 = Respond to Job Offer
+Q = Go Back

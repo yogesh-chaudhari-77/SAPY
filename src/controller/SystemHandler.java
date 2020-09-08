@@ -339,7 +339,7 @@ public class SystemHandler {
 		System.out.println("Kindly Select an operation to perform");
 
 		try {
-			menu = new Menu("sub_menu_options\n");
+			menu = new Menu("sub_menu_options");
 		} catch (Exception e) {
 			System.out.println();
 		}
