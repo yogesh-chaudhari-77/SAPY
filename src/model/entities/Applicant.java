@@ -34,7 +34,7 @@ public class Applicant extends User {
         }else {
             this.applicantType = ApplicantType.INTERNATIONAL;
         }
-        this.cvPath = "";
+        this.cvPath = null;
     }
 
     public boolean addEmploymentRecords(EmploymentRecord record) throws BadEmployeeRecordException, DuplicateEntryException {
@@ -47,7 +47,8 @@ public class Applicant extends User {
             }
         }
         if (!employmentRecordFound) {
-            if (record.getStartDate().after(record.getEndDate()) || record.getStartDate().equals(record.getEndDate())) {
+            System.out.println();
+            if (!record.getCurrentCompany() && (record.getStartDate().after(record.getEndDate()) || record.getStartDate().equals(record.getEndDate()))) {
                 throw new BadEmployeeRecordException("Start Date should be less then end date");
             } else {
                 employmentHistory.add(record);

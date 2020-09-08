@@ -1,6 +1,7 @@
 import java.util.HashMap;
 
 
+import model.exceptions.BadEmployeeRecordException;
 import model.exceptions.BadQualificationException;
 import model.exceptions.DuplicateEntryException;
 
@@ -14,7 +15,7 @@ public class CasualEmploymentSystem {
 	HashMap<String, Employer> allEmployersList = null;
 	HashMap<String, MaintenanceStaff> allStaffList = null;
 	
-	public static void main(String[] args) throws BadQualificationException, DuplicateEntryException {
+	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		
 		
