@@ -65,7 +65,10 @@ public class TestEmployer {
 	public void test_shortListBlackListedApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException {
 		
 		applicant.setId("A1");
-		applicant.setBlacklistStatus(BlacklistStatus.FULL_BLACKLISTED);
+		/*
+		Change this assignment as Blacklist status is a class in Applicant
+		 */
+		//applicant.setBlacklistStatus(BlacklistStatus.FULL_BLACKLISTED);
 		
 		this.employer.shortListCandidate(applicant);
 	}

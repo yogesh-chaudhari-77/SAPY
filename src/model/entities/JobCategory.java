@@ -7,7 +7,7 @@ public class JobCategory {
 
 	private String id;
 	private String categoryTitle;
-	private int idNo = 1;
+	private static int idNo = 1;
 	private String status;
 	
 	public JobCategory(String newCategory, String status)
@@ -17,7 +17,8 @@ public class JobCategory {
 		this.status = status;
 		idNo++;
 	}
-	
-	
-	
+
+	public String getCategoryTitle() {
+		return categoryTitle;
+	}
 }

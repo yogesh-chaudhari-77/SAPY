@@ -1,9 +1,9 @@
 import java.util.HashMap;
-import java.util.HashMap;
-import java.util.HashSet;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+
+import model.exceptions.BadQualificationException;
+import model.exceptions.DuplicateEntryException;
+
 
 import model.entities.*;
 import controller.*;
@@ -14,7 +14,7 @@ public class CasualEmploymentSystem {
 	HashMap<String, Employer> allEmployersList = null;
 	HashMap<String, MaintenanceStaff> allStaffList = null;
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws BadQualificationException, DuplicateEntryException {
 		// TODO Auto-generated method stub
 		
 		

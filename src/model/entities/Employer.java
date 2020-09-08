@@ -160,7 +160,7 @@ public class Employer extends User {
 		HashMap<String, Applicant> shortListedApplicants = this.getMyApplicantsList();
 
 		// If an applicant is blacklisted, he/she should not be allowed to be shortlisted
-		if( applicant.getBlacklistStatus() == BlacklistStatus.FULL_BLACKLISTED) 
+		if( applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.FULL_BLACKLISTED)
 		{
 			throw new ApplicantIsBlackListedException();
 		}
