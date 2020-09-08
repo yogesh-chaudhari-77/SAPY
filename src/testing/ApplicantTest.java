@@ -46,8 +46,6 @@ public class ApplicantTest {
         int currentRecordsCount= applicants.get(1).getEmploymentHistory().size();
         applicants.get(1).addEmploymentRecords(newRecord);
         assertEquals(currentRecordsCount+1, applicants.get(1).getEmploymentHistory().size());
-//        assertTrue(applicants.get(1).updateEmploymentRecords(new EmploymentRecord("TestCompany",
-//                "TestDesignation", new Date(2018, 02, 15), new Date(2018, 02, 16), false)));
     }
 
     //passing duplicate employment records
@@ -59,32 +57,50 @@ public class ApplicantTest {
 
         //adding duplicate record
         applicants.get(0).addEmploymentRecords(newRecord);
-
-//        applicants.get(1).updateEmploymentRecords(new EmploymentRecord("TestCompany",
-//                "TestDesignation", new Date(2018, 02, 15), new Date(2018, 02, 16), false));
     }
+
+    @Test(expected = InvalidCVPathException.class)
+    public void testInvalidPathForUploadCV() throws InvalidCVPathException {
+        //providing invalid path, expecting exception
+        applicants.get(1).uploadCV("");
+    }
+
+   @Test
+    public void testNormalUploadCV() throws InvalidCVPathException {
+       String cvPath = "/Users/prodip/Desktop/Resume.pdf";
+       assertEquals(null, applicants.get(1).getCvPath());
+       applicants.get(1).uploadCV(cvPath);
+       assertEquals(cvPath, applicants.get(1).getCvPath());
+   }
 
     //passing correct references
     @Test
     public void testValidReference() throws Exception {
-        assertTrue(applicants.get(1).updateReferences(new Reference("TestReference",
-                "TestEmail", "testDesignation", "testCompany")));
+        Reference newReference= new Reference("Harish", "Iyer", "h@google.com","Manager","Woolies","040122121");
+        assertEquals(0, applicants.get(0).getReferences().size());
+        applicants.get(0).addReferences(newReference);
+        assertEquals(1, applicants.get(0).getReferences().size());
+
     }
 
     //passing duplicate references
     @Test(expected = DuplicateEntryException.class)
     public void testInValidReference() throws Exception {
-       applicants.get(1).updateReferences(new Reference("TestReference",
-                "TestEmail", "testDesignation", "testCompany"));
-        applicants.get(1).updateReferences(new Reference("TestReference",
-                "TestEmail", "testDesignation", "testCompany"));
+        Reference newReference= new Reference("Harish", "Iyer", "h@google.com","Manager","Woolies","040122121");
+        //adding first reference
+        applicants.get(1).addReferences(newReference);
+        //adding duplicate record
+        applicants.get(1).addReferences(newReference);
     }
 
     //passing correct License
     @Test
     public void testValidLicense() throws Exception {
-        assertTrue(applicants.get(1).updateLicenses(new License("Driving", "Test123",
-                new Date (2025,04, 25))));
+        SimpleDateFormat parser = new SimpleDateFormat("dd/MM/yyyy");
+        License newLicense = new License("Driving Licence", "a1234",parser.parse("31/12/2021"));
+        assertEquals(0,applicants.get(1).getLicenses().size());
+        applicants.get(1).addLicenses(newLicense);
+        assertEquals(1, applicants.get(1).getLicenses().size());
     }
 
     //passing two licenses and then getting count of complaints
