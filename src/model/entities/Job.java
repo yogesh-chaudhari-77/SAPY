@@ -4,6 +4,7 @@ import model.enums.*;
 import model.exceptions.*;
 
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 
 public class Job {
 	
@@ -23,12 +24,17 @@ public class Job {
 	private PostedJobJStatus jobStatus;
 	
 	
+	// List of shortlisted applicant for this job
+	private HashMap<String, Applicant> shortListedApplicants;
+	
+	
 	public Job() {
 		jobId = "";
 		jobTitle = "";
 		jobDesc = "";
 		jobPostedDateTime = new SimpleDateFormat();
 		jobStatus = PostedJobJStatus.ACTIVE;
+		shortListedApplicants = new HashMap<String, Applicant>();
 	}
 	
 	public Job(String jobTitle, String jobDesc) {
@@ -37,6 +43,7 @@ public class Job {
 		this.jobDesc = jobDesc;
 		this.jobPostedDateTime = new SimpleDateFormat();
 		this.jobStatus = PostedJobJStatus.ACTIVE;
+		shortListedApplicants = new HashMap<String, Applicant>();
 	}
 
 	
@@ -46,6 +53,7 @@ public class Job {
 		this.jobDesc = jobDesc;
 		this.jobPostedDateTime = new SimpleDateFormat();
 		this.jobStatus = PostedJobJStatus.ACTIVE;
+		shortListedApplicants = new HashMap<String, Applicant>();
 	}
 	
 	// Getter - Setters Starts Here
@@ -87,6 +95,14 @@ public class Job {
 
 	public void setJobStatus(PostedJobJStatus jobStatus) {
 		this.jobStatus = jobStatus;
+	}
+
+	public HashMap<String, Applicant> getShortListedApplicants() {
+		return shortListedApplicants;
+	}
+
+	public void setShortListedApplicants(HashMap<String, Applicant> shortListedApplicants) {
+		this.shortListedApplicants = shortListedApplicants;
 	}
 
 	@Override
