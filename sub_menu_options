@@ -1,0 +1,8 @@
+# main menu for the entire system
+# comments begin with # and empty lines are ignored
+
+
+1 = Add
+2 = Update
+3 = View
+4 = Go back to previous menu
