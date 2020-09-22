@@ -1,0 +1,9 @@
+# menu for the MaintenanceStaff
+# comments begin with # and empty lines are ignored
+
+
+1 = Add New Job category
+2 = View BlacklistedUsers
+3 = Blacklist user
+4 = Reactivate blacklisted user
+Q = quit

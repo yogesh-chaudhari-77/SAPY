@@ -1,0 +1,11 @@
+# menu for the Employer
+# comments begin with # and empty lines are ignored
+
+
+1 = Post Job
+2 = Search Applicants
+3 = Short List an Applicant
+4 = Rank Applicants
+5 = Register Complaint Against Applicant
+6 = Create Job Offer
+Q = quit
