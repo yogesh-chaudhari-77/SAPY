@@ -1,6 +1,7 @@
 import java.util.HashMap;
 
 
+import model.exceptions.BadEmployeeRecordException;
 import model.exceptions.BadQualificationException;
 import model.exceptions.DuplicateEntryException;
 import model.exceptions.DuplicateJobCategoryException;

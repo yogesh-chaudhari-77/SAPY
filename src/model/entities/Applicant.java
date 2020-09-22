@@ -28,13 +28,14 @@ public class Applicant extends User {
         this.licenses = new ArrayList<>();
         this.references = new ArrayList<>();
         this.qualifications = new ArrayList<>();
-        this.blacklistStatus = null;
+        //this.blacklistStatus = null;
+        this.blacklistStatus = new Blacklist();
         if(applicantType.equalsIgnoreCase("l")){
             this.applicantType = ApplicantType.LOCAL;
         }else {
             this.applicantType = ApplicantType.INTERNATIONAL;
         }
-        this.cvPath = "";
+        this.cvPath = null;
     }
 
     public boolean addEmploymentRecords(EmploymentRecord record) throws BadEmployeeRecordException, DuplicateEntryException {
@@ -47,7 +48,8 @@ public class Applicant extends User {
             }
         }
         if (!employmentRecordFound) {
-            if (record.getStartDate().after(record.getEndDate()) || record.getStartDate().equals(record.getEndDate())) {
+            System.out.println();
+            if (!record.getCurrentCompany() && (record.getStartDate().after(record.getEndDate()) || record.getStartDate().equals(record.getEndDate()))) {
                 throw new BadEmployeeRecordException("Start Date should be less then end date");
             } else {
                 employmentHistory.add(record);
@@ -111,11 +113,11 @@ public class Applicant extends User {
     }
 
     public boolean addLicenses(License license) throws DuplicateEntryException {
-        boolean licenseFound = true;
+        boolean licenseFound = false;
 
         for(License currentLicense : licenses) {
             if ( currentLicense.getId().equals(license.getId())){
-                licenseFound = false;
+                licenseFound = true;
                 break;
             }
         }

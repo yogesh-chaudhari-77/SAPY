@@ -4,6 +4,8 @@ import global.*;
 import view.*;
 import customUtils.*;
 import model.entities.*;
+import model.enums.ApplicantType;
+import model.enums.AvailabilityType;
 import model.exceptions.*;
 import model.enums.*;
 
@@ -56,6 +58,7 @@ public class SystemHandler {
 		allEmployersList = new HashMap<>();
 		allStaffList = new HashMap<>();
 
+		loadDummyDataForEmployeFunctions();
 	}
 	
 
@@ -290,7 +293,7 @@ public class SystemHandler {
 		}
 	}
 
-	public void showApplicantMenu(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+	public void showApplicantMenu(Applicant applicant) {
 		boolean quit = false;
 		Menu menu = null;
 
@@ -301,7 +304,7 @@ public class SystemHandler {
 		}
 
 		do{
-			System.out.println("===Applicant Menu of various options to check===");
+			System.out.println("\n===Applicant Menu of various options to check===");
 			String choice = menu.show();
 			choice = choice.toUpperCase();
 
@@ -314,6 +317,19 @@ public class SystemHandler {
 					registerEmployer();
 					break;
 
+				case "3":
+					//employmentRecords
+					addUpdateEmploymentHistory(applicant);
+					break;
+
+				case "4":
+					addUpdateLicenses(applicant);
+					break;
+
+				case "5":
+					uploadApplicantCV(applicant);
+					break;
+
 				case "Q":
 					quit = true;
 
@@ -322,7 +338,8 @@ public class SystemHandler {
 
 	}
 
-	public void addUpdateQualification(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+	public void addUpdateQualification(Applicant applicant){
+		System.out.println("****** Qualifications ******");
 		String operation = subMenu();
 
 		if (operation.equals("add")){
@@ -330,11 +347,99 @@ public class SystemHandler {
 		} else if (operation.equals("update")){
 			//updateQualification(applicant);
 		} else if (operation.equals("view")){
-			//showQualification(applicant);
+			showQualification(applicant);
 		} else {
 			System.out.println("Exiting Sub Menu");
 			return ;
 		}
+	}
+	public void addUpdateEmploymentHistory(Applicant applicant){
+		boolean continueMessageDisplay = true;
+		do {
+			try {
+				System.out.println("****** Employment Records ******");
+				String operation = subMenu();
+				if (operation.equals("add")) {
+					addEmploymentHistory(applicant);
+				} else if (operation.equals("update")) {
+					//updateQualification(applicant);
+				} else if (operation.equals("view")) {
+					showEmploymentRecords(applicant);
+				} else {
+					System.out.println("Exiting Sub Menu");
+					return;
+				}
+			} catch (DuplicateEntryException duplicate) {
+				System.out.println("Employment Record Already exists. Please try again.");
+				//continueMessageDisplay= true;
+			}
+		}while (continueMessageDisplay);
+	}
+
+	public void uploadApplicantCV(Applicant applicant){
+		System.out.println("***** Upload CV *****");
+		String currentCV = applicant.getCvPath();
+		if(currentCV == null){
+			System.out.println("No CV uploaded.");
+		}else{
+			System.out.println("Current CV in the system: "+currentCV);
+		}
+		try {
+			Menu menu = new Menu("cv_menu_options");
+			boolean wrongOption = false;
+
+			do {
+				String choice = menu.show();
+				choice = choice.toUpperCase();
+
+				switch (choice) {
+					case "1":
+						if(addCVPathToApplicant(applicant)){
+							System.out.println("CV uploaded successfully!!");
+							return;
+						}else {
+							System.out.println("Path to CV does not exist. Please enter valid path");
+							wrongOption = true;
+						}
+						break;
+
+					case "Q":
+						return;
+
+					default:
+						System.out.println("!! Wrong Option !! Kindly select the correct one");
+						wrongOption = true;
+				}
+			} while(wrongOption);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	private boolean addCVPathToApplicant(Applicant applicant){
+		System.out.print("Enter system path to your CV: ");
+		String path= Global.scanner.nextLine();
+		try {
+			applicant.uploadCV(path);
+			return true;
+		} catch (InvalidCVPathException e) {
+			return false;
+		}
+	}
+
+	private void showEmploymentRecords(Applicant applicant){
+		List<EmploymentRecord> allEmploymentHistory = applicant.getEmploymentHistory();
+
+		if(allEmploymentHistory.size() == 0){
+			System.out.println("No Employment Records present.");
+		}else{
+			for(int i=0; i<allEmploymentHistory.size();i++){
+				System.out.println("Employment Record "+(i+1)+":");
+				System.out.println(allEmploymentHistory.get(i).toString());
+			}
+		}
+
 	}
 
 	public String subMenu(){
@@ -376,7 +481,7 @@ public class SystemHandler {
 		return null;
 	}
 	
-	public void addQualification(Applicant applicant) throws BadQualificationException, DuplicateEntryException {
+	public void addQualification(Applicant applicant) {
 
 		String qualificationLevel;
 		Date startDate;
@@ -387,29 +492,133 @@ public class SystemHandler {
 		System.out.print("Enter Below details for adding qualification\n");
 		System.out.print("Qualification Level: ");
 		qualificationLevel = Global.scanner.nextLine();
-		System.out.print("Start Date(YYYY/MM/DD): ");
+		System.out.print("Start Date(DD/MM/YYYY): ");
 		startDate = getDateInput();
-		System.out.print("End Date(YYYY/MM/DD): ");
+		System.out.print("End Date(DD/MM/YYYY): ");
 		endDate = getDateInput();
 		System.out.print("Field of Study: ");
 		fieldOfStudy = Global.scanner.nextLine();
 		System.out.print("Marks Obtained(in percentage): ");
 		marksObtained = Global.scanner.nextDouble();
 
-		Qualification qualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marksObtained);
-		if (applicant.addQualifications(qualification)){
-			System.out.println("Qualification add successfully");
-			Global.scanner.nextLine();
-		} else {
+
+			Qualification qualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marksObtained);
+
+
+		try{
+			applicant.addQualifications(qualification);
+			System.out.println("Qualification added successfully");
+		} catch (BadQualificationException e){
+			System.out.println(e);
 			System.out.println("!! Adding qualification failed !!");
+		} catch (DuplicateEntryException e){
+			System.out.println(e);
+			System.out.println("!! Adding qualification failed !!");
+		}
+	}
+
+	public void showQualification(Applicant applicant){
+		List<Qualification> qualifications = new ArrayList<Qualification>();
+		qualifications = applicant.getQualifications();
+
+		int i =1;
+		for (Qualification qualification: qualifications){
+			System.out.println("Qualification "+ i++ + ". " + qualification);
+		}
+	}
+
+	public void addUpdateLicenses(Applicant applicant){
+		String operation = subMenu();
+
+		if (operation.equals("add")){
+			addLicense(applicant);
+		} else if (operation.equals("update")){
+			//updateLicense(applicant);
+		} else if (operation.equals("view")){
+			showLicenses(applicant);
+		} else {
+			System.out.println("Exiting Sub Menu");
+			return ;
+		}
+
+	}
+
+	public void addLicense(Applicant applicant) {
+		String type;
+		String id;
+		Date validTill;
+
+		System.out.println("Enter the below details for adding License");
+		System.out.print("License Type: ");
+		type = Global.scanner.nextLine();
+		System.out.print("License ID: ");
+		id = Global.scanner.nextLine();
+		System.out.print("Validity(DD/MM/YYYY): ");
+		validTill = getDateInput();
+
+		License license = new License(type, id, validTill);
+
+		try {
+			applicant.addLicenses(license);
+			System.out.println("License added successfully");
+		} catch (DuplicateEntryException e) {
+			System.out.println(e);
+			System.out.println("!! Adding License failed !!");
+		}
+	}
+
+	public void showLicenses(Applicant applicant){
+		List<License> licenses = new ArrayList<License>();
+		licenses = applicant.getLicenses();
+
+		int i =1;
+		for (License license: licenses){
+			System.out.println("License "+ i++ + ". " + license);
+		}
+	}
+
+	public void addEmploymentHistory(Applicant applicant) throws DuplicateEntryException{
+
+		String companyName;
+		String designation;
+		Date startDate;
+		Date endDate;
+		boolean currentCompany;
+
+		System.out.println("Enter Below details for adding Employment Record\n");
+		System.out.print("Company Name: ");
+		companyName = Global.scanner.nextLine();
+		System.out.print("Designation: ");
+		designation = Global.scanner.nextLine();
+		System.out.print("Start Date(DD/MM/YYYY): ");
+		startDate = getDateInput();
+		System.out.println("Are you still working in this company?(Y/N): ");
+		String answer= Global.scanner.nextLine();
+		if(answer.equalsIgnoreCase("y")){
+			currentCompany= true;
+			endDate= null;
+		}else {
+			currentCompany = false;
+			System.out.print("End Date(DD/MM/YYYY): ");
+			endDate = getDateInput();
+		}
+
+		EmploymentRecord newRecord= new EmploymentRecord(companyName, designation, startDate, endDate, currentCompany);
+
+		try {
+			applicant.addEmploymentRecords(newRecord);
+			System.out.println("Employment Record added successfully");
+		} catch (BadEmployeeRecordException e) {
+			System.out.println(e.getMessage());
+			System.out.println("Failed to add employment record. Please try again.");
 		}
 
 	}
 
 	public Date getDateInput(){
 
-		String datePattern = "((19|20)[0-9]{2})/((0?[1-9])|1[012])/((0?[1-9])|(1[0-9])|(2[0-9])|(3[01]))";
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+		String datePattern = "((0?[1-9])|(1[0-9])|(2[0-9])|(3[01]))/((0?[1-9])|1[012])/(19|20)[0-9]{2}";
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 		Pattern pattern = Pattern.compile(datePattern);
 
 		Date date = null;
@@ -554,40 +763,45 @@ public class SystemHandler {
 			choice = choice.toUpperCase();
 
 			switch(choice){
-				case "1":
-				{
-					this.createAJob(employer);
+			case "1":
+			{
+				this.createAJob(employer);
+			}
+			break;
+
+			case "2":
+				HashMap<String, Applicant> matchingApplicants = this.searchApplicants(employer);
+
+				if(matchingApplicants != null) {
+					for (Applicant appRef : matchingApplicants.values()) {
+						System.out.println(appRef.toString());
+					}
 				}
+
 				break;
 
-				case "2":
-					HashMap<String, Applicant> matchingApplicants = this.searchApplicants(employer);
-					
-					if(matchingApplicants != null) {
-						for (Applicant appRef : matchingApplicants.values()) {
-							System.out.println(appRef.toString());
-						}
-					}
-					
-					break;
+			case "3":
+			{
+				String user,type;
+				System.out.println("Enter the id of the user to be blacklisted:  ");
+				user = input.nextLine();
 
-				case "3":
-				{
-					String user,type;
-					System.out.println("Enter the id of the user to be blacklisted:  ");
-					user = input.nextLine();
+				System.out.println("Blacklisting Types('P' - Provisional Blacklist, 'F' - Full Blacklist ");
+				System.out.println("Enter the type (P/F) : ");
+				type = input.nextLine();
+				staff.blacklistUser(allUsersList.get(user), type);
 
-					System.out.println("Blacklisting Types('P' - Provisional Blacklist, 'F' - Full Blacklist ");
-					System.out.println("Enter the type (P/F) : ");
-					type = input.nextLine();
-					staff.blacklistUser(allUsersList.get(user), type);
-					
-				}
-					//registerMaintenanceStaff();
-					break;
+			}
+			break;
+			
+			// Shortlisting an applicant
+			case "5" :
+			{
+				this.shortListApplicant(employer);
+			}
 
-				case "Q":
-					quit = true;
+			case "Q":
+				quit = true;
 
 			}
 		} while (!quit);
@@ -669,18 +883,27 @@ public class SystemHandler {
 		// Accepting basic job details
 		String jobId = customScanner.readString("Job ID : ");
 		String jobTitle = customScanner.readString("Job Title : ");
-		String jobDesc = customScanner.readString("Please enter a short job description");
+		String jobDesc = customScanner.readString("Description : ");
 		
 		// Create new job
 		Job tempJob = new Job(jobId, jobTitle, jobDesc);
 		
 		// Add that job to the employer
-		employer.createJob(tempJob);
-		
-		// Validate
-		if(employer.getPostedJobs().get(jobId) != null) {
-			System.out.println("Job has been successfully added your posted jobs");
+		try {
+			Job newJob = employer.createJob(tempJob);
+			
+			// Validate
+			if(newJob != null) {
+				
+				System.out.println("Job has been successfully added");
+				System.out.println(newJob.toString());
+			}
+		}catch(DuplicateJobIdException d) {
+			System.err.println(d.getMessage());
 		}
+
+		
+		printPostedJobs( employer.getId() );
 	}
 	
 	
@@ -699,8 +922,8 @@ public class SystemHandler {
 		}
 		
 		// Search Criteria
-		String jobPreferencesStr = customScanner.readString("Pleaser enter prefered job categories (Seperate multiple categories using ,) :\n");
-		String availability = customScanner.readString("Provide Availability");
+		String jobPreferencesStr = customScanner.readString("Job Categories :\n");
+		//String availability = customScanner.readString("Provide Availability");
 		
 		// Extracting individual job preferences
 		String [] jobPreferencesArr = null;
@@ -789,6 +1012,224 @@ public class SystemHandler {
 //	} while (wrongDate);
 //
 //		return date;
+
+	
+	/**
+	 * @author Yogeshwar Chaudhari
+	 * Employer can shortlist a person based on job
+	 * Enum : EmploymentStatus
+	 */
+	public void shortListApplicant(Employer employer) {
+		
+		Job jobRef = null;
+		
+		printPostedJobs( employer.getId() );
+		String jobId = customScanner.readString("Job ID");
+		jobRef = employer.getPostedJobs().get(jobId);
+		
+		printApplicantList();
+		String applicantId = customScanner.readString("Applicant Id : ");
+
+		String repeat;
+		do{
+			Applicant applicntRef = this.allApplicantsList.get( applicantId );
+
+			// Shorting the applicant for given job
+			try {
+				employer.shortListCandidate(jobRef, applicntRef);
+			} catch (AlreadyPresentInYourShortListedListException | ApplicantIsBlackListedException | NullApplicantException | NullJobReferenceException e) {
+				e.printStackTrace();
+			}
+			
+			repeat = customScanner.readYesNo("Do you want to add one more ?");
+			
+		}while(repeat.equalsIgnoreCase("Y"));
+		
+		printShortListedApplicntsEmployer(employer);
+		
+	}
+	
+	/**
+	 * @author Yogeshwar Chaudhari
+	 * Employer should be able to change the applicant's employement status
+	 * Enum : EmploymentStatus
+	 */
+	
+	public void changeApplicantStatus(Employer employer) {
+		
+	}
+	
+	/**
+	 * @author Yogeshwar Chaudhari
+	 * Praparing data for demonstrating Employer functionalities
+	 */
+	public void loadDummyDataForEmployeFunctions() {
+		
+		Employer e = new Employer("e", "e@gmail.com", "123", "Yosha");
+		try {
+			e.createJob(new Job("job1", "Developer", "Developer Desc"));
+			e.createJob(new Job("job2", "Analyst", "Analyst Required"));
+			e.createJob(new Job("job3", "Designer", "Designer Required"));
+		} 
+		catch (DuplicateJobIdException e1) {
+			e1.printStackTrace();
+		}
+		
+		Applicant a1 = new Applicant("app1", "a@gmail.com", "123", "John", "Doe", "048888888", "l");
+		Applicant a2 = new Applicant("app2", "b@gmail.com", "123", "Mark", "Brown", "048942879", "l");
+		Applicant a3 = new Applicant("app3", "c@gmail.com", "123", "Johny", "Ive", "048734878", "l");
+		Applicant a4 = new Applicant("app4", "d@gmail.com", "123", "Sim", "Corol", "043445873", "i");
+		Applicant a5 = new Applicant("app5", "e@gmail.com", "123", "Dave", "Snow", "048734878", "i");
+		Applicant a6 = new Applicant("app6", "f@gmail.com", "123", "June", "Last", "039847484", "i");
+		
+		// Create some job categories 
+		JobCategory j1 = new JobCategory("1", "Active");
+		JobCategory j2 = new JobCategory("2", "Active");
+		JobCategory j3 = new JobCategory("3", "Active");
+		
+		// Adding for system level
+		this.allJobCategories.put("1", j1);
+		this.allJobCategories.put("2", j2);
+		this.allJobCategories.put("3", j3);
+		
+		// Updating user availability
+		a1.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.FULL_TIME, null));
+		a2.getUserAvailability().add(new UserAvailability(j2, AvailabilityType.PART_TIME, null));
+		a3.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.INTERNSHIP, null));
+		a4.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.FULL_TIME, null));
+		a5.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, null));
+		a6.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, null));
+		
+		// Populating all users list with dummy users
+		this.allUsersList.put("app1", a1);
+		this.allUsersList.put("app2", a2);
+		this.allUsersList.put("app3", a3);
+		this.allUsersList.put("app4", a4);
+		this.allUsersList.put("app5", a5);
+		this.allUsersList.put("app6", a6);
+		
+		this.allApplicantsList.put("app1", a1);
+		this.allApplicantsList.put("app2", a2);
+		this.allApplicantsList.put("app3", a3);
+		this.allApplicantsList.put("app4", a4);
+		this.allApplicantsList.put("app5", a5);
+		this.allApplicantsList.put("app6", a6);
+		
+		// Adding employer
+		this.allUsersList.put("e", e);
+		this.allEmployersList.put("e", e);
+		
+		printApplicantList();
+		printPostedJobs(e.getId());
+	}
+	
+	/**
+	 * @author Yogeshwar Chaudhari
+	 * Prints the list of all applicants in the system
+	 */
+	public void printApplicantList() {
+		
+		System.out.println("List of all applicants");
+		
+		System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+		System.out.format("%-3s|%-10s|%-32s|%-10s|\n", "Sr", "ID", "Full Name", "JC Pref");
+		System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+		
+		int i = 1;
+		for(Applicant app : this.allApplicantsList.values()) {
+			System.out.format("%-3s|%-10s|%-32s|%-10s|\n", i, app.getId(), app.getFirstName()+" "+app.getLastName(), app.getJobPreferences());
+			System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+			i++;
+		}
+		
+	}
+	
+	
+	/**
+	 * @author Yogeshwar Chaudhari
+	 * Prints the list of all posted jobs for the test employer "e"
+	 */
+	public void printPostedJobs(String id) {
+		
+		Employer e = this.allEmployersList.get(id);
+		
+		System.out.println("List of All Posted Jobs By Employer : "+e.getId());
+		System.out.format("%3s%10s%32s%20s\n", "---+","----------+","--------------------------------+","--------------------+");
+		System.out.format("%-3s|%-10s|%-32s|%-20s|\n", "Sr", "ID", "Job Title", "Desc");
+		System.out.format("%3s%10s%32s%20s\n", "---+","----------+","--------------------------------+","--------------------+");
+		
+		int i = 1;
+		for(Job j : this.allEmployersList.get( id ).getPostedJobs().values()) {
+			System.out.format("%-3s|%-10s|%-32s|%-20s|\n", i, j.getJobId(), j.getJobTitle(), j.getJobDesc());
+			System.out.format("%3s%10s%32s%20s\n", "---+","----------+","--------------------------------+","--------------------+");
+			i++;
+		}
+	}
+	
+	
+	/**
+	 * @author Yogeshwar Chaudhari
+	 * Print ShortListed Applicants for every job from employer
+	 */
+	public void printShortListedApplicntsEmployer(Employer e) {
+		
+		System.out.println("List of all ShortListed Applicants For All Jobs");
+		
+		System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+		System.out.format("%-3s|%-10s|%-32s|%-10s|\n", "Sr", "ID", "Full Name", "JC Pref");
+		System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+		
+		for(Job jobRef : e.getPostedJobs().values()) {
+			System.out.println(jobRef.getJobId()+" "+jobRef.getJobTitle());
+			
+			int i = 1;
+			for(Applicant app : jobRef.getShortListedApplicants().values()) {
+				System.out.format("%-3s|%-10s|%-32s|%-10s|\n", i, app.getId(), app.getFirstName()+" "+app.getLastName(), app.getJobPreferences());
+				System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+				i++;
+			}
+		}
+	}
+
+
+
+	public HashMap<String, Applicant> getAllApplicantsList() {
+		return allApplicantsList;
+	}
+
+
+
+	public void setAllApplicantsList(HashMap<String, Applicant> allApplicantsList) {
+		this.allApplicantsList = allApplicantsList;
+	}
+
+
+
+	public HashMap<String, Employer> getAllEmployersList() {
+		return allEmployersList;
+	}
+
+
+
+	public void setAllEmployersList(HashMap<String, Employer> allEmployersList) {
+		this.allEmployersList = allEmployersList;
+	}
+
+
+
+	public HashMap<String, JobCategory> getAllJobCategories() {
+		return allJobCategories;
+	}
+
+
+
+	public void setAllJobCategories(HashMap<String, JobCategory> allJobCategories) {
+		this.allJobCategories = allJobCategories;
+	}
+	
+	
+	
+	
 
 }
 

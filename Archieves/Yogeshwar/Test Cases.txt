@@ -1,0 +1,70 @@
+	/*
+	 * Negative Test Case
+	 * Calling scheduling interview time.
+	 * TODO : Logic of this method yet to be implementated
+	 */
+	@Test
+	public void test_setInterviewTime() {
+		
+	}
+	
+	
+	/*
+	 * Negative Test Case
+	 * Saving interview results
+	 * TODO : Logic of this method yet to be implementated
+	 */
+	
+	@Test
+	public void test_saveInterviewResults() {
+	}
+	
+	
+	/*
+	 * Positive Test Case
+	 * Calling scheduling interview time.
+	 * TODO : Logic of this method yet to be implementated
+	 */
+	@Test
+	public void test_setInterviewTimeP() {
+	}
+	
+	
+	/*
+	 * Positive Test Case
+	 * Saving interview results
+	 * TODO : Logic of this method yet to be implementated
+	 */
+	@Test
+	public void test_saveInterviewResultsP() {
+	}
+	
+	/*
+	 * Positive test case
+	 * An email notication will be sent to the applicant.
+	 * Expecting true status if no problem occured while sending the mail
+	 */
+	@Test
+	public void test_sendEmailNotification() {
+	}
+	
+	
+	/*
+	 * Positive test case
+	 * Applicant be hired. 
+	 */
+	@Test
+	public void test_hireApplicant() throws ApplicantNotPresentInMyApplicantsException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException {
+		// TODO : To be implemented
+	}
+	
+	
+	/*
+	 * Negative test case
+	 * Applicant is not present in employer's list. 
+	 * Exception will be thrown as employer does not have access to this applicant
+	 */
+	@Test (expected = ApplicantNotPresentInMyApplicantsException.class)
+	public void test_changeApplicantStatus() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException {
+		
+	}
