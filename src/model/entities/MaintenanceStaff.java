@@ -6,8 +6,10 @@ import java.util.HashMap;
 
 public class MaintenanceStaff extends User{
 	
-	
-	private int catgId = 0;
+	private JobCategory jobcategory;
+	BlacklistStatus blacklistStatus;
+
+	private int catgId = 1;
 
 	public MaintenanceStaff(String id, String userEmail, String password, String firstName, String lastName, String phoneNumber)
 	{
@@ -16,10 +18,19 @@ public class MaintenanceStaff extends User{
 	
 	
 	//Adding a new job category to the system
-	public JobCategory addJobCategory(String newCategory)
+	public JobCategory addJobCategory(HashMap<String, JobCategory> allJobCategories,String newCategory) throws DuplicateJobCategoryException
 	{
-		catgId++;
-		return new JobCategory(newCategory,"Active", catgId);
+		if (allJobCategories.get(newCategory) == null)
+		{
+			jobcategory =  new JobCategory(newCategory,"Active", catgId);
+			catgId++;
+			return jobcategory;
+		}
+		else
+		{
+			throw new DuplicateJobCategoryException();
+		}
+		
 	}
 	
 	
@@ -35,10 +46,16 @@ public class MaintenanceStaff extends User{
 		
 		for (String s : blacklistedUsers.keySet())
 		{
-			if(blacklistedUsers.get(s) instanceof Employer)
+			if(blacklistedUsers.get(s) instanceof Employer )
+			{
+				if (((Employer)blacklistedUsers.get(s)).getBlacklistStat() != blacklistStatus.NOT_BLACKLISTED)
 				System.out.format("|%-20s|%-20s|%-36s|%-30s|\n",blacklistedUsers.get(s).getId(), "Employer", ((Employer)blacklistedUsers.get(s)).getBlacklistStat(),((Employer)blacklistedUsers.get(s)).getStartDate());
+			}
 			else
+			{
+				if (((Applicant)blacklistedUsers.get(s)).getBlacklistStat() != blacklistStatus.NOT_BLACKLISTED)
 				System.out.format("|%-20s|%-20s|%-36s|%-30s|\n",blacklistedUsers.get(s).getId(), "Applicant", ((Applicant)blacklistedUsers.get(s)).getBlacklistStat(),((Applicant)blacklistedUsers.get(s)).getStartDate());
+			}
 		}
 		System.out.format("%20s%20s%36s%30s\n","|--------------------|","--------------------|","------------------------------------|","------------------------------|");
 	}
@@ -76,7 +93,8 @@ public class MaintenanceStaff extends User{
 		}
 		else if (user instanceof Applicant)
 		{
-			System.out.println("Before\n Applicant ID: " + ((Applicant)user).getId() + " Blacklist Status: " + ((Applicant)user).getBlacklistStat());
+			if(((Applicant)user).getBlacklistStat() != null)
+				System.out.println("Before\n Applicant ID: " + ((Applicant)user).getId() + " Blacklist Status: " + ((Applicant)user).getBlacklistStat());
 			((Applicant) user).removeBlacklistStatus();
 			System.out.println("After\n Applicant ID: " + ((Applicant)user).getId() + " Blacklist Status: " + ((Applicant)user).getBlacklistStat());
 
@@ -90,4 +108,10 @@ public class MaintenanceStaff extends User{
 		}
 	}
 
+	
+	//Generation the reports to tune the system
+	public void generateReport()
+	{
+		//Yet to implement
+	}
 }

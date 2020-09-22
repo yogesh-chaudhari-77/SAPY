@@ -60,7 +60,7 @@ public class SystemHandler {
 	
 
 		
-	public void run() throws BadQualificationException, DuplicateEntryException {
+	public void run() throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException {
 		Menu menu = null;
 		boolean quit = false;
 		
@@ -258,7 +258,7 @@ public class SystemHandler {
 
 	}
 
-	public void login () throws BadQualificationException, DuplicateEntryException {
+	public void login () throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException {
 
 		String id;
 		String password;
@@ -280,7 +280,7 @@ public class SystemHandler {
 		}
 	}
 
-	public void showUserMenu(User user) throws BadQualificationException, DuplicateEntryException {
+	public void showUserMenu(User user) throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException {
 		if (user instanceof Applicant){
 			showApplicantMenu(((Applicant) user));
 		} else if (user instanceof Employer){
@@ -433,7 +433,8 @@ public class SystemHandler {
 		return date;
 	}
 
-	public void showMaintenanceStaffMenu(MaintenanceStaff staff){
+	public void showMaintenanceStaffMenu(MaintenanceStaff staff) throws DuplicateJobCategoryException
+	{
 		boolean quit = false;
 		Menu menu = null;
 
@@ -444,12 +445,16 @@ public class SystemHandler {
 		}
 		
 		BlacklistStatus blacklistStatus = BlacklistStatus.NOT_BLACKLISTED ;
-		blacklistedUsers.put("E1", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
-		blacklistedUsers.put("S1", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123",""));
-		((Applicant)blacklistedUsers.get("S1")).setBlacklistStatus(blacklistStatus.PROVISIONAL_BLACKLISTED);
-		((Employer)blacklistedUsers.get("E1")).setBlacklistStatus(blacklistStatus.FULL_BLACKLISTED);
-		allUsersList.put("E001", blacklistedUsers.get("E1"));
-		allUsersList.put("S001", blacklistedUsers.get("S1"));
+//		blacklistedUsers.put("E1", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
+//		blacklistedUsers.put("S1", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123",""));
+//		blacklistedUsers.put("E3", new Employer("E003", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
+
+//		((Applicant)blacklistedUsers.get("S1")).setBlacklistStatus(blacklistStatus.PROVISIONAL_BLACKLISTED);
+//		((Employer)blacklistedUsers.get("E1")).setBlacklistStatus(blacklistStatus.FULL_BLACKLISTED);
+//		((Employer)blacklistedUsers.get("E1")).setBlacklistStatus(blacklistStatus.PROVISIONAL_BLACKLISTED);
+
+		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
+		allUsersList.put("E003", new Employer("E003", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
 		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2", "Test" ,"Employer2", "123"));
 		
 		do{
@@ -475,7 +480,10 @@ public class SystemHandler {
 					System.out.println("Enter the title of the Job category: ");
 					title = input.nextLine();
 					
-					allJobCategories.put(title,staff.addJobCategory(title));
+					
+						
+					allJobCategories.put(title,staff.addJobCategory(allJobCategories,title));
+					
 					
 					System.out.println("Job categories avaialable in the System\n-------------------------------------------------------");
 					for (String s: allJobCategories.keySet())
@@ -510,7 +518,7 @@ public class SystemHandler {
 					System.out.println("Enter the id of the user to be reactivated:  ");
 					user = input.nextLine();
 
-					if(staff.revertBlacklistedUser((User)(allUsersList.get("E001"))))
+					if(staff.revertBlacklistedUser((User)(allUsersList.get(user))))
 						blacklistedUsers.remove("E1");
 					 
 				}

@@ -3,8 +3,7 @@ import java.util.HashMap;
 
 import model.exceptions.BadQualificationException;
 import model.exceptions.DuplicateEntryException;
-
-
+import model.exceptions.DuplicateJobCategoryException;
 import model.entities.*;
 import controller.*;
 
@@ -14,7 +13,7 @@ public class CasualEmploymentSystem {
 	HashMap<String, Employer> allEmployersList = null;
 	HashMap<String, MaintenanceStaff> allStaffList = null;
 	
-	public static void main(String[] args) throws BadQualificationException, DuplicateEntryException {
+	public static void main(String[] args) throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException {
 		// TODO Auto-generated method stub
 		
 		
