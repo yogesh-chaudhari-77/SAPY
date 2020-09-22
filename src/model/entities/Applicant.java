@@ -130,9 +130,38 @@ public class Applicant extends User {
         }
     }
 
-    public boolean updateAvailability(AvailabilityType availabilityType, int hoursPerWeek){
+    public boolean addAvailability(AvailabilityType availabilityType, JobCategory jobCategory, int hoursPerWeek) throws DuplicateEntryException {
+        boolean duplicateAvailability= false;
+        for(UserAvailability availability: userAvailability){
+            if((availability.getAvailabilityType() == availabilityType)
+                    && (availability.getApplicableJobCategory().getId().equalsIgnoreCase(jobCategory.getId()))
+                    && availability.getNoOfHoursAWeek() == hoursPerWeek){
+                duplicateAvailability= true;
+                break;
+            }
+        }
 
-        return true;
+        if(!duplicateAvailability){
+            userAvailability.add(new UserAvailability(jobCategory, availabilityType, hoursPerWeek));
+        }else{
+            throw new DuplicateEntryException("User Availability already present");
+        }
+        return false;
+    }
+
+    public boolean updateAvailability(UserAvailability oldRecord, UserAvailability newRecord){
+
+        for(int index=0; index<userAvailability.size();index++){
+            UserAvailability availability= userAvailability.get(index);
+            if((availability.getAvailabilityType() == oldRecord.getAvailabilityType())
+                    && (availability.getApplicableJobCategory().getId().equalsIgnoreCase(oldRecord.getApplicableJobCategory().getId()))
+                    && availability.getNoOfHoursAWeek() == oldRecord.getNoOfHoursAWeek()){
+                userAvailability.remove(index);
+                userAvailability.set(index,newRecord);
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean uploadCV(String cvPath) throws InvalidCVPathException{

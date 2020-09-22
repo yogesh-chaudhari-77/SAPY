@@ -27,4 +27,8 @@ public class JobCategory {
 	public String getCategoryTitle() {
 		return categoryTitle;
 	}
+
+	public String getId() {
+		return id;
+	}
 }

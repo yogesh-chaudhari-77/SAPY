@@ -2,18 +2,16 @@ package model.entities;
 
 import model.enums.AvailabilityType;
 
-import java.util.HashMap;
-import java.util.List;
 
 public class UserAvailability {
     private JobCategory applicableJobCategory;
     private AvailabilityType availabilityType;
-    private HashMap<String,Integer> period;
+    private int noOfHoursAWeek;
 
-    public UserAvailability(JobCategory applicableJobCategory, AvailabilityType availabilityType, HashMap<String, Integer> period) {
+    public UserAvailability(JobCategory applicableJobCategory, AvailabilityType availabilityType, int noOfHoursAWeek) {
         this.applicableJobCategory = applicableJobCategory;
         this.availabilityType = availabilityType;
-        this.period = period;
+        this.noOfHoursAWeek = noOfHoursAWeek;
     }
 
     public JobCategory getApplicableJobCategory() {
@@ -24,6 +22,14 @@ public class UserAvailability {
         this.applicableJobCategory = applicableJobCategory;
     }
 
+    public int getNoOfHoursAWeek() {
+        return noOfHoursAWeek;
+    }
+
+    public void setNoOfHoursAWeek(int noOfHoursAWeek) {
+        this.noOfHoursAWeek = noOfHoursAWeek;
+    }
+
     public AvailabilityType getAvailabilityType() {
         return availabilityType;
     }
@@ -32,11 +38,5 @@ public class UserAvailability {
         this.availabilityType = availabilityType;
     }
 
-    public HashMap<String, Integer> getPeriod() {
-        return period;
-    }
 
-    public void setPeriod(HashMap<String, Integer> period) {
-        this.period = period;
-    }
 }
