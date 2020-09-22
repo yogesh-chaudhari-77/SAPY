@@ -39,17 +39,10 @@ public class SystemHandler {
 	
 	Scanner input = new Scanner(System.in);
 	ScannerUtil customScanner = ScannerUtil.createInstance().consoleReader();
-	Date date = new Date();
 	
 	MaintenanceStaff staff = new MaintenanceStaff("Staff001", "maintenancestaff@mail.com", "test123", "System", "Admin", "415414478");
 	
-	
-//	blacklistedUsers.put("E1", new Employer("","","","","",""));
-//	//testing purpose
-//	blacklistedUsers.put("E1", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
-//	blacklistedUsers.put("S1", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123"));
-//	
-//	staff.viewBlackListedMembers(blacklistedUsers);
+
 	
 	public SystemHandler() {
 
@@ -330,6 +323,9 @@ public class SystemHandler {
 					uploadApplicantCV(applicant);
 					break;
 
+				case "6":
+					addUpdateAvailability(applicant);
+
 				case "Q":
 					quit = true;
 
@@ -362,7 +358,7 @@ public class SystemHandler {
 				if (operation.equals("add")) {
 					addEmploymentHistory(applicant);
 				} else if (operation.equals("update")) {
-					//updateQualification(applicant);
+					//updateEmploymentHistory(applicant);
 				} else if (operation.equals("view")) {
 					showEmploymentRecords(applicant);
 				} else {
@@ -426,6 +422,30 @@ public class SystemHandler {
 		} catch (InvalidCVPathException e) {
 			return false;
 		}
+	}
+
+	private void addUpdateAvailability(Applicant applicant){
+		boolean continueMessageDisplay = true;
+		do {
+			try {
+				System.out.println("****** Employment Records ******");
+				String operation = subMenu();
+				if (operation.equals("add")) {
+					addAvailability(applicant);
+				} else if (operation.equals("update")) {
+					//updateAvailability(applicant);
+				} else if (operation.equals("view")) {
+					showEmploymentRecords(applicant);
+				} else {
+					System.out.println("Exiting Sub Menu");
+					return;
+				}
+			} catch (DuplicateEntryException duplicate) {
+				System.out.println("Availability Already exists. Please try again.");
+				//continueMessageDisplay= true;
+			}
+		}while (continueMessageDisplay);
+
 	}
 
 	private void showEmploymentRecords(Applicant applicant){
@@ -578,6 +598,44 @@ public class SystemHandler {
 	}
 
 	public void addEmploymentHistory(Applicant applicant) throws DuplicateEntryException{
+
+		String companyName;
+		String designation;
+		Date startDate;
+		Date endDate;
+		boolean currentCompany;
+
+		System.out.println("Enter Below details for adding Employment Record\n");
+		System.out.print("Company Name: ");
+		companyName = Global.scanner.nextLine();
+		System.out.print("Designation: ");
+		designation = Global.scanner.nextLine();
+		System.out.print("Start Date(DD/MM/YYYY): ");
+		startDate = getDateInput();
+		System.out.println("Are you still working in this company?(Y/N): ");
+		String answer= Global.scanner.nextLine();
+		if(answer.equalsIgnoreCase("y")){
+			currentCompany= true;
+			endDate= null;
+		}else {
+			currentCompany = false;
+			System.out.print("End Date(DD/MM/YYYY): ");
+			endDate = getDateInput();
+		}
+
+		EmploymentRecord newRecord= new EmploymentRecord(companyName, designation, startDate, endDate, currentCompany);
+
+		try {
+			applicant.addEmploymentRecords(newRecord);
+			System.out.println("Employment Record added successfully");
+		} catch (BadEmployeeRecordException e) {
+			System.out.println(e.getMessage());
+			System.out.println("Failed to add employment record. Please try again.");
+		}
+
+	}
+
+	public void addAvailability(Applicant applicant) throws DuplicateEntryException{
 
 		String companyName;
 		String designation;
@@ -1075,9 +1133,9 @@ public class SystemHandler {
 		Applicant a6 = new Applicant("app6", "f@gmail.com", "123", "June", "Last", "039847484", "i");
 		
 		// Create some job categories 
-		JobCategory j1 = new JobCategory("1", "Active");
-		JobCategory j2 = new JobCategory("2", "Active");
-		JobCategory j3 = new JobCategory("3", "Active");
+		JobCategory j1 = new JobCategory("1", "Active",1);
+		JobCategory j2 = new JobCategory("2", "Active",2);
+		JobCategory j3 = new JobCategory("3", "Active",3);
 		
 		// Adding for system level
 		this.allJobCategories.put("1", j1);
@@ -1085,12 +1143,12 @@ public class SystemHandler {
 		this.allJobCategories.put("3", j3);
 		
 		// Updating user availability
-		a1.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.FULL_TIME, null));
-		a2.getUserAvailability().add(new UserAvailability(j2, AvailabilityType.PART_TIME, null));
-		a3.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.INTERNSHIP, null));
-		a4.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.FULL_TIME, null));
-		a5.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, null));
-		a6.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, null));
+		a1.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.FULL_TIME, 40));
+		a2.getUserAvailability().add(new UserAvailability(j2, AvailabilityType.PART_TIME, 20));
+		a3.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.INTERNSHIP, 30));
+		a4.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.FULL_TIME, 40));
+		a5.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, 20));
+		a6.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, 20));
 		
 		// Populating all users list with dummy users
 		this.allUsersList.put("app1", a1);
