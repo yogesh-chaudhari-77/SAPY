@@ -130,38 +130,56 @@ public class Applicant extends User {
         }
     }
 
-    public boolean addAvailability(AvailabilityType availabilityType, JobCategory jobCategory, int hoursPerWeek) throws DuplicateEntryException {
+    public boolean addAvailability(AvailabilityType availabilityType, List<JobCategory> jobCategories, int hoursPerWeek, Date periodStartDate, Date periodEndDate) throws DuplicateEntryException, BadEntryException {
         boolean duplicateAvailability= false;
-        for(UserAvailability availability: userAvailability){
-            if((availability.getAvailabilityType() == availabilityType)
-                    && (availability.getApplicableJobCategory().getId().equalsIgnoreCase(jobCategory.getId()))
-                    && availability.getNoOfHoursAWeek() == hoursPerWeek){
-                duplicateAvailability= true;
-                break;
+
+        UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
+
+        if(validAvailability(availability)){
+            for(UserAvailability currentAvailability: userAvailability){
+                if((currentAvailability.getAvailabilityType() == availability.getAvailabilityType())
+                        && currentAvailability.getNoOfHoursAWeek() == availability.getNoOfHoursAWeek()){
+                    duplicateAvailability= true;
+                    break;
+                }
             }
+
+            if(duplicateAvailability) {
+                throw new DuplicateEntryException("User Availability already present");
+            }
+
+            userAvailability.add(availability);
         }
 
-        if(!duplicateAvailability){
-            userAvailability.add(new UserAvailability(jobCategory, availabilityType, hoursPerWeek));
-        }else{
-            throw new DuplicateEntryException("User Availability already present");
-        }
         return false;
     }
 
-    public boolean updateAvailability(UserAvailability oldRecord, UserAvailability newRecord){
+    public boolean validAvailability(UserAvailability availability) throws BadEntryException, DuplicateEntryException {
 
-        for(int index=0; index<userAvailability.size();index++){
-            UserAvailability availability= userAvailability.get(index);
-            if((availability.getAvailabilityType() == oldRecord.getAvailabilityType())
-                    && (availability.getApplicableJobCategory().getId().equalsIgnoreCase(oldRecord.getApplicableJobCategory().getId()))
-                    && availability.getNoOfHoursAWeek() == oldRecord.getNoOfHoursAWeek()){
-                userAvailability.remove(index);
-                userAvailability.set(index,newRecord);
-                return true;
-            }
+
+        if(availability.getPeriodStartDate().after(availability.getPeriodEndDate())
+                || availability.getPeriodStartDate().equals(availability.getPeriodEndDate())){
+            throw new BadEntryException("Start date must be less than end date");
         }
-        return false;
+
+        return true;
+    }
+
+    public boolean updateAvailability(AvailabilityType availabilityType, List<JobCategory> jobCategories, int hoursPerWeek, Date periodStartDate, Date periodEndDate, int recordIndex) throws BadEntryException, DuplicateEntryException, NoSuchRecordException {
+
+
+        UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
+
+        if (recordIndex > userAvailability.size()){
+            throw new NoSuchRecordException("No Such Job Preference");
+        }
+
+        if(validAvailability(availability)){
+            userAvailability.remove(recordIndex);
+            userAvailability.set(recordIndex,availability);
+        }
+
+        return true;
     }
 
     public boolean uploadCV(String cvPath) throws InvalidCVPathException{
@@ -225,10 +243,10 @@ public class Applicant extends User {
         List<String> jobPreferences= new ArrayList<>();
         for(UserAvailability availability : userAvailability){
             if(availability.getAvailabilityType() != AvailabilityType.UNKNOWN) {
-                String preference = availability.getApplicableJobCategory().getCategoryTitle();
-                if(!jobPreferences.contains(preference)){
-                    jobPreferences.add(preference);
-                }
+                //String preference = availability.getApplicableJobCategory().getCategoryTitle();
+//                if(!jobPreferences.contains(preference)){
+//                    jobPreferences.add(preference);
+//                }
             }
         }
 

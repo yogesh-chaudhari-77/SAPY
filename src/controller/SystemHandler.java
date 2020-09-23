@@ -1379,12 +1379,12 @@ public class SystemHandler {
 		this.allJobCategories.put("C3", j3);
 
 		// Updating user availability
-		a1.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.FULL_TIME, 40, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2021"))));
-		a2.getUserAvailability().add(new UserAvailability(j2, AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("11/11/2021"))));
-		a3.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.INTERNSHIP, 30, (new SimpleDateFormat("dd/MM/yyyy").parse("10/11/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("10/03/2021"))));
-		a4.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.FULL_TIME, 40, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020"))));
-		a5.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("23/12/2020"))));
-		a6.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/10/2020"))));
+//		a1.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.FULL_TIME, 40, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2021"))));
+//		a2.getUserAvailability().add(new UserAvailability(j2, AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("11/11/2021"))));
+//		a3.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.INTERNSHIP, 30, (new SimpleDateFormat("dd/MM/yyyy").parse("10/11/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("10/03/2021"))));
+//		a4.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.FULL_TIME, 40, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020"))));
+//		a5.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("23/12/2020"))));
+//		a6.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/10/2020"))));
 
 		// Populating all users list with dummy users
 		this.allUsersList.put("app1", a1);

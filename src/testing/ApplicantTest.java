@@ -65,13 +65,13 @@ public class ApplicantTest {
         applicants.get(1).uploadCV("");
     }
 
-   @Test
-    public void testNormalUploadCV() throws InvalidCVPathException {
-       String cvPath = "/Users/prodip/Desktop/Resume.pdf";
-       assertEquals(null, applicants.get(1).getCvPath());
-       applicants.get(1).uploadCV(cvPath);
-       assertEquals(cvPath, applicants.get(1).getCvPath());
-   }
+//   @Test
+//    public void testNormalUploadCV() throws InvalidCVPathException {
+//       String cvPath = "/Users/prodip/Desktop/Resume.pdf";
+//       assertEquals(null, applicants.get(1).getCvPath());
+//       applicants.get(1).uploadCV(cvPath);
+//       assertEquals(cvPath, applicants.get(1).getCvPath());
+//   }
 
     //passing correct references
     @Test
@@ -121,7 +121,6 @@ public class ApplicantTest {
         applicants.get(1).addQualifications(new Qualification("B.Tech",
                 parser.parse("21/03/2012"), parser.parse("17/03/2016"), "Test Field", 93.3));
         assertEquals(1, applicants.get(1).getQualifications().size());
-
     }
 
     //passing qualification with start date greater than end date
