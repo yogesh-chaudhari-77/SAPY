@@ -14,6 +14,10 @@ import model.entities.*;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class TestEmployer {
 
 	private Employer employer;
@@ -44,6 +48,9 @@ public class TestEmployer {
 
 		// Creating an applicant
 		applicant = new Applicant("A1", "a@gmail.com", "123", "John", "Doe", "048888888", "l");
+
+		applicant.getUserAvailability().add(new UserAvailability(sysHandler.getAllJobCategories().get("C2"), AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("11/11/2021"))));
+
 	}
 
 	@After
@@ -56,8 +63,28 @@ public class TestEmployer {
 	 * Shortlist an applicant. Applicant is not present hence will be shortlisted
 	 */
 
+//	@Test
+//	public void test_shortListApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException {
+//
+//		Applicant applicntRef = this.applicant;
+//		Job jobRef = employer.getPostedJobs().get("job1");
+//
+//		// Making sure that there were no Applicant in the list
+//		int initialSize = jobRef.getShortListedApplicants().size();
+//
+//		this.employer.shortListCandidate(jobRef, applicntRef);
+//
+//		// Testing if the applicant has really been added to shortlisted list
+//		Assert.assertEquals(initialSize + 1, jobRef.getShortListedApplicants().size());
+//	}
+
+	/*
+	 * Positive test case
+	 * Shortlist an applicant. Check the availability of the applicant before shortlisting
+	 */
+
 	@Test
-	public void test_shortListApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException {
+	public void test_shortListApplicantWithAvailabilityCheck() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException, ParseException {
 
 		Applicant applicntRef = this.applicant;
 		Job jobRef = employer.getPostedJobs().get("job1");
@@ -65,10 +92,49 @@ public class TestEmployer {
 		// Making sure that there were no Applicant in the list
 		int initialSize = jobRef.getShortListedApplicants().size();
 
-		this.employer.shortListCandidate(jobRef, applicntRef);
+		if(sysHandler.checkUserAvailability(applicntRef, new String[]{"C1","C2"}, 20, AvailabilityType.PART_TIME, (new SimpleDateFormat("dd/MM/yyyy").parse("01/10/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("10/10/2020")))){
+			this.employer.shortListCandidate(jobRef, applicntRef);
+		}
 
 		// Testing if the applicant has really been added to shortlisted list
 		Assert.assertEquals(initialSize + 1, jobRef.getShortListedApplicants().size());
+	}
+
+	/*
+	 * Positive test case
+	 * Shortlist multiple matching applicants.
+	 * If applicant matches with the filters, then he should be able to be shortlisted if, he has not been shortlisted before and/or not blacklisted
+	 */
+
+	@Test
+	public void test_shortListApplicantMultiple() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException, ParseException {
+
+		Applicant applicntRef = this.applicant;
+		Job jobRef = employer.getPostedJobs().get("job1");
+
+		//sysHandler.checkUserAvailability(Applicant applcntRef, String [] jobPreferencesArr, int perWeekAvailability, AvailabilityType aType, Date availableFrom, Date availableTill);
+
+		int initialSize = jobRef.getShortListedApplicants().size();
+
+		if(sysHandler.checkUserAvailability(sysHandler.getAllApplicantsList().get("app2"), new String[]{"C1","C2"}, 20, AvailabilityType.PART_TIME, (new SimpleDateFormat("dd/MM/yyyy").parse("01/10/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("10/10/2020")))){
+			this.employer.shortListCandidate(jobRef, sysHandler.getAllApplicantsList().get("app2"));
+			Assert.assertEquals(initialSize + 1, jobRef.getShortListedApplicants().size());
+		}
+
+		initialSize = jobRef.getShortListedApplicants().size();
+
+		if(sysHandler.checkUserAvailability(sysHandler.getAllApplicantsList().get("app5"), new String[]{"C1","C2"}, 20, AvailabilityType.PART_TIME, (new SimpleDateFormat("dd/MM/yyyy").parse("01/10/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("10/10/2020")))){
+			this.employer.shortListCandidate(jobRef, sysHandler.getAllApplicantsList().get("app5"));
+			Assert.assertEquals(initialSize + 1, jobRef.getShortListedApplicants().size());
+		}
+
+		initialSize = jobRef.getShortListedApplicants().size();
+		if(sysHandler.checkUserAvailability(sysHandler.getAllApplicantsList().get("app6"), new String[]{"C1","C2"}, 20, AvailabilityType.PART_TIME, (new SimpleDateFormat("dd/MM/yyyy").parse("01/10/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("10/10/2020")))){
+			this.employer.shortListCandidate(jobRef, sysHandler.getAllApplicantsList().get("app6"));
+			Assert.assertEquals(initialSize + 1, jobRef.getShortListedApplicants().size());
+		}
+
+		Assert.assertEquals(3, jobRef.getShortListedApplicants().size());
 	}
 
 
@@ -115,22 +181,28 @@ public class TestEmployer {
 		this.employer.shortListCandidate(jobRef, applicant);
 	}
 
+	/*
+	 * Negative test case
+	 * Testing error checking for null applicant object is passed to employer's shortlisted method
+	 * Null is passed when user enters applicant id which is not present in the list
+	 */
+	@Test (expected = NullApplicantException.class)
+	public void test_shortlistNullApplicant() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullJobReferenceException {
 
+		Job jobRef = employer.getPostedJobs().get("job1");
+		employer.shortListCandidate(jobRef, sysHandler.getAllApplicantsList().get("APP123829"));
+	}
 
 	/*
 	 * Negative test case
-	 * Testing error checking for null applicant object is passed to employer methods
+	 * Testing error checking for null job object is passed to employer's shortlisted method
+	 * Null is passed when user enters job id which is not present in the list
 	 */
-	@Test (expected = NullApplicantException.class)
-	public void test_changeApplicantStatusOfNullApplicant() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullJobReferenceException {
+	@Test (expected = NullJobReferenceException.class)
+	public void test_shortlistForNullJob() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullJobReferenceException {
 
-		Job jobRef = employer.getPostedJobs().get("job1");
-		Applicant applicntRef = null;
-
-		employer.shortListCandidate(null, applicntRef);
-		employer.changeApplicantStatus(null, EmploymentStatus.EMPLOYED);
+		employer.shortListCandidate(employer.getPostedJobs().get("DUMMY_JOB_ID"), this.applicant);
 	}
-
 
 	/**
 	 * @author Yogeshwar Chaudhari

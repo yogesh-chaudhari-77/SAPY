@@ -1111,7 +1111,6 @@ public class SystemHandler {
 				continue;
 			}
 
-
 			System.out.println(applcntRef.getId()+" -- "+oneAvail.getApplicableJobCategoriesIds());
 
 			// If atleast one job preference matches with given requirment, then takeThisApplicnt
