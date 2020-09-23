@@ -16,6 +16,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import com.sun.jdi.InvalidTypeException;
+
 // Commenting should be enough
 // Methods should be in there own classes
 
@@ -29,6 +31,8 @@ public class SystemHandler {
 	HashMap<String, User> blacklistedUsers = new HashMap<String, User>();
 	HashMap<String, JobCategory> allJobCategories = new HashMap<String, JobCategory>();
 
+	// 23-09-2020 
+	List<Complaints> allComplaints = new ArrayList<Complaints>();
 
 	String id;
 	String userEmail;
@@ -284,6 +288,13 @@ public class SystemHandler {
 		if (user instanceof Applicant){
 			showApplicantMenu(((Applicant) user));
 		} else if (user instanceof Employer){
+			
+			// Blacklisting check - Before accessing any of the functionality.
+			if( ((Employer) user).isBlackListed()) {
+				System.out.println("Employer is blacklisted. Sorry. You can not proceed.");
+				return;
+			}
+			
 			showEmployerMenu(((Employer) user));
 		} else {
 			showMaintenanceStaffMenu(staff);
@@ -850,9 +861,18 @@ public class SystemHandler {
 				this.rankApplicants(employer);
 			}
 			break;
+			
+			// Set possible interview times
+			case "5" :
+			{
+				System.out.println("Set Possible Interview Times");
+				this.setPossibleInterviewTimes();
+			}
+			break;
+			
 
 			// Registering the complaint about the applicant
-			case "5" :
+			case "6" :
 			{
 				this.registerComplaintAgaintApplicnt(employer);
 			}
@@ -944,6 +964,32 @@ public class SystemHandler {
 		String jobTitle = customScanner.readString("Job Title : ");
 		String jobDesc = customScanner.readString("Description : ");
 		
+
+		// This is kind of accepting required userAvailability
+//		printAllAvailabilityTypes(); 
+//		int aTypePos = customScanner.readInt("Provide availability type [0-2] : ", 0, 2);
+//		AvailabilityType aType = (AvailabilityType.values())[aTypePos];
+//
+//		int perWeekAvailability = customScanner.readInt("Provide Availability Per Week : ", 4, 80);
+//
+//		System.out.print("Starting From : "); 
+//		Date startingFrom = this.getDateInput();
+//
+//		System.out.print("End Date : "); 
+//		Date endingOn = this.getDateInput();
+//
+//		printJobCategories("Active"); String [] reqJobCategoriesIds =
+//		inputJobCategories(); List<JobCategory> reqJobCateObjs = new ArrayList<JobCategory>();
+//
+//		for(String cId : reqJobCategoriesIds) 
+//		{ 
+//			reqJobCateObjs.add( this.allJobCategories.get(cId) ); 
+//		}
+//
+//		UserAvailability requirements = new UserAvailability(null, aType, perWeekAvailability, startingFrom, endingOn);
+//		requirements.setApplicableJobCategories( reqJobCateObjs );
+
+		
 		// Create new job
 		Job tempJob = new Job(jobId, jobTitle, jobDesc);
 		
@@ -974,19 +1020,35 @@ public class SystemHandler {
 		
 		HashMap<String, Applicant> searchResults = new HashMap<String, Applicant>();
 		
-		// Blacklisting check
-		if(employer.isBlackListed()) {
-			System.out.println("Employer is blacklisted. Sorry. You can not proceed.");
-			return null;
-		}
+		boolean jobCValidated = true;
+		String [] jobPreferencesArr = null;
+		do {
+			// Search Criteria
+			String jobPreferencesStr = customScanner.readString("Job Categories :\n");
+			
+			// Extracting individual job preferences
+			jobPreferencesArr = null;
+			
+			if(!jobPreferencesStr.isBlank() && !jobPreferencesStr.isEmpty()) {
+				jobPreferencesArr = jobPreferencesStr.split(",");
+			}
+			
+			// 23-09-2020 - Validate entered job categories
+//			for(int c = 0; c < jobPreferencesArr.length; c++) {
+//				if (allJobCategories.get(jobPreferencesArr[c]) == null) {
+//					jobCValidated = false;
+//					break;
+//				}
+//			}
+			
+		}while(!jobCValidated);
+
 		
-		// Search Criteria
-		String jobPreferencesStr = customScanner.readString("Job Categories :\n");
 		int perWeekAvailability = customScanner.readInt("Provide Availability Per Week : ", 4, 80);
 		
 		printAllAvailabilityTypes();
 		
-		int aTypePos = customScanner.readInt("Provide availability type [0-3] : ", 0, 3);
+		int aTypePos = customScanner.readInt("Provide availability type [0-2] : ", 0, 2);
 		AvailabilityType aType = (AvailabilityType.values())[aTypePos];
 		
 		System.out.println(aType);
@@ -996,11 +1058,6 @@ public class SystemHandler {
 		System.out.print("Preferred Ending date : ");
 		Date endingOn = getDateInput();
 		
-		// Extracting individual job preferences
-		String [] jobPreferencesArr = null;
-		if(!jobPreferencesStr.isBlank() && !jobPreferencesStr.isEmpty()) {
-			jobPreferencesArr = jobPreferencesStr.split(",");
-		}
 
 		// Iterating over the applicant's list to find the matching candidates 
 		for(Applicant applicantRef : allApplicantsList.values()) {
@@ -1019,19 +1076,34 @@ public class SystemHandler {
 	}
 	
 	
+	/**
+	 * This function assesses the eligibility of applicant against given search cateria.
+	 * @param applcntRef : Current applicant under eligibility check
+	 * @param jobPreferencesArr : Job categories required by employer
+	 * @param perWeekAvailability : Number of hours availability required by employer
+	 * @param aType : Intership, parttime full time requirement
+	 * @param availableFrom : starting date of job
+	 * @param availableTill : ending date of job
+	 * @return
+	 */
 	public boolean checkUserAvailability(Applicant applcntRef, String [] jobPreferencesArr, int perWeekAvailability, AvailabilityType aType, Date availableFrom, Date availableTill) {
 
-		boolean takeThisStudent = false;
+		boolean takeThisApplicnt = false;
+		
+		// Get this user's all availabilities
 		List<UserAvailability> userAvailabilities = applcntRef.getUserAvailability();
 		
+		// If at least one availability matches with the search criteria, takeThisApplicnt 
 		for(int a = 0; a < userAvailabilities.size(); a++) {
 			
 			UserAvailability oneAvail = userAvailabilities.get(a);
 			
+			// Validating number of hours and job availability type (internship, part-time etc)
 			if (oneAvail.getNoOfHoursAWeek() < perWeekAvailability || oneAvail.getAvailabilityType() != aType) {
 				continue;
 			}
 			
+			// Validating that the period covers start and end date of job requirement
 			if (oneAvail.getPeriodStartDate().after(availableFrom) || oneAvail.getPeriodEndDate().before(availableTill))  {
 				System.out.println(applcntRef.getId());
 				System.out.println(oneAvail.getPeriodStartDate().toString() + " -- "+availableFrom);
@@ -1039,23 +1111,26 @@ public class SystemHandler {
 				continue;
 			}
 			
+			
 			System.out.println(applcntRef.getId()+" -- "+oneAvail.getApplicableJobCategoriesIds());
+			
+			// If atleast one job preference matches with given requirment, then takeThisApplicnt 
 			for(String sp : jobPreferencesArr) {
 				
 				if(oneAvail.getApplicableJobCategoriesIds().contains(sp)) {
-					takeThisStudent = true;
+					takeThisApplicnt = true;
 					System.out.println(true+" for "+applcntRef.getId());
 					break;	
 				}				
 			}
 			
-			if(takeThisStudent == true) {
+			if(takeThisApplicnt == true) {
 				break;
 			}
 			
 		}
 		
-		return takeThisStudent;
+		return takeThisApplicnt;
 	}
 	
 	
@@ -1094,18 +1169,6 @@ public class SystemHandler {
 	}
 
 
-	//	public boolean complaintApplicant(Applicant applcnt, String message) {
-	//		
-	//		// Basic error checking
-	//		if(applcnt == null) {
-	//			throw new NullApplicantException();
-	//		}
-	//		
-	//		Complaints tempComplaint = new Complaints(this, applcnt, message);
-	//		return tempComplaint;
-	//	}
-
-
 // Written by Abhishek
 //	SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
 //	Date date = null;
@@ -1142,23 +1205,25 @@ public class SystemHandler {
 		
 		printPostedJobs( employer.getId() );
 		
-		
-		String jobId = customScanner.readString("Job ID");
+		String jobId = customScanner.readString("Job ID : ");
 		jobRef = employer.getPostedJobs().get(jobId);
 		
-		printApplicantList();
+		HashMap<String, Applicant> searchResults = searchApplicants(employer);
+		
+		printApplicantList(searchResults);
 
 		String repeat;
 		do{
 			String applicantId = customScanner.readString("Applicant Id : ");
 			
-			Applicant applicntRef = this.allApplicantsList.get( applicantId );
+			// Check if the id is from the search results only
+			Applicant applicntRef = (searchResults.containsKey(applicantId)) ? this.allApplicantsList.get( applicantId) : null;
 
 			// Shorting the applicant for given job
 			try {
 				employer.shortListCandidate(jobRef, applicntRef);
 			} catch (AlreadyPresentInYourShortListedListException | ApplicantIsBlackListedException | NullApplicantException | NullJobReferenceException e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 			}
 			
 			repeat = customScanner.readYesNo("Do you want to add one more ?");
@@ -1190,7 +1255,7 @@ public class SystemHandler {
 		
 		System.out.println("Press Q + Enter to quit");
 		
-		String jobId = customScanner.readString("Please enter the job ID: ");
+		String jobId = customScanner.readString("Please enter the job ID : ");
 		if(jobId.equalsIgnoreCase("q"))
 			return;
 		
@@ -1247,11 +1312,35 @@ public class SystemHandler {
 	 * 23-09-2020
 	 * @author Yogeshwar Chaudhari
 	 * Employer can register compaint against any applicant.
-	 * Duplicate complaint can't be registered until the previous complaint has been address.
 	 */
 	public void registerComplaintAgaintApplicnt(Employer emp) {
 		
-		String studentId = this.customScanner.readString("Please enter student ID: ");
+		String appcntId = this.customScanner.readString("Please enter applicant ID: ");
+		
+		User applcntRef = this.allUsersList.get(appcntId);
+		
+		String message = customScanner.readString("*Enter Message : ");
+		try {
+			
+			// Create new complaint
+			Complaints newComplaint = emp.complaintApplicant(applcntRef, message);
+			
+			// Add to all complaint's list
+			this.allComplaints.add(newComplaint);
+			
+			((Applicant)applcntRef).setComplaintCount( ((Applicant)applcntRef).getComplaintCount() + 1 );
+			
+			// Call provisionally blacklisting login here which accepts applicant's reference
+			
+		} catch (NullApplicantException | InvalidTypeException e) {
+			System.err.println(e.getMessage());
+		}
+		
+	}
+	
+	
+	public void setPossibleInterviewTimes() {
+		
 		
 	}
 	
@@ -1419,8 +1508,60 @@ public class SystemHandler {
 		AvailabilityType [] aTypes = AvailabilityType.values(); 
 		
 		for(int i = 0; i < aTypes.length; i++) {
-			System.out.println(i+" - "+aTypes[i]);
+			if(aTypes[i] != AvailabilityType.UNKNOWN) {
+				System.out.println(i+" - "+aTypes[i]);
+			}
 		}
+	}
+	
+	
+	/**
+	 * Prints out all the job actegories available in the system
+	 * 
+	 */
+	public void printJobCategories(String status) {
+		
+		for (String s: allJobCategories.keySet())
+		{
+			if(allJobCategories.get(s).getStatus().equalsIgnoreCase( status )) {
+				System.out.println (allJobCategories.get(s));
+			}
+		}
+		
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public String[] inputJobCategories() {
+		
+		boolean jobCValidated = true;
+		String [] jobPreferencesArr = null;
+		do {
+			// Search Criteria
+			String jobPreferencesStr = customScanner.readString("Job Categories (, separated)  :\n");
+			
+			// Extracting individual job preferences
+			jobPreferencesArr = null;
+			
+			if(!jobPreferencesStr.isBlank() && !jobPreferencesStr.isEmpty()) {
+				jobPreferencesArr = jobPreferencesStr.split(",");
+			}
+			
+			// 23-09-2020 - Validate entered job categories
+//			for(int c = 0; c < jobPreferencesArr.length; c++) {
+//				if (allJobCategories.get(jobPreferencesArr[c]) == null) {
+//					System.err.println("Invalid job category "+jobPreferencesArr[c]." Try again.");
+//					jobCValidated = false;
+//					break;
+//				}
+//			}
+			
+		}while(!jobCValidated);
+		
+		return jobPreferencesArr;
+		
 	}
 
 	public HashMap<String, Applicant> getAllApplicantsList() {

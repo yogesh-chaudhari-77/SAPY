@@ -10,6 +10,8 @@ import java.util.Set;
 
 import org.json.JSONObject;
 
+import com.sun.jdi.InvalidTypeException;
+
 /*
  * Class implements all employer related functionality
  */
@@ -66,74 +68,28 @@ public class Employer extends User {
 	}
 
 
-	/*
-	 * Employer can search throught the applicant list
-	 * Employer can also specify the availability and job preference requirements
-	 */
-	public HashMap<String, Applicant> search(HashMap<String, Applicant> allApplicantsList, String [] searchJobPreference) {
-
-		HashMap<String, Applicant> searchResults = new HashMap<String, Applicant>();
-
-
-		// Iterating over the applicant's list to find the matching candidates 
-		for(Applicant applicantRef : allApplicantsList.values()) {
-
-			// Check the preferences and availability
-			if(checkAppcntJobPreference(applicantRef, searchJobPreference) && checkAvailability(applicantRef)) {
-
-				// Matching preference and availability
-				searchResults.put(applicantRef.getId(), applicantRef);
-			}
-		}
-
-		return searchResults;
-	}
-	// End of search();
-
 	/**
-	 * Checks if the applicant has desired job preference
-	 * @param applicantRef
-	 * @return
+	 * Employer registers complaint against any applicant
+	 * @param applcnt
+	 * @param message
+	 * @return Complaints : The newly formed complaint
+	 * @throws NullApplicantException : Thrown when a null reference applicant has been passed
+	 * @throws InvalidTypeException : Thrown when, passed reference is not of Applicant type
 	 */
-	public boolean checkAppcntJobPreference(Applicant applicantRef, String [] searchJobPreference) {
+	public Complaints complaintApplicant(User applcnt, String message) throws NullApplicantException, InvalidTypeException {
 
-		// Check for each job preference supplied in search criteria
-		for(int i = 0; i < searchJobPreference.length; i++) {
-
-			// Check if applicant's job preferences matches with search criteria
-			if(applicantRef.getJobPreferences().contains( searchJobPreference[i] )) {
-
-				// match found
-				return true;
-			}
+		// Basic error checking
+		if(applcnt == null) {
+			throw new NullApplicantException("Invalid applicant ID. Please verify applicant ID and try again.");
 		}
-
-		return false;
-
-	} // end of checkAppcntJobPreference()
-
-	/**
-	 * Checks the applicant is available at the times, employer desires to be
-	 * TODO : to be implemented
-	 * @param applicantRef
-	 * @return
-	 */
-	public boolean checkAvailability(Applicant applicantRef) {
-
-		return true;
+		
+		if(applcnt instanceof Applicant) {
+			Complaints tempComplaint = new Complaints(this, (Applicant)applcnt, message);
+			return tempComplaint;
+		}else {
+			throw new InvalidTypeException("Supplied user is not applicant");
+		}
 	}
-
-
-	//	public boolean complaintApplicant(Applicant applcnt, String message) {
-	//		
-	//		// Basic error checking
-	//		if(applcnt == null) {
-	//			throw new NullApplicantException();
-	//		}
-	//		
-	//		Complaints tempComplaint = new Complaints(this, applcnt, message);
-	//		return tempComplaint;
-	//	}
 
 	/**
 	 * A employer can create a job and candidates will shortlisted
@@ -157,17 +113,17 @@ public class Employer extends User {
 	/*
 	 * Employer shortlists candidates by looking at their credentials and availability schedule
 	 */
-
+	
 	public boolean shortListCandidate(Job jobRef, Applicant applicant) throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException {
 
 		// Basic error checking. 
 		// TODO : Needs to perform more validations here like blacklisted status, current employment staus
 		if(applicant == null) {
-			throw new NullApplicantException();
+			throw new NullApplicantException("Null applicant. Please double check the applicant ID and try again.");
 		}
 		
 		if(jobRef == null) {
-			throw new NullJobReferenceException();
+			throw new NullJobReferenceException("Invalid Job Id. Please try again.");
 		}
 
 
@@ -176,7 +132,7 @@ public class Employer extends User {
 		// If an applicant is blacklisted, he/she should not be allowed to be shortlisted
 		if(applicant.getBlacklistStatus() != null && applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.FULL_BLACKLISTED)
 		{
-			throw new ApplicantIsBlackListedException();
+			throw new ApplicantIsBlackListedException("Blacklisted applicants can't be shortlisted.");
 		}
 
 		// Add the applicant only if it is not already present
@@ -185,7 +141,7 @@ public class Employer extends User {
 			shortListedApplicants.put(applicant.getId(), applicant);
 		}
 		else {
-			throw new AlreadyPresentInYourShortListedListException();
+			throw new AlreadyPresentInYourShortListedListException("The applicant is already present in your shortlisted applicant's list.");
 		}
 
 		return true;

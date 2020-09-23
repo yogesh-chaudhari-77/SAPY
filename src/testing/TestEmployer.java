@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import controller.SystemHandler;
 import model.entities.*;
 import model.enums.*;
 import model.exceptions.*;
@@ -17,6 +18,7 @@ public class TestEmployer {
 
 	private Employer employer;
 	private Applicant applicant;
+	private SystemHandler sysHandler;
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
@@ -28,6 +30,9 @@ public class TestEmployer {
 
 	@Before
 	public void setUp() throws Exception {
+		
+		sysHandler = new SystemHandler();
+		sysHandler.loadDummyDataForEmployeFunctions();
 		
 		// Creating an employer
 		employer = new Employer("E1", "employer@gmail.com", "qwerty", "Sample", "Employer", "123456789");
@@ -60,7 +65,7 @@ public class TestEmployer {
 		// Making sure that there were no Applicant in the list
 		int initialSize = jobRef.getShortListedApplicants().size();
 		
-		this.employer.shortListCandidate(jobRef, applicant);
+		this.employer.shortListCandidate(jobRef, applicntRef);
 		
 		// Testing if the applicant has really been added to shortlisted list
 		Assert.assertEquals(initialSize + 1, jobRef.getShortListedApplicants().size());
@@ -83,7 +88,7 @@ public class TestEmployer {
 		Blacklist b = new Blacklist();
 		b.setBlacklistStatus("F");
 		
-		//applicant.setBlacklistStatus( b );
+		applicant.setBlacklistStatus( "F" );
 			
 		this.employer.shortListCandidate(jobRef, applicant);
 	}
@@ -120,7 +125,7 @@ public class TestEmployer {
 	public void test_changeApplicantStatusOfNullApplicant() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullJobReferenceException {
 		
 		Job jobRef = employer.getPostedJobs().get("job1");
-		Applicant applicntRef = null; 
+		Applicant applicntRef = null;
 		
 		employer.shortListCandidate(null, applicntRef);
 		employer.changeApplicantStatus(null, EmploymentStatus.EMPLOYED);

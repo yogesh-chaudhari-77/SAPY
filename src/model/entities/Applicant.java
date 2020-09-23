@@ -321,4 +321,6 @@ public class Applicant extends User {
 	{
 		return blacklistStatus.getStartDate();
 	}
+	
+	
 }

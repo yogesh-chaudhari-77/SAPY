@@ -13,7 +13,7 @@ public class UserAvailability {
     private JobCategory applicableJobCategory;
     
     // 23-09-2020 - Mutiple job categories can be specified by applicant
-    private ArrayList<JobCategory> applicableJobCategories;
+    private List<JobCategory> applicableJobCategories;
     
     private AvailabilityType availabilityType;
     private int noOfHoursAWeek;
@@ -75,12 +75,12 @@ public class UserAvailability {
     }
 
     
-    public ArrayList<JobCategory> getApplicableJobCategories() {
+    public List<JobCategory> getApplicableJobCategories() {
 		return applicableJobCategories;
 	}
 
 
-	public void setApplicableJobCategories(ArrayList<JobCategory> applicableJobCategories) {
+	public void setApplicableJobCategories(List<JobCategory> applicableJobCategories) {
 		this.applicableJobCategories = applicableJobCategories;
 	}
 
@@ -113,7 +113,8 @@ public class UserAvailability {
 	 */
 	public List<String> getApplicableJobCategoriesIds() {
 		
-		List<String> onlyIds = new ArrayList<String>(); 
+		List<String> onlyIds = new ArrayList<String>();
+		
 		for(int i = 0; i < this.getApplicableJobCategories().size(); i++) {
 			onlyIds.add(this.getApplicableJobCategories().get(i).getId());
 		}
