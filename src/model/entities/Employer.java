@@ -21,7 +21,7 @@ public class Employer extends User {
 	private String companyName = null;
 	private String address = null;
 	private String weburl = null;
-	private String contactEmail = null;
+	//private String contactEmail = null;
 
 
 	// List of applicants shortlisted and hired by this employer
@@ -62,7 +62,7 @@ public class Employer extends User {
 	public Employer updateDetails(JSONObject updatedEmployerDetails) {
 
 		this.setCompanyName( updatedEmployerDetails.getString("companyName") );
-		this.setContactEmail(updatedEmployerDetails.getString("contactEmail") );
+		//this.setContactEmail(updatedEmployerDetails.getString("contactEmail") );
 
 		return this;
 	}
@@ -284,14 +284,14 @@ public class Employer extends User {
 	}
 
 
-	public String getContactEmail() {
-		return contactEmail;
-	}
-
-
-	public void setContactEmail(String contactEmail) {
-		this.contactEmail = contactEmail;
-	}
+//	public String getContactEmail() {
+//		return contactEmail;
+//	}
+//
+//
+//	public void setContactEmail(String contactEmail) {
+//		this.contactEmail = contactEmail;
+//	}
 
 
 	public HashMap<String, Applicant> getMyApplicantsList() {

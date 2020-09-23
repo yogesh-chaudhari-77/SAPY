@@ -4,7 +4,6 @@ import global.*;
 import view.*;
 import customUtils.*;
 import model.entities.*;
-import model.enums.ApplicantType;
 import model.enums.AvailabilityType;
 import model.exceptions.*;
 import model.enums.*;
@@ -866,7 +865,7 @@ public class SystemHandler {
 				case "5" :
 				{
 					System.out.println("Set Possible Interview Times");
-					this.setPossibleInterviewTimes();
+					this.setPossibleInterviewTimes(employer);
 				}
 				break;
 
@@ -1338,9 +1337,40 @@ public class SystemHandler {
 	}
 
 
-	public void setPossibleInterviewTimes() {
+	/**
+	 * An employer can set possible interview times.
+	 * Applicant selects one of them and interview will be carried out at timing
+	 * @param e
+	 */
+	public void setPossibleInterviewTimes(Employer e) {
 
+		// Employer selects a job for setting possible interview times
+		printPostedJobs(e.getId());
+		String jobId = customScanner.readString("Job ID : ");
+		Job jobRef = null;
 
+		do {
+			jobRef = e.getPostedJobs().get(jobId) != null ? e.getPostedJobs().get(jobId) : null;
+		} while (jobRef == null);
+		// Job ID validation ends here
+
+		printShortListedApplicntsForJob(e, jobRef);
+
+		// Accept all possible interview times
+		List<Date> myInterviewTimes = new ArrayList<Date>();
+		String repeat;
+		do {
+
+			Date possibleDate = getDateInput();
+			myInterviewTimes.add(possibleDate);
+
+			jobRef.getAvailInterviewTimings().add(possibleDate);
+
+			repeat = customScanner.readYesNo("Do you want to add one more ?");
+
+		} while (repeat.equalsIgnoreCase("Y"));
+
+		System.out.println("Possible interview times have been set. Please forward this to shortlisted applicants");
 	}
 
 	/**
@@ -1493,6 +1523,34 @@ public class SystemHandler {
 				System.out.format("%-3s|%-10s|%-32s|%-10s|\n", i, app.getId(), app.getFirstName()+" "+app.getLastName(), app.getJobPreferences());
 				System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
 				i++;
+			}
+		}
+	}
+
+	/**
+	 *
+	 * @param e : Employer reference
+	 * @param jobR : Job Reference
+	 */
+	public void printShortListedApplicntsForJob(Employer e, Job jobR) {
+
+		System.out.println("List of all ShortListed Applicants For Job : "+jobR.getJobId());
+
+		for(Job jobRef : e.getPostedJobs().values()) {
+
+			if(jobRef.getJobId().equalsIgnoreCase( jobR.getJobId() )){
+				System.out.println(jobRef.getJobId()+" "+jobRef.getJobTitle());
+
+				System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+				System.out.format("%-3s|%-10s|%-32s|%-10s|\n", "Sr", "ID", "Full Name", "JC Pref");
+				System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+
+				int i = 1;
+				for(Applicant app : jobRef.getShortListedApplicants().values()) {
+					System.out.format("%-3s|%-10s|%-32s|%-10s|\n", i, app.getId(), app.getFirstName()+" "+app.getLastName(), app.getJobPreferences());
+					System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+					i++;
+				}
 			}
 		}
 	}
