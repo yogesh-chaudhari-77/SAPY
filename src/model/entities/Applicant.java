@@ -42,7 +42,7 @@ public class Applicant extends User {
         boolean employmentRecordFound = false;
         for (EmploymentRecord currentRecord : employmentHistory){
             if (currentRecord.getCompanyName().equals(record.getCompanyName())
-            && currentRecord.getStartDate().equals(record.getStartDate())) {
+                    && currentRecord.getStartDate().equals(record.getStartDate())) {
                 employmentRecordFound = true;
                 break;
             }
@@ -203,19 +203,19 @@ public class Applicant extends User {
     }
 
 
-		
-	//Blacklisting an user by setting type to 'P' or 'F'
-	public void setBlacklistStatus(String type)
-	{
-		blacklistStatus.setBlacklistStatus(type);
-	}
-	
-	
-	//Reactivating the blacklisted user
-	public void removeBlacklistStatus()
-	{
-		blacklistStatus.removeBlacklistStatus();
-	}
+
+    //Blacklisting an user by setting type to 'P' or 'F'
+    public void setBlacklistStatus(String type)
+    {
+        blacklistStatus.setBlacklistStatus(type);
+    }
+
+
+    //Reactivating the blacklisted user
+    public void removeBlacklistStatus()
+    {
+        blacklistStatus.removeBlacklistStatus();
+    }
 
     /**
      * Extra function to preserve functionality
@@ -310,15 +310,17 @@ public class Applicant extends User {
 
 
     public BlacklistStatus getBlacklistStat()
-	{
-		return this.blacklistStatus.getBlacklistStatus();
-	}
-		
-	
+    {
+        return this.blacklistStatus.getBlacklistStatus();
+    }
 
-	
-	public Date getStartDate()
-	{
-		return blacklistStatus.getStartDate();
-	}
+
+
+
+    public Date getStartDate()
+    {
+        return blacklistStatus.getStartDate();
+    }
+
+
 }

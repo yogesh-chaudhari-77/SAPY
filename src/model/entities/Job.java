@@ -1,61 +1,80 @@
 package model.entities;
 
-import model.enums.*;
-import model.exceptions.*;
-
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+
+import model.enums.PostedJobJStatus;
 
 public class Job {
-	
+
 	// System identifier
 	private String jobId;
-	
+
 	// Job heading, A short indentifier
 	private String jobTitle;
-	
+
 	// Short textual description about the job
-	private String jobDesc;			
-	
+	private String jobDesc;
+
 	// When is the job posted
-	private SimpleDateFormat jobPostedDateTime;		
-	
+	private Date jobPostedDateTime;
+
 	// Active or Inactive
 	private PostedJobJStatus jobStatus;
-	
-	
+
 	// List of shortlisted applicant for this job
 	private HashMap<String, Applicant> shortListedApplicants;
-	
-	
+
+	// List of applicants with ranking
+	private LinkedHashMap<Integer, Applicant> rankedApplicants;
+
+
 	public Job() {
 		jobId = "";
 		jobTitle = "";
 		jobDesc = "";
-		jobPostedDateTime = new SimpleDateFormat();
+		jobPostedDateTime = new Date();
 		jobStatus = PostedJobJStatus.ACTIVE;
 		shortListedApplicants = new HashMap<String, Applicant>();
-	}
-	
-	public Job(String jobTitle, String jobDesc) {
-		this.jobId = 
-		this.jobTitle = jobTitle;
-		this.jobDesc = jobDesc;
-		this.jobPostedDateTime = new SimpleDateFormat();
-		this.jobStatus = PostedJobJStatus.ACTIVE;
-		shortListedApplicants = new HashMap<String, Applicant>();
+		rankedApplicants = new LinkedHashMap<Integer, Applicant>();
 	}
 
-	
+	public Job(String jobTitle, String jobDesc) {
+		this.jobId =
+				this.jobTitle = jobTitle;
+		this.jobDesc = jobDesc;
+		this.jobPostedDateTime = new Date();
+		this.jobStatus = PostedJobJStatus.ACTIVE;
+		shortListedApplicants = new HashMap<String, Applicant>();
+		rankedApplicants = new LinkedHashMap<Integer, Applicant>();
+	}
+
+
 	public Job(String jobId, String jobTitle, String jobDesc) {
 		this.jobId = jobId;
 		this.jobTitle = jobTitle;
 		this.jobDesc = jobDesc;
-		this.jobPostedDateTime = new SimpleDateFormat();
+		this.jobPostedDateTime = new Date();
 		this.jobStatus = PostedJobJStatus.ACTIVE;
 		shortListedApplicants = new HashMap<String, Applicant>();
+		rankedApplicants = new LinkedHashMap<Integer, Applicant>();
 	}
-	
+
+
+	/**
+	 * This will store the ranking of the shortlisted applicants.
+	 * Ranking all candidates may not be necessary. But Interview invitations must be sent to highly ranked candidates.
+	 * @param applicntRef : Reference of the applicant
+	 * @param rank : The rank that will be assinged to this applicant
+	 */
+	public void rankApplicant(Applicant applicntRef, int rank) {
+
+		this.getRankedApplicants().put(rank, applicntRef);
+
+	}
+
 	// Getter - Setters Starts Here
 	public String getJobId() {
 		return jobId;
@@ -81,11 +100,11 @@ public class Job {
 		this.jobDesc = jobDesc;
 	}
 
-	public SimpleDateFormat getJobPostedDateTime() {
+	public Date getJobPostedDateTime() {
 		return jobPostedDateTime;
 	}
 
-	public void setJobPostedDateTime(SimpleDateFormat jobPostedDateTime) {
+	public void setJobPostedDateTime(Date jobPostedDateTime) {
 		this.jobPostedDateTime = jobPostedDateTime;
 	}
 
@@ -105,11 +124,19 @@ public class Job {
 		this.shortListedApplicants = shortListedApplicants;
 	}
 
+	public LinkedHashMap<Integer, Applicant> getRankedApplicants() {
+		return rankedApplicants;
+	}
+
+	public void setRankedApplicants(LinkedHashMap<Integer, Applicant> rankedApplicants) {
+		this.rankedApplicants = rankedApplicants;
+	}
+
 	@Override
 	public String toString() {
 		return "Job [jobId=" + jobId + ", jobTitle=" + jobTitle + ", jobDesc=" + jobDesc + ", jobPostedDateTime="
 				+ jobPostedDateTime + ", jobStatus=" + jobStatus + "]";
 	}
-	
-	
+
+
 }
