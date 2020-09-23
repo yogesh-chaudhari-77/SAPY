@@ -3,6 +3,7 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -362,7 +363,7 @@ public class Employer extends User {
 	        this.blacklistStatus.setBlacklistStatus(blacklistStatus);
     }
 	//Blacklisting the employer by setting type to 'P' or 'F'
-	public void setBlacklistStatus(String type)
+	public void setBlacklistStatus(String type) throws ParseException
 	{
 		blacklistStatus.setBlacklistStatus(type);
 	}
@@ -374,9 +375,14 @@ public class Employer extends User {
 		blacklistStatus.removeBlacklistStatus();
 	}
 	
-	public Date getStartDate()
+	public Date getBlacklistStartDate()
 	{
 		return blacklistStatus.getStartDate();
+	}
+	
+	public void setBlacklistStartDate(Date startDate) throws ParseException
+	{
+		blacklistStatus.setStartDate(startDate);
 	}
 
 }

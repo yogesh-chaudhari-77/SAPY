@@ -1,6 +1,8 @@
 package testing;
 import static org.junit.Assert.*;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 
 import model.entities.*;
@@ -21,14 +23,8 @@ public class TestMaintenanceStaff {
 	HashMap<String, User> allUsersList  = new HashMap<String, User>();;
 	HashMap<String, User> blacklistedUsers = new HashMap<String, User>();
 	HashMap<String, JobCategory> allJobCategories = new HashMap<String, JobCategory>();
+	SimpleDateFormat dateFormat;
 	
-//	((Applicant)blacklistedUsers.get("S1")).setBlacklistStatus(blacklistStatus.PROVISIONAL_BLACKLISTED);
-//	((Employer)blacklistedUsers.get("E1")).setBlacklistStatus(blacklistStatus.FULL_BLACKLISTED);
-//	allUsersList.put("E001", blacklistedUsers.get("E1"));
-//	allUsersList.put("S001", blacklistedUsers.get("S1"));
-	
-
-
 	
 	@Before
 	public void setUp() throws Exception 
@@ -37,6 +33,8 @@ public class TestMaintenanceStaff {
 		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
 		allUsersList.put("S001", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123",""));
 		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2", "Test" ,"Employer2", "123"));
+		
+		dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		
 	}
 
@@ -71,7 +69,7 @@ public class TestMaintenanceStaff {
 	 * 		-- Checking the post condition, now User should be provisionally blacklisted 
 	 */
 	@Test
-	public void testBlackListingProvisoinally()
+	public void testBlackListingProvisoinally() throws ParseException
 	{
 		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
 		staff.blacklistUser(allUsersList.get("E001"), "P");
@@ -85,7 +83,7 @@ public class TestMaintenanceStaff {
 	 * 		-- Checking the post condition, now User should be Fully blacklisted 
 	 */
 	@Test
-	public void testBlackListingFully()
+	public void testBlackListingFully() throws ParseException
 	{
 		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
 		staff.blacklistUser(allUsersList.get("E001"), "F");
@@ -93,19 +91,119 @@ public class TestMaintenanceStaff {
 
 	}
 	
-	/* Positive Test Case for Re-activating Blacklisted User Fully 
-	 * 		-- Checking the pre condition, such that  User is already blacklisted.
-	 * 		-- Then Blacklisting the User provisionally by using type'F'
-	 * 		-- Checking the post condition, now User should be reactivated
+	
+		/* ******************************************************************************************    */
+		/* 					Stage 2 Presentation - Positive & Negative Testcases 						 */
+		/*					For the Use Case - "Reactivate Blacklisted User"							 */
+		/* ******************************************************************************************    */
+	
+	
+	/* Positive Test Case for Re-activating Fully Blacklisted User 
+	 * 		-- Check the pre condition, such that  User is already fully blacklisted.
+	 * 		-- Then perform the operation - reactivating the fully blacklisted user
+	 * 		-- Check the post condition, now User should be reactivated
 	 */
+	
 	@Test
-	public void testRevertBlackListedUser()
+	public void testReactivatingFullyBlackListedUser() throws NotFullyBlacklistedUserException, ParseException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException
 	{
 		
+		//Pre condition
 		staff.blacklistUser(allUsersList.get("E001"), "F");
+		((Employer)allUsersList.get("E001")).setBlacklistStartDate(dateFormat.parse("15/05/2020 15:42:42"));
 		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.FULL_BLACKLISTED);
-		staff.revertBlacklistedUser(allUsersList.get("E001"));
+		
+		//Operation
+		staff.revertBlacklistedUser(allUsersList.get("E001"),"F");
+		
+		//Post Condition
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
+	}
+	
+	
+	/* Positive Test Case for Re-activating Provisionally Blacklisted User 
+	 * 		-- Check the pre condition, such that  User is already Provisionally blacklisted.
+	 * 		-- Then perform the operation - reactivating the Provisionally blacklisted user
+	 * 		-- Check the post condition, now User should be reactivated
+	 */
+	
+	@Test
+	public void testReactivatingProvisionallyBlackListedUser() throws NotFullyBlacklistedUserException, ParseException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException
+	{
+		
+		//Pre condition
+		staff.blacklistUser(allUsersList.get("E001"), "P");
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.PROVISIONAL_BLACKLISTED);
+		
+		//Operation
+		staff.revertBlacklistedUser(allUsersList.get("E001"),"P");
+		
+		//Post Condition
 		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
 	}
 
+	
+	/* Negative Test Case for Re-activating Provisionally Blacklisted User 
+	 * 		-- Check the pre condition, such that  User is not blacklisted.
+	 * 		-- Then perform the operation of  reactivating the Provisionally blacklisted user on non blacklisted user
+	 * 			which should throw NotProvisionallyBlacklistedUserException
+	 * 		
+	 */
+	
+	@Test
+	(expected = NotProvisionallyBlacklistedUserException.class)
+	public void testReactivatingNonBlackListedUser1() throws NotFullyBlacklistedUserException, ParseException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException
+	{
+		
+		//Pre condition
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
+		
+		//Operation - Exception is expected
+		staff.revertBlacklistedUser(allUsersList.get("E001"),"P");
+	}
+	
+	
+	/* Negative Test Case for Re-activating Provisionally Blacklisted User 
+	 * 		-- Check the pre condition, such that  User is not blacklisted.
+	 * 		-- Then perform the operation of  reactivating the Provisionally blacklisted user on non blacklisted user
+	 * 			which should throw NotProvisionallyBlacklistedUserException
+	 * 		
+	 */
+	
+	@Test
+	(expected = NotFullyBlacklistedUserException.class)
+	public void testReactivatingNonBlackListedUser2() throws NotFullyBlacklistedUserException, ParseException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException
+	{
+		
+		//Pre condition
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
+		
+		//Operation - Exception is expected
+		staff.revertBlacklistedUser(allUsersList.get("E001"),"F");
+		
+	}
+	
+	
+	/* Negative Test Case for Re-activating Fully Blacklisted User, where the blacklisted period has not exceeded 3 months 
+	 * 		-- Check the pre condition, such that  User is Fully blacklisted.
+	 * 		-- Then perform the operation of  reactivating the Provisionally blacklisted user on non blacklisted user
+	 * 			which should throw NotProvisionallyBlacklistedUserException
+	 * 		
+	 */
+	
+	@Test
+	(expected = BlacklistedTimeNotElapsedException.class)
+	public void testReactivatingUserBeforeTimeElapse() throws NotFullyBlacklistedUserException, ParseException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException
+	{
+		
+		//Pre condition
+		staff.blacklistUser(allUsersList.get("E001"), "F");
+		((Employer)allUsersList.get("E001")).setBlacklistStartDate(dateFormat.parse("15/09/2020 15:42:42"));
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.FULL_BLACKLISTED);
+		
+		
+		//Operation - Exception is expected
+		staff.revertBlacklistedUser(allUsersList.get("E001"),"F");
+		
+	}
 }

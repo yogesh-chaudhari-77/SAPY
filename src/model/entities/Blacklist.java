@@ -4,7 +4,9 @@ import model.enums.*;
 import model.exceptions.*;
 
 import java.util.Date;
-import java.time.format.DateTimeFormatter;  
+import java.time.format.DateTimeFormatter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;  
 
 public class Blacklist {
@@ -14,18 +16,19 @@ public class Blacklist {
 	private Date startDate;
 	private Date endDate;
 	BlacklistStatus blacklistStatus;
+	SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	
 //	DateTimeFormatter dateFormatter = new DateTimeFormatter("dd/MM/yyyy HH:mm:ss");
 	
 	//Blacklisting an user
-	public void setBlacklistStatus(String type)
+	public void setBlacklistStatus(String type) throws ParseException
 	{
 		if (type.toUpperCase().contentEquals("P"))
 			this.blacklistStatus = blacklistStatus.PROVISIONAL_BLACKLISTED;
 		else
 			this.blacklistStatus = blacklistStatus.FULL_BLACKLISTED;
 
-		startDate = new Date();
+		startDate = dateFormat.parse(dateFormat.format(new Date()));
 		endDate = null;
 	}
 	
@@ -43,8 +46,8 @@ public class Blacklist {
 	}
 
 
-	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
+	public void setStartDate(Date startDate) throws ParseException {
+		this.startDate = dateFormat.parse(dateFormat.format(startDate));
 	}
 
 

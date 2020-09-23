@@ -63,7 +63,7 @@ public class SystemHandler {
 	
 
 		
-	public void run() throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException {
+	public void run() throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException, ParseException, NotFullyBlacklistedUserException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException {
 		Menu menu = null;
 		boolean quit = false;
 		
@@ -261,7 +261,7 @@ public class SystemHandler {
 
 	}
 
-	public void login () throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException {
+	public void login () throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException, ParseException, NotFullyBlacklistedUserException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException {
 
 		String id;
 		String password;
@@ -283,7 +283,7 @@ public class SystemHandler {
 		}
 	}
 
-	public void showUserMenu(User user) throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException {
+	public void showUserMenu(User user) throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException, ParseException, NotFullyBlacklistedUserException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException {
 		if (user instanceof Applicant){
 			showApplicantMenu(((Applicant) user));
 		} else if (user instanceof Employer){
@@ -642,7 +642,7 @@ public class SystemHandler {
 		return date;
 	}
 
-	public void showMaintenanceStaffMenu(MaintenanceStaff staff) throws DuplicateJobCategoryException
+	public void showMaintenanceStaffMenu(MaintenanceStaff staff) throws DuplicateJobCategoryException, NotFullyBlacklistedUserException, ParseException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException
 	{
 		boolean quit = false;
 		Menu menu = null;
@@ -654,13 +654,7 @@ public class SystemHandler {
 		}
 		
 		BlacklistStatus blacklistStatus = BlacklistStatus.NOT_BLACKLISTED ;
-//		blacklistedUsers.put("E1", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
-//		blacklistedUsers.put("S1", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123",""));
-//		blacklistedUsers.put("E3", new Employer("E003", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
 
-//		((Applicant)blacklistedUsers.get("S1")).setBlacklistStatus(blacklistStatus.PROVISIONAL_BLACKLISTED);
-//		((Employer)blacklistedUsers.get("E1")).setBlacklistStatus(blacklistStatus.FULL_BLACKLISTED);
-//		((Employer)blacklistedUsers.get("E1")).setBlacklistStatus(blacklistStatus.PROVISIONAL_BLACKLISTED);
 
 		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
 		allUsersList.put("E003", new Employer("E003", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
@@ -721,14 +715,29 @@ public class SystemHandler {
 					//registerMaintenanceStaff();
 					break;
 				
+				//Reactivating Blacklisted User
 				case "4":
 				{
-					String user;
-					System.out.println("Enter the id of the user to be reactivated:  ");
-					user = input.nextLine();
+					String user, blacklistType;
+					System.out.println("Enter the blacklisted type of User to be reactivated. " +
+										"\n 'P' - Provisionally Blacklisted user \n 'F' - Fully Blacklisted user " +
+										"Enter your choice ( P / F ) : ");
+					try
+					{
+						blacklistType = input.nextLine();
+						if (!blacklistType.toUpperCase().contentEquals("P") && !blacklistType.toUpperCase().contentEquals("F"))
+							throw new Exception();
 
-					if(staff.revertBlacklistedUser((User)(allUsersList.get(user))))
-						blacklistedUsers.remove("E1");
+						System.out.println("Enter the id of the user to be reactivated:  ");
+						user = input.nextLine();
+				
+						if(staff.revertBlacklistedUser((User)(allUsersList.get(user)), blacklistType))
+							blacklistedUsers.remove("E1");
+					}
+					catch(Exception e)
+					{
+						System.out.println("You have entered an invalid blacklist type. Please try again");
+					}
 					 
 				}
 					//registerMaintenanceStaff();
@@ -746,9 +755,10 @@ public class SystemHandler {
 	/**
 	 * @author : Yogeshwar Girish Chaudhari
 	 * Employer Menu Options
+	 * @throws ParseException 
 	 */
 	
-	public void showEmployerMenu(Employer employer){
+	public void showEmployerMenu(Employer employer) throws ParseException{
 		boolean quit = false;
 		Menu menu = null;
 
@@ -1083,9 +1093,9 @@ public class SystemHandler {
 		Applicant a6 = new Applicant("app6", "f@gmail.com", "123", "June", "Last", "039847484", "i");
 		
 		// Create some job categories 
-		JobCategory j1 = new JobCategory("1", "Active");
-		JobCategory j2 = new JobCategory("2", "Active");
-		JobCategory j3 = new JobCategory("3", "Active");
+		JobCategory j1 = new JobCategory("1", "Active" ,4);
+		JobCategory j2 = new JobCategory("2", "Active" ,5);
+		JobCategory j3 = new JobCategory("3", "Active" ,6);
 		
 		// Adding for system level
 		this.allJobCategories.put("1", j1);
