@@ -181,22 +181,28 @@ public class TestEmployer {
 		this.employer.shortListCandidate(jobRef, applicant);
 	}
 
+	/*
+	 * Negative test case
+	 * Testing error checking for null applicant object is passed to employer's shortlisted method
+	 * Null is passed when user enters applicant id which is not present in the list
+	 */
+	@Test (expected = NullApplicantException.class)
+	public void test_shortlistNullApplicant() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullJobReferenceException {
 
+		Job jobRef = employer.getPostedJobs().get("job1");
+		employer.shortListCandidate(jobRef, sysHandler.getAllApplicantsList().get("APP123829"));
+	}
 
 	/*
 	 * Negative test case
-	 * Testing error checking for null applicant object is passed to employer methods
+	 * Testing error checking for null job object is passed to employer's shortlisted method
+	 * Null is passed when user enters job id which is not present in the list
 	 */
-	@Test (expected = NullApplicantException.class)
-	public void test_changeApplicantStatusOfNullApplicant() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullJobReferenceException {
+	@Test (expected = NullJobReferenceException.class)
+	public void test_shortlistForNullJob() throws ApplicantNotPresentInMyApplicantsException, NullApplicantException, AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullJobReferenceException {
 
-		Job jobRef = employer.getPostedJobs().get("job1");
-		Applicant applicntRef = null;
-
-		employer.shortListCandidate(null, applicntRef);
-		employer.changeApplicantStatus(null, EmploymentStatus.EMPLOYED);
+		employer.shortListCandidate(employer.getPostedJobs().get("DUMMY_JOB_ID"), this.applicant);
 	}
-
 
 	/**
 	 * @author Yogeshwar Chaudhari
