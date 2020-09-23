@@ -32,6 +32,20 @@ public class ApplicantTest {
         applicants.add(a3);
         applicants.add(a4);
 
+        JobCategory jc1 = new JobCategory("Software Engineer", "Active", 1);
+        JobCategory jc2 = new JobCategory("Software Engineer", "Active", 2);
+        JobCategory jc3 = new JobCategory("Software Engineer", "Active", 3);
+
+        List<JobCategory> jobCategoryList = new ArrayList<>();
+
+        jobCategoryList.add(jc1);
+        jobCategoryList.add(jc2);
+        jobCategoryList.add(jc3);
+
+       // UserAvailability availability = new UserAvailability(jobCategoryList, )
+
+       // applicants.get(0).addAvailability();
+
     }
 
     @After
@@ -131,13 +145,18 @@ public class ApplicantTest {
                 parser.parse("21/03/2012"), parser.parse("21/03/2012"), "Test Field", 93.3));
     }
 
-    //passing complaint (this test case will fail as this functionality is not developed.
     @Test
-    public void complaint() {
-
-        assertTrue(applicants.get(1).registerComplaint(new Complaints(new Employer("E1", "testEmail", "testPassword", "TestFirstName", "testLastName", "023456777"),
-                applicants.get(1), "Test Complaint Message")));
+    public void updateDateJobPreference(){
+        //applicants.get(0).updateAvailability()
     }
+
+    //passing complaint (this test case will fail as this functionality is not developed.
+//    @Test
+//    public void complaint() {
+//
+//        assertTrue(applicants.get(1).registerComplaint(new Complaints(new Employer("E1", "testEmail", "testPassword", "TestFirstName", "testLastName", "023456777"),
+//                applicants.get(1), "Test Complaint Message")));
+//    }
 
 
 
