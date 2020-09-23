@@ -14,15 +14,15 @@ public class ScannerUtil {
 
 	private static ScannerUtil scannerInstance = null;
 	private Scanner consoleIn = null;
-	
+
 	private ScannerUtil() {
 	}
 
-	
+
 	/* Its there as part of standard implementation.
-	 * Kept is static for code reduction 
+	 * Kept is static for code reduction
 	 */
-	
+
 	public static ScannerUtil createInstance() {
 		if(scannerInstance == null) {
 			scannerInstance = new ScannerUtil();
@@ -44,18 +44,18 @@ public class ScannerUtil {
 
 		return ScannerUtil.scannerInstance;
 	}
-	
-	
+
+
 	/*
 	 * Reads integer data until integer data is not supplied
 	 * Re-prints original instruction message on failure
 	 */
-	
+
 	public int readInt(String inputStr) {
-		
+
 		boolean success = false;
 		int readVal = 0;
-		
+
 		do {
 			try {
 				System.out.print(inputStr);
@@ -64,72 +64,103 @@ public class ScannerUtil {
 			} catch (InputMismatchException | IllegalArgumentException ime) {
 				System.err.println("Please enter numeric value.");
 			}
-			
+
 			ScannerUtil.consoleReader().clearReader();
 		}while(!success);
-		
-		
+
+
 		return readVal;
 	}
-	
+
+
+	/*
+	 * Reads integer data until integer data is not supplied
+	 * Re-prints original instruction message on failure
+	 */
+
+	public int readInt(String inputStr, int min, int max) {
+
+		boolean success = false;
+		int readVal = 0;
+
+		do {
+			try {
+				System.out.print(inputStr);
+				readVal = ScannerUtil.scannerInstance.consoleIn.nextInt();
+				if (readVal < min || readVal > max) {
+					System.err.println("value must be in between ["+min+", "+max+"]");
+					continue;
+				}
+				success = true;
+			} catch (InputMismatchException | IllegalArgumentException ime) {
+				System.err.println("Please enter numeric value.");
+			}
+
+			ScannerUtil.consoleReader().clearReader();
+		}while(!success);
+
+
+		return readVal;
+	}
+
 	// Reads double data and does not accept wrong data
 	public double readDouble(String inputInstr) {
-		
+
 		boolean success = false;
 		double readVal = 0;
-		
+
 		do {
-			
+
 			try {
-				 System.out.print(inputInstr);
-				 readVal = ScannerUtil.scannerInstance.consoleIn.nextDouble();
-				 success = true;
+				System.out.print(inputInstr);
+				readVal = ScannerUtil.scannerInstance.consoleIn.nextDouble();
+				success = true;
 			} catch (InputMismatchException ime) {
 				System.err.println("Please enter numeric value. ");
 			}
-			
+
 			ScannerUtil.consoleReader().clearReader();
-			
+
 		} while(!success);
 
 		return readVal;
 	}
-	
-	
+
+
 	// Reads any String data but empty values are not allowed
 	public String readString(String instrString) {
-		
+
 		String userInput = null;
 		do {
 			System.out.print(instrString);
 			userInput = ScannerUtil.scannerInstance.consoleIn.nextLine();
-			
+
 			if(userInput == null || userInput == "" || userInput.isBlank() || userInput.isEmpty()) {
 				System.err.print("Empty value is not allowed\nEnter Again : ");
 			}
-			
+
 		}while(userInput == null || userInput == "" || userInput.isBlank() || userInput.isEmpty());
-		
+
 		return userInput.strip();
 	}
-	
-	
+
+
 	/*
 	 * Reads any String and validates against given pattern
 	 * User can supply either predefined patterns (Globals) or provide an custom in place pattern
 	 * re-prints the original instruction message after failure
-	 * 
+	 *
 	 * @param errMsg : error message that will be shown on error
 	 */
-	
+
 	public String readString(String pattern, String inputInstr, String errMsg) {
-	
+
 		// Check if the developer is trying to use the predefined patterns
 		String derivedPattern = predefinedPatterns(pattern);
 		if(derivedPattern != null) {
 			pattern = derivedPattern;
 		}
-		
+
 		String userInput;
 		boolean matched = false;
 		do {
@@ -143,17 +174,17 @@ public class ScannerUtil {
 					System.err.println(errMsg);
 			}
 		}while(!matched);
-		
+
 		return userInput;
 	}
-	
-	
+
+
 	/*
 	 * List of common validation regex for name, email, phone, abn
 	 */
-	
+
 	public String predefinedPatterns(String pattern) {
-		
+
 		String derivedPatt = null;
 //		switch(pattern) {
 //			case Globals.EMAIL_PATT_IDENT:
@@ -183,21 +214,21 @@ public class ScannerUtil {
 //			default:
 //				derivedPatt = null;
 //		}
-		
+
 		return derivedPatt;
 	}
-		
-		
+
+
 	// Special method of reading only yes no type answers.
 	public String readYesNo(String inputMessage) {
 		String typedInput = "";
 		boolean success = false;
-		
+
 
 		do {
 			System.out.print(inputMessage);
 			typedInput = ScannerUtil.scannerInstance.consoleIn.nextLine();
-			
+
 			if(typedInput.trim().equalsIgnoreCase("yes") || typedInput.trim().equalsIgnoreCase("y")) {
 				success = true;
 				typedInput = "Y";
@@ -208,18 +239,18 @@ public class ScannerUtil {
 				System.out.println("-- Invalid Input --");
 				success = false;
 			}
-			
+
 		}while(!success);
-		 
+
 		return typedInput;
 	}
-	
+
 	// Removes the newline character from the input stream
 	public void clearReader() {
 		ScannerUtil.scannerInstance.consoleIn.nextLine();
 	}
 
-	
+
 	// Close connection after use. Now to be used with every request.
 	public void closeReader() {
 
@@ -227,7 +258,7 @@ public class ScannerUtil {
 			this.consoleIn.close();
 		}
 	}
-	
+
 
 }
 
