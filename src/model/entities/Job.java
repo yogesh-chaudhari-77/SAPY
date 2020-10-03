@@ -23,7 +23,7 @@ public class Job {
 	private PostedJobJStatus jobStatus;
 
 	// List of shortlisted applicant for this job
-	private HashMap<String, Applicant> shortListedApplicants;
+	private HashMap<String, JobApplication> shortListedApplicants;
 
 	// List of applicants with ranking
 	private LinkedHashMap<Integer, Applicant> rankedApplicants;
@@ -37,7 +37,7 @@ public class Job {
 		jobDesc = "";
 		jobPostedDateTime = new Date();
 		jobStatus = PostedJobJStatus.ACTIVE;
-		shortListedApplicants = new HashMap<String, Applicant>();
+		shortListedApplicants = new HashMap<String, JobApplication>();
 		rankedApplicants = new LinkedHashMap<Integer, Applicant>();
 
 		// 24-09-2020
@@ -50,7 +50,7 @@ public class Job {
 		this.jobDesc = jobDesc;
 		this.jobPostedDateTime = new Date();
 		this.jobStatus = PostedJobJStatus.ACTIVE;
-		shortListedApplicants = new HashMap<String, Applicant>();
+		shortListedApplicants = new HashMap<String, JobApplication>();
 		rankedApplicants = new LinkedHashMap<Integer, Applicant>();
 
 		// 24-09-2020
@@ -64,7 +64,7 @@ public class Job {
 		this.jobDesc = jobDesc;
 		this.jobPostedDateTime = new Date();
 		this.jobStatus = PostedJobJStatus.ACTIVE;
-		shortListedApplicants = new HashMap<String, Applicant>();
+		shortListedApplicants = new HashMap<String, JobApplication>();
 		rankedApplicants = new LinkedHashMap<Integer, Applicant>();
 
 		// 24-09-2020
@@ -80,8 +80,7 @@ public class Job {
 	 */
 	public void rankApplicant(Applicant applicntRef, int rank) {
 
-		this.getRankedApplicants().put(rank, applicntRef);
-
+		this.shortListedApplicants.get(applicntRef.getId()).setRank(rank);
 	}
 
 	// Getter - Setters Starts Here
@@ -125,11 +124,11 @@ public class Job {
 		this.jobStatus = jobStatus;
 	}
 
-	public HashMap<String, Applicant> getShortListedApplicants() {
+	public HashMap<String, JobApplication> getShortListedApplicants() {
 		return shortListedApplicants;
 	}
 
-	public void setShortListedApplicants(HashMap<String, Applicant> shortListedApplicants) {
+	public void setShortListedApplicants(HashMap<String, JobApplication> shortListedApplicants) {
 		this.shortListedApplicants = shortListedApplicants;
 	}
 

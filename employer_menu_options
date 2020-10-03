@@ -8,5 +8,7 @@
 4 = Rank Applicants
 5 = Set Possible Interview Times
 6 = Register Complaint Against Applicant
-7 = Create Job Offer
+7 = Record Interview Results
+8 = Create Job Offer
+10 = Send Email
 Q = quit

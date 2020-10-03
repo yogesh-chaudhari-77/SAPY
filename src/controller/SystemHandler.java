@@ -1,5 +1,6 @@
 package controller;
 
+import com.mashape.unirest.http.exceptions.UnirestException;
 import global.*;
 import view.*;
 import customUtils.*;
@@ -16,6 +17,9 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import com.sun.jdi.InvalidTypeException;
+
+import javax.mail.MessagingException;
+import javax.management.InvalidApplicationException;
 
 // Commenting should be enough
 // Methods should be in there own classes
@@ -877,6 +881,22 @@ public class SystemHandler {
 				}
 				break;
 
+				// Record Interview Results
+				case "7" :
+				{
+					this.recordInterviewResults(employer);
+				}
+				break;
+
+				case "10" :
+				{
+					try {
+						EmailUtil.sendEmail();
+					} catch (MessagingException | UnirestException e) {
+						e.printStackTrace();
+					}
+				}
+
 				case "Q":
 					quit = true;
 			}
@@ -1228,7 +1248,7 @@ public class SystemHandler {
 
 		}while(repeat.equalsIgnoreCase("Y"));
 
-		printShortListedApplicntsEmployer(employer);
+		printShortListedApplicntsForJob(employer, jobRef);
 
 	}
 
@@ -1262,10 +1282,9 @@ public class SystemHandler {
 		if(jobRef != null) {
 
 			System.out.println("All Shortlisted Applicants.");
-			printApplicantList(jobRef.getShortListedApplicants());
+			printShortlistedApplicants(jobRef.getShortListedApplicants());
 
 			for(String applicantId : jobRef.getShortListedApplicants().keySet()) {
-
 
 				Applicant applicntRef = this.getAllApplicantsList().get(applicantId);
 
@@ -1356,22 +1375,99 @@ public class SystemHandler {
 
 		printShortListedApplicntsForJob(e, jobRef);
 
-		// Accept all possible interview times
-		List<Date> myInterviewTimes = new ArrayList<Date>();
-		String repeat;
-		do {
+		String enteredDates = this.customScanner.readString("Please enter all possible dates.");
+		String [] singleDates = enteredDates.split(",");
 
-			Date possibleDate = getDateInput();
-			myInterviewTimes.add(possibleDate);
-
+		for(String dateStr : singleDates){
+			Date possibleDate = validateDate(dateStr);
 			jobRef.getAvailInterviewTimings().add(possibleDate);
-
-			repeat = customScanner.readYesNo("Do you want to add one more ?");
-
-		} while (repeat.equalsIgnoreCase("Y"));
+		}
 
 		System.out.println("Possible interview times have been set. Please forward this to shortlisted applicants");
 	}
+
+
+	/**
+	 * Validates the string date and returns the date Object
+	 * @param dateStr
+	 */
+	public Date validateDate(String dateStr){
+		String datePattern = "((0?[1-9])|(1[0-9])|(2[0-9])|(3[01]))/((0?[1-9])|1[012])/(19|20)[0-9]{2}";
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+		Pattern pattern = Pattern.compile(datePattern);
+
+		Date date = null;
+
+		if(pattern.matcher(dateStr).matches()){
+			try	{
+				date = dateFormat.parse(dateStr);
+			} catch (ParseException e){
+				System.err.println(e);
+			}
+		}else{
+			System.err.println("Invalid date format. dd/MM/yyyy");
+		}
+
+		return date;
+	}
+
+	/**
+	 * Records the interview results.
+	 */
+	public void recordInterviewResults(Employer e){
+
+		printPostedJobs(e.getId());
+
+		String jobId = customScanner.readString("Job ID : ");
+		Job jobRef = null;
+
+		do {
+			jobRef = e.getPostedJobs().get(jobId) != null ? e.getPostedJobs().get(jobId) : null;
+		} while (jobRef == null);
+		// Job ID validation ends here
+
+		printShortListedApplicntsForJob(e, jobRef);
+
+		String applntId = customScanner.readString("Applicant ID : ");
+
+		String result = customScanner.readString("Remarks : ");
+
+		try {
+			e.recordInterviewResults(jobRef, (Applicant) this.allUsersList.get(applntId), result);
+		} catch (InvalidApplicationException | NullApplicantException | NullEntityException excep) {
+			System.err.println(excep.getMessage());
+		}
+
+	}
+
+
+	/**
+	 * Creates the job offers only when the  the interview results.
+	 */
+	public void createJobOffer(Employer e){
+
+		printPostedJobs(e.getId());
+
+		String jobId = customScanner.readString("Job ID : ");
+		Job jobRef = null;
+
+		do {
+			jobRef = e.getPostedJobs().get(jobId) != null ? e.getPostedJobs().get(jobId) : null;
+		} while (jobRef == null);
+		// Job ID validation ends here
+
+		printShortListedApplicntsForJob(e, jobRef);
+
+		String applntId = customScanner.readString("Applicant ID : ");
+
+		try {
+			e.createJobOffer(jobRef, (Applicant) this.allUsersList.get(applntId));
+		} catch (InvalidApplicationException | NullApplicantException | NullEntityException excep) {
+			System.err.println(excep.getMessage());
+		}
+
+	}
+
 
 	/**
 	 * @author Yogeshwar Chaudhari
@@ -1483,6 +1579,24 @@ public class SystemHandler {
 
 	/**
 	 * @author Yogeshwar Chaudhari
+	 * Prints all the shortlisted Applicants
+	 * @param jobApplicantions
+	 */
+	public void printShortlistedApplicants(HashMap<String, JobApplication> jobApplicantions){
+		System.out.format("%3s%10s%32s%10s%10s\n", "---+","----------+","--------------------------------+","----------+","----------+");
+		System.out.format("%-3s|%-10s|%-32s|%-10s|%-10s|\n", "Sr", "ID", "Full Name", "JC Pref", "Rank");
+		System.out.format("%3s%10s%32s%10s%10s\n", "---+","----------+","--------------------------------+","----------+","----------+");
+
+		int i = 1;
+		for(JobApplication ja : jobApplicantions.values()) {
+			System.out.format("%-3s|%-10s|%-32s|%-10s|%-10s|\n", i, ja.getApplicantRef().getId(), ja.getApplicantRef().getFirstName()+" "+ja.getApplicantRef().getLastName(), ja.getApplicantRef().getJobPreferences());
+			System.out.format("%3s%10s%32s%10s%10s\n", "---+","----------+","--------------------------------+","----------+","----------+");
+			i++;
+		}
+	}
+
+	/**
+	 * @author Yogeshwar Chaudhari
 	 * Prints the list of all posted jobs for the test employer "e"
 	 */
 	public void printPostedJobs(String id) {
@@ -1519,8 +1633,8 @@ public class SystemHandler {
 			System.out.println(jobRef.getJobId()+" "+jobRef.getJobTitle());
 
 			int i = 1;
-			for(Applicant app : jobRef.getShortListedApplicants().values()) {
-				System.out.format("%-3s|%-10s|%-32s|%-10s|\n", i, app.getId(), app.getFirstName()+" "+app.getLastName(), app.getJobPreferences());
+			for(JobApplication ja : jobRef.getShortListedApplicants().values()) {
+				System.out.format("%-3s|%-10s|%-32s|%-10s|\n", i, ja.getApplicantRef().getId(), ja.getApplicantRef().getFirstName()+" "+ja.getApplicantRef().getLastName(), ja.getApplicantRef().getJobPreferences());
 				System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
 				i++;
 			}
@@ -1541,14 +1655,14 @@ public class SystemHandler {
 			if(jobRef.getJobId().equalsIgnoreCase( jobR.getJobId() )){
 				System.out.println(jobRef.getJobId()+" "+jobRef.getJobTitle());
 
-				System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
-				System.out.format("%-3s|%-10s|%-32s|%-10s|\n", "Sr", "ID", "Full Name", "JC Pref");
-				System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+				System.out.format("%3s%10s%32s%10s%10s\n", "---+","----------+","--------------------------------+","----------+","----------+");
+				System.out.format("%-3s|%-10s|%-32s|%-10s|%-10s|\n", "Sr", "ID", "Full Name", "JC Pref", "Rank");
+				System.out.format("%3s%10s%32s%10s%10s\n", "---+","----------+","--------------------------------+","----------+","----------+");
 
 				int i = 1;
-				for(Applicant app : jobRef.getShortListedApplicants().values()) {
-					System.out.format("%-3s|%-10s|%-32s|%-10s|\n", i, app.getId(), app.getFirstName()+" "+app.getLastName(), app.getJobPreferences());
-					System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+				for(JobApplication ja : jobRef.getShortListedApplicants().values()) {
+					System.out.format("%-3s|%-10s|%-32s|%-10s|%-10s|\n", i, ja.getApplicantRef().getId(), ja.getApplicantRef().getFirstName()+" "+ja.getApplicantRef().getLastName(), ja.getApplicantRef().getJobPreferences(), ja.getRank());
+					System.out.format("%3s%10s%32s%10s%10s\n", "---+","----------+","--------------------------------+","----------+","----------+");
 					i++;
 				}
 			}
@@ -1643,12 +1757,9 @@ public class SystemHandler {
 		this.allEmployersList = allEmployersList;
 	}
 
-
-
 	public HashMap<String, JobCategory> getAllJobCategories() {
 		return allJobCategories;
 	}
-
 
 
 	public void setAllJobCategories(HashMap<String, JobCategory> allJobCategories) {
