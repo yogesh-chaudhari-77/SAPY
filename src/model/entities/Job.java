@@ -1,9 +1,7 @@
 package model.entities;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 import model.enums.PostedJobJStatus;
 
@@ -30,6 +28,8 @@ public class Job {
 	// List of applicants with ranking
 	private LinkedHashMap<Integer, Applicant> rankedApplicants;
 
+	// Maintains the list of possible interview times
+	private List<Date> availInterviewTimings;
 
 	public Job() {
 		jobId = "";
@@ -39,6 +39,9 @@ public class Job {
 		jobStatus = PostedJobJStatus.ACTIVE;
 		shortListedApplicants = new HashMap<String, Applicant>();
 		rankedApplicants = new LinkedHashMap<Integer, Applicant>();
+
+		// 24-09-2020
+		availInterviewTimings = new ArrayList<Date>();
 	}
 
 	public Job(String jobTitle, String jobDesc) {
@@ -49,6 +52,9 @@ public class Job {
 		this.jobStatus = PostedJobJStatus.ACTIVE;
 		shortListedApplicants = new HashMap<String, Applicant>();
 		rankedApplicants = new LinkedHashMap<Integer, Applicant>();
+
+		// 24-09-2020
+		availInterviewTimings = new ArrayList<Date>();
 	}
 
 
@@ -60,6 +66,9 @@ public class Job {
 		this.jobStatus = PostedJobJStatus.ACTIVE;
 		shortListedApplicants = new HashMap<String, Applicant>();
 		rankedApplicants = new LinkedHashMap<Integer, Applicant>();
+
+		// 24-09-2020
+		availInterviewTimings = new ArrayList<Date>();
 	}
 
 
@@ -132,11 +141,17 @@ public class Job {
 		this.rankedApplicants = rankedApplicants;
 	}
 
+	public List<Date> getAvailInterviewTimings() {
+		return availInterviewTimings;
+	}
+
+	public void setAvailInterviewTimings(List<Date> availInterviewTimings) {
+		this.availInterviewTimings = availInterviewTimings;
+	}
+
 	@Override
 	public String toString() {
 		return "Job [jobId=" + jobId + ", jobTitle=" + jobTitle + ", jobDesc=" + jobDesc + ", jobPostedDateTime="
 				+ jobPostedDateTime + ", jobStatus=" + jobStatus + "]";
 	}
-
-
 }
