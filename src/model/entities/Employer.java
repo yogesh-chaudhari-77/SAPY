@@ -12,6 +12,8 @@ import org.json.JSONObject;
 
 import com.sun.jdi.InvalidTypeException;
 
+import javax.management.InvalidApplicationException;
+
 /*
  * Class implements all employer related functionality
  */
@@ -117,7 +119,6 @@ public class Employer extends User {
 	public boolean shortListCandidate(Job jobRef, Applicant applicant) throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException {
 
 		// Basic error checking.
-		// TODO : Needs to perform more validations here like blacklisted status, current employment staus
 		if(applicant == null) {
 			throw new NullApplicantException("Null applicant. Please double check the applicant ID and try again.");
 		}
@@ -127,7 +128,7 @@ public class Employer extends User {
 		}
 
 
-		HashMap<String, Applicant> shortListedApplicants = jobRef.getShortListedApplicants();
+		HashMap<String, JobApplication> shortListedApplicants = jobRef.getShortListedApplicants();
 
 		// If an applicant is blacklisted, he/she should not be allowed to be shortlisted
 		if(applicant.getBlacklistStatus() != null && applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.FULL_BLACKLISTED)
@@ -138,7 +139,7 @@ public class Employer extends User {
 		// Add the applicant only if it is not already present
 		if(! shortListedApplicants.containsKey(applicant.getId()) )
 		{
-			shortListedApplicants.put(applicant.getId(), applicant);
+			shortListedApplicants.put(applicant.getId(), new JobApplication(jobRef, applicant));
 		}
 		else {
 			throw new AlreadyPresentInYourShortListedListException("The applicant is already present in your shortlisted applicant's list.");
@@ -157,28 +158,6 @@ public class Employer extends User {
 			System.out.println("Congratulations "+applicant.getFirstName()+"! We are pleased to extend formal offer to you.");
 		}
 
-		return true;
-	}
-
-
-	/*
-	 * Employer fixes interview time by looking at availability schedules of applicants/student
-	 * TODO : Scheduled implementation
-	 */
-
-	public boolean setInterviewTime() {
-		System.out.println("Interview has been scheduled");
-		return true;
-	}
-
-
-	/*
-	 * Employer saves the interview results. All records are written to the file for future reference
-	 * TODO : Scheduled implementation
-	 */
-	public boolean saveInterviewResults() {
-
-		System.out.println("Interview results have been sasved");
 		return true;
 	}
 
@@ -248,6 +227,60 @@ public class Employer extends User {
 
 		// If the rank has already been occupied, it will be overridden.
 		jobRef.rankApplicant(applicntRef, rank);
+	}
+
+
+	public void recordInterviewResults(Job jobRef, Applicant applicant, String result) throws InvalidApplicationException, NullApplicantException, NullEntityException {
+
+		// Null applicant check
+		if (applicant == null){
+			throw new NullApplicantException("Invalid applicant ID :");
+		}
+
+		// Applicant not present in the shortlisted applicants list of the job
+		if( ! jobRef.getShortListedApplicants().containsKey(applicant.getId()) ){
+			throw new InvalidApplicationException(applicant.getId()+" has not been shortlisted for this job");
+		}
+
+		Interview interviewRef = jobRef.getShortListedApplicants().get(applicant.getId()).getInterviewRef();
+
+		if(interviewRef == null){
+			throw new NullEntityException("Can't find any interview for this applicant");
+		}
+
+		interviewRef.setResult(result);
+	}
+
+
+	/**
+	 * Employer can create job offer for applicants.
+	 * Select Job -> Enter applicant ID -> Offer created
+	 * Applicant then need to accept or reject the offer
+	 * @param jobRef
+	 * @param applicant
+	 * @throws InvalidApplicationException
+	 * @throws NullApplicantException
+	 * @throws NullEntityException
+	 */
+	public void createJobOffer(Job jobRef, Applicant applicant) throws InvalidApplicationException, NullApplicantException, NullEntityException {
+
+		// Null applicant check
+		if (applicant == null){
+			throw new NullApplicantException("Invalid applicant ID :");
+		}
+
+		// Applicant not present in the shortlisted applicants list of the job
+		if( ! jobRef.getShortListedApplicants().containsKey(applicant.getId()) ){
+			throw new InvalidApplicationException(applicant.getId()+" has not been shortlisted for this job");
+		}
+
+		JobApplication jobApp = jobRef.getShortListedApplicants().get(applicant.getId());
+
+		if(jobApp == null){
+			throw new NullEntityException("No job applicantion against given applicant.");
+		}
+
+		jobApp.setOfferRef( new JobOffer("Congratulations ! "+this.getCompanyName()+" is happy to onboard you. Please read the employment details carefully before accepting / rejecting the offer.") );
 	}
 
 	/*

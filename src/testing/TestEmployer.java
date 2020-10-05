@@ -175,7 +175,10 @@ public class TestEmployer {
 
 		System.out.println(applicntRef.getId());
 
+		// This should pass as excepted as this applicant is being shortlisted for the first time
+		Assert.assertEquals(0, jobRef.getShortListedApplicants().size());
 		this.employer.shortListCandidate(jobRef, applicant);
+		Assert.assertEquals(1, jobRef.getShortListedApplicants().size());
 
 		// Pushing same applicant again. Throws exception
 		this.employer.shortListCandidate(jobRef, applicant);

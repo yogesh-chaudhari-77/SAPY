@@ -1,0 +1,66 @@
+package customUtils;
+
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
+
+import java.net.http.HttpResponse;
+import java.util.*;
+import java.util.Properties;
+import javax.mail.*;
+import javax.mail.internet.*;
+
+
+/**
+ * References :
+ * [1] sendgrid/sendgrid-java
+ *  sendgrid/sendgrid-java (2020). Available at: https://github.com/sendgrid/sendgrid-java#installation (Accessed: 1 October 2020).
+ */
+public class EmailUtil {
+
+    public static void sendEmail() throws MessagingException, UnirestException {
+
+        String host="smtp.pepipost.com";
+        final String user="chaudhariyogesh20";
+        final String fromEmail = "chaudhariyogesh20@pepisandbox.com";
+        final String password="chaudhariyogesh20_7643511c0216843e5c2ee340a035d49a";
+
+        String to="chaudhari.yogesh20@gmail.com";
+
+
+
+
+        // sets SMTP server properties
+        Properties properties = new Properties();
+        properties.put("mail.smtp.host", host);
+        properties.put("mail.smtp.port", 25);
+        properties.put("mail.smtp.auth", "true");
+        //properties.put("mail.smtp.starttls.enable", "true");
+// *** BEGIN CHANGE
+        properties.put("mail.smtp.user", user);
+
+        // creates a new session, no Authenticator (will connect() later)
+        Session session = Session.getDefaultInstance(properties);
+// *** END CHANGE
+
+        // creates a new e-mail message
+        Message msg = new MimeMessage(session);
+
+        msg.setFrom(new InternetAddress(fromEmail));
+        InternetAddress[] toAddresses = { new InternetAddress(to) };
+        msg.setRecipients(Message.RecipientType.TO, toAddresses);
+        msg.setSubject("Test Mail");
+        msg.setSentDate(new Date());
+        // set plain text message
+        msg.setText("Dummy content");
+
+// *** BEGIN CHANGE
+        // sends the e-mail
+        Transport t = session.getTransport("smtp");
+        t.connect(user, password);
+        t.sendMessage(msg, msg.getAllRecipients());
+        t.close();
+// *** END CHANGE
+
+    }
+
+}
