@@ -837,6 +837,7 @@ public class SystemHandler {
 				}
 				break;
 
+				// Search Applicants
 				case "2":
 				{
 					HashMap<String, Applicant> matchingApplicants = this.searchApplicants(employer);
@@ -873,7 +874,6 @@ public class SystemHandler {
 				}
 				break;
 
-
 				// Registering the complaint about the applicant
 				case "6" :
 				{
@@ -888,10 +888,17 @@ public class SystemHandler {
 				}
 				break;
 
+				// Create Job Offers
+				case "8" :
+				{
+					this.createJobOffer(employer);
+				}
+				break;
+
 				case "10" :
 				{
 					try {
-						EmailUtil.sendEmail();
+						EmailUtil.sendEmail(new EmailObject("","","",""));
 					} catch (MessagingException | UnirestException e) {
 						e.printStackTrace();
 					}
@@ -1081,6 +1088,10 @@ public class SystemHandler {
 		// Iterating over the applicant's list to find the matching candidates
 		for(Applicant applicantRef : allApplicantsList.values()) {
 
+			// Applicants with pending status cant be viewed for shortlisted by the employer
+			if(applicantRef.getEmploymentStatus() == EmploymentStatus.PENDING){
+				continue;
+			}
 			// Check the preferences and availability
 			if(checkUserAvailability(applicantRef, jobPreferencesArr, perWeekAvailability, aType, startingFrom, endingOn)) {
 
@@ -1240,6 +1251,7 @@ public class SystemHandler {
 			// Shorting the applicant for given job
 			try {
 				employer.shortListCandidate(jobRef, applicntRef);
+
 			} catch (AlreadyPresentInYourShortListedListException | ApplicantIsBlackListedException | NullApplicantException | NullJobReferenceException e) {
 				System.err.println(e.getMessage());
 			}
@@ -1294,6 +1306,9 @@ public class SystemHandler {
 				try {
 					employer.rankApplicant(jobRef, applicntRef, rank);
 
+					// On successfully ranking applicant, employer sends out interview invite
+					employer.sendInterviewInvite(jobRef, applicntRef);
+
 				} catch (NullJobException | NullApplicantException  e) {
 					System.out.println(e.getMessage());
 				}
@@ -1307,21 +1322,29 @@ public class SystemHandler {
 
 		// printings the applicants with respective ranking - For validation purpose
 		if(jobRef != null) {
-			for(Map.Entry<Integer, Applicant> r : jobRef.getRankedApplicants().entrySet()) {
-				System.out.println(r.getKey()+" => "+r.getValue().getId());
-			}
+			printShortlistedApplicants(jobRef.getShortListedApplicants());
 		}
 
 	}
 
+
 	/**
-	 * @author Yogeshwar Chaudhari
-	 * Employer should be able to change the applicant's employement status
-	 * Enum : EmploymentStatus
+	 * Employer can blackList an applicant.
+	 * A list of blacklist status will be shown, and employer can choose any one of them
+	 * @param emp
 	 */
+	public void blackListApplicantByEmp(Employer emp){
 
-	public void changeApplicantStatus(Employer employer) {
+		String appcntId = this.customScanner.readString("Please enter applicant ID: ");
 
+		Applicant applicant = this.getAllApplicantsList().get(appcntId);
+
+		printAllBlackListStatus();
+
+		int bTypePos = customScanner.readInt("BlackList Level [0-1] : ", 0, 1);
+		BlacklistStatus bType = (BlacklistStatus.values())[bTypePos];
+
+		emp.blacklistApplicant(applicant, bType);
 	}
 
 
@@ -1334,7 +1357,7 @@ public class SystemHandler {
 
 		String appcntId = this.customScanner.readString("Please enter applicant ID: ");
 
-		User applcntRef = this.allUsersList.get(appcntId);
+		Applicant applcntRef = (Applicant) this.allUsersList.get(appcntId);
 
 		String message = customScanner.readString("*Enter Message : ");
 		try {
@@ -1418,53 +1441,85 @@ public class SystemHandler {
 
 		printPostedJobs(e.getId());
 
-		String jobId = customScanner.readString("Job ID : ");
 		Job jobRef = null;
 
 		do {
+			String jobId = customScanner.readString("Job ID : ");
 			jobRef = e.getPostedJobs().get(jobId) != null ? e.getPostedJobs().get(jobId) : null;
 		} while (jobRef == null);
 		// Job ID validation ends here
 
 		printShortListedApplicntsForJob(e, jobRef);
 
-		String applntId = customScanner.readString("Applicant ID : ");
+		String exit = "N";
 
-		String result = customScanner.readString("Remarks : ");
+		do{
 
-		try {
-			e.recordInterviewResults(jobRef, (Applicant) this.allUsersList.get(applntId), result);
-		} catch (InvalidApplicationException | NullApplicantException | NullEntityException excep) {
-			System.err.println(excep.getMessage());
-		}
+			String results = customScanner.readString("Enter Applicant ID and Result : [app1 success app2 fail]");
 
+			// Format expected = app1 success app2 failed app3 success
+			StringTokenizer resultTokens = new StringTokenizer(results);
+
+			// Loop over all applicants and their results
+			while ( resultTokens.hasMoreTokens() ){
+				String applntId = resultTokens.nextToken();
+				String result = resultTokens.nextToken();
+
+				// Result is something else. No updation done
+				if(! result.equalsIgnoreCase("success") && ! result.equalsIgnoreCase("fail")){
+					System.err.println(result+" is not a valid result. [success/fail]");
+					continue;
+				}
+
+				// Otherwise shortlist
+				try {
+					e.recordInterviewResults(jobRef, (Applicant) this.allUsersList.get(applntId), result);
+				} catch (InvalidApplicationException | NullApplicantException | NullEntityException excep) {
+					System.err.println(excep.getMessage());
+				}
+
+			}
+
+			exit = customScanner.readYesNo("Exit ? [y/n]");
+
+		}while (exit.trim().strip().equalsIgnoreCase("y"));
 	}
 
 
 	/**
-	 * Creates the job offers only when the  the interview results.
+	 * Creates the job offers only when we have interview results
 	 */
 	public void createJobOffer(Employer e){
 
 		printPostedJobs(e.getId());
 
-		String jobId = customScanner.readString("Job ID : ");
 		Job jobRef = null;
 
 		do {
+			String jobId = customScanner.readString("Job ID : ");
 			jobRef = e.getPostedJobs().get(jobId) != null ? e.getPostedJobs().get(jobId) : null;
 		} while (jobRef == null);
 		// Job ID validation ends here
 
 		printShortListedApplicntsForJob(e, jobRef);
 
-		String applntId = customScanner.readString("Applicant ID : ");
+		String applntIds = customScanner.readString("Applicant IDs : [app1 app2]");
 
-		try {
-			e.createJobOffer(jobRef, (Applicant) this.allUsersList.get(applntId));
-		} catch (InvalidApplicationException | NullApplicantException | NullEntityException excep) {
-			System.err.println(excep.getMessage());
+		StringTokenizer applntIdTokens = new StringTokenizer(applntIds);
+
+		while(applntIdTokens.hasMoreTokens()){
+
+			try {
+				e.createJobOffer(jobRef, (Applicant) this.allUsersList.get( applntIdTokens.nextToken() ));
+
+				// On successing at interview, automated email notification will be sent to the applicant
+				e.sendJobOfferEmail(jobRef, (Applicant) this.allUsersList.get( applntIdTokens.nextToken() ));
+
+			} catch (InvalidApplicationException | NullApplicantException | NullEntityException excep) {
+				System.err.println(excep.getMessage());
+			}
 		}
+
 
 	}
 
@@ -1476,22 +1531,44 @@ public class SystemHandler {
 	 */
 	public void loadDummyDataForEmployeFunctions() throws ParseException {
 
-		Employer e = new Employer("e", "e@gmail.com", "123", "Yosha");
+		Employer e = new Employer("e", "chaudhari.yogesh20@gmail.com", "123", "Yosha");
 		try {
 			e.createJob(new Job("job1", "Developer", "Developer Desc"));
 			e.createJob(new Job("job2", "Analyst", "Analyst Required"));
 			e.createJob(new Job("job3", "Designer", "Designer Required"));
+
+			List<Date> jobInterviewTimes = new ArrayList<Date>();
+			jobInterviewTimes.add(new Date("01/10/2020"));
+			jobInterviewTimes.add(new Date("02/10/2020"));
+			jobInterviewTimes.add(new Date("03/10/2020"));
+
+			e.getPostedJobs().get("job1").setAvailInterviewTimings(jobInterviewTimes);
+
+			jobInterviewTimes.add(new Date("05/10/2020"));
+			jobInterviewTimes.add(new Date("06/10/2020"));
+
+			e.getPostedJobs().get("job2").setAvailInterviewTimings(jobInterviewTimes);
+
+			jobInterviewTimes.add(new Date("08/10/2020"));
+			jobInterviewTimes.add(new Date("09/10/2020"));
+
+			e.getPostedJobs().get("job3").setAvailInterviewTimings(jobInterviewTimes);
+
 		}
 		catch (DuplicateJobIdException e1) {
 			e1.printStackTrace();
 		}
 
-		Applicant a1 = new Applicant("app1", "a@gmail.com", "123", "John", "Doe", "048888888", "l");
-		Applicant a2 = new Applicant("app2", "b@gmail.com", "123", "Mark", "Brown", "048942879", "l");
-		Applicant a3 = new Applicant("app3", "c@gmail.com", "123", "Johny", "Ive", "048734878", "l");
-		Applicant a4 = new Applicant("app4", "d@gmail.com", "123", "Sim", "Corol", "043445873", "i");
-		Applicant a5 = new Applicant("app5", "e@gmail.com", "123", "Dave", "Snow", "048734878", "i");
-		Applicant a6 = new Applicant("app6", "f@gmail.com", "123", "June", "Last", "039847484", "i");
+		Applicant a1 = new Applicant("app1", "chaudhari.yogesh20@gmail.com", "123", "John", "Doe", "048888888", "l");
+		Applicant a2 = new Applicant("app2", "chaudhari.yogesh20@gmail.com", "123", "Mark", "Brown", "048942879", "l");
+		Applicant a3 = new Applicant("app3", "chaudhari.yogesh20@gmail.com", "123", "Johny", "Ive", "048734878", "l");
+		Applicant a4 = new Applicant("app4", "chaudhari.yogesh20@gmail.com", "123", "Sim", "Corol", "043445873", "i");
+		Applicant a5 = new Applicant("app5", "chaudhari.yogesh20@gmail.com", "123", "Dave", "Snow", "048734878", "i");
+		Applicant a6 = new Applicant("app6", "chaudhari.yogesh20@gmail.com", "123", "June", "Last", "039847484", "i");
+
+		JobApplication ja = new JobApplication(e.getPostedJobs().get("job1"), a5);
+		ja.setRank(1);
+		e.getPostedJobs().get("job1").getShortListedApplicants().put("app5", ja);
 
 		// Create some job categories
 		JobCategory j1 = new JobCategory("1", "Active", 1);
@@ -1589,7 +1666,7 @@ public class SystemHandler {
 
 		int i = 1;
 		for(JobApplication ja : jobApplicantions.values()) {
-			System.out.format("%-3s|%-10s|%-32s|%-10s|%-10s|\n", i, ja.getApplicantRef().getId(), ja.getApplicantRef().getFirstName()+" "+ja.getApplicantRef().getLastName(), ja.getApplicantRef().getJobPreferences());
+			System.out.format("%-3s|%-10s|%-32s|%-10s|%-10s|\n", i, ja.getApplicantRef().getId(), ja.getApplicantRef().getFirstName()+" "+ja.getApplicantRef().getLastName(), ja.getApplicantRef().getJobPreferences(), ja.getRank());
 			System.out.format("%3s%10s%32s%10s%10s\n", "---+","----------+","--------------------------------+","----------+","----------+");
 			i++;
 		}
@@ -1681,6 +1758,22 @@ public class SystemHandler {
 		for(int i = 0; i < aTypes.length; i++) {
 			if(aTypes[i] != AvailabilityType.UNKNOWN) {
 				System.out.println(i+" - "+aTypes[i]);
+			}
+		}
+	}
+
+
+	/**
+	 * Prints all blacklisted status types in the system. except not_blacklisted
+	 * Can be used while making selection in case of employer trying to blacklist someone
+	 */
+	public void printAllBlackListStatus(){
+
+		BlacklistStatus [] bTypes = BlacklistStatus.values();
+
+		for(int i = 0; i < bTypes.length; i++) {
+			if(bTypes[i] != BlacklistStatus.NOT_BLACKLISTED) {
+				System.out.println(i+" - "+bTypes[i]);
 			}
 		}
 	}

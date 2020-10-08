@@ -19,6 +19,9 @@ public class Applicant extends User {
     private ApplicantType applicantType;
     private String cvPath;
 
+    // 07-10-2020 - Added by Yogeshwar - Employer needs to update employmentStatus if made an offer
+    private EmploymentStatus employmentStatus;
+
 
     public Applicant(String id,String email, String password, String firstName, String lastName, String phoneNumber, String applicantType) {
         super(id, email, password, firstName, lastName, phoneNumber);
@@ -323,4 +326,12 @@ public class Applicant extends User {
     }
 
 
+    // 07-10-2020 - Yogeshwar Chaudhari - Employer needs employementStatus while searching, shortlisting and making an offer
+    public EmploymentStatus getEmploymentStatus() {
+        return employmentStatus;
+    }
+
+    public void setEmploymentStatus(EmploymentStatus employmentStatus) {
+        this.employmentStatus = employmentStatus;
+    }
 }

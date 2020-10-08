@@ -1,5 +1,7 @@
 package model.entities;
 
+import com.mashape.unirest.http.exceptions.UnirestException;
+import customUtils.EmailUtil;
 import model.enums.*;
 import model.exceptions.*;
 
@@ -8,10 +10,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import org.json.JSONObject;
 
 import com.sun.jdi.InvalidTypeException;
 
+import javax.mail.MessagingException;
 import javax.management.InvalidApplicationException;
 
 /*
@@ -78,19 +83,15 @@ public class Employer extends User {
 	 * @throws NullApplicantException : Thrown when a null reference applicant has been passed
 	 * @throws InvalidTypeException : Thrown when, passed reference is not of Applicant type
 	 */
-	public Complaints complaintApplicant(User applcnt, String message) throws NullApplicantException, InvalidTypeException {
+	public Complaints complaintApplicant(Applicant applcnt, String message) throws NullApplicantException, InvalidTypeException {
 
 		// Basic error checking
 		if(applcnt == null) {
 			throw new NullApplicantException("Invalid applicant ID. Please verify applicant ID and try again.");
 		}
 
-		if(applcnt instanceof Applicant) {
-			Complaints tempComplaint = new Complaints(this, (Applicant)applcnt, message);
-			return tempComplaint;
-		}else {
-			throw new InvalidTypeException("Supplied user is not applicant");
-		}
+		Complaints tempComplaint = new Complaints(this, applcnt, message);
+		return tempComplaint;
 	}
 
 	/**
@@ -162,35 +163,6 @@ public class Employer extends User {
 	}
 
 
-	/*
-	 * Employer can change the employment status of the applicant / student.
-	 */
-	public boolean changeApplicantStatus(Applicant applicant, EmploymentStatus newStatus) throws ApplicantNotPresentInMyApplicantsException, NullApplicantException {
-
-		// Basic error checking.
-		// TODO : Needs to perform more validations here like blacklisted status, current employment staus
-		if(applicant == null) {
-			throw new NullApplicantException();
-		}
-
-		HashMap<String, Applicant> myApplicantsList = this.getMyApplicantsList();
-
-
-		// Make sure the employer has access to this applicant details
-		if(myApplicantsList.containsKey( applicant.getId() )) {
-
-			// TODO : More error checking needs to be done here. Scheduled
-			myApplicantsList.put(applicant.getId(), applicant);
-
-		}else {
-
-			throw new ApplicantNotPresentInMyApplicantsException();
-		}
-
-		return true;
-	}
-
-
 	/**
 	 * Checks if the employer is blacklisted or not
 	 * True means black listed and false means not
@@ -230,6 +202,15 @@ public class Employer extends User {
 	}
 
 
+	/**
+	 * Employer can record interview result, either success or failed
+	 * @param jobRef
+	 * @param applicant
+	 * @param result
+	 * @throws InvalidApplicationException
+	 * @throws NullApplicantException
+	 * @throws NullEntityException
+	 */
 	public void recordInterviewResults(Job jobRef, Applicant applicant, String result) throws InvalidApplicationException, NullApplicantException, NullEntityException {
 
 		// Null applicant check
@@ -282,6 +263,120 @@ public class Employer extends User {
 
 		jobApp.setOfferRef( new JobOffer("Congratulations ! "+this.getCompanyName()+" is happy to onboard you. Please read the employment details carefully before accepting / rejecting the offer.") );
 	}
+
+
+	/**
+	 * Employer can blacklist an applicant, either provisionally or fully.
+	 * @param applicant
+	 * @param blacklistType
+	 */
+	public void blacklistApplicant(Applicant applicant, BlacklistStatus blacklistType){
+
+		if(applicant != null){
+			if(blacklistType instanceof BlacklistStatus){
+				applicant.setBlacklistStatus( blacklistType );
+			}else{
+				System.err.println("Unexpected Blacklist type");
+			}
+		}else{
+			System.err.println("Applicant is Null");
+		}
+	}
+
+
+	/**
+	 * Employer can send interview invites to the applicant,
+	 * This invite is limited to per job and is sent automatically when employer ranks applicant for the job
+	 * @param jobRef
+	 * @param appRef
+	 */
+	public void sendInterviewInvite(Job jobRef, Applicant appRef) {
+
+		String subject = "Applicant Update";
+		String toEmail = appRef.getUserEmail().trim().strip();
+		String toName = appRef.getFirstName();
+
+//		StringBuilder matter = new StringBuilder();
+//		matter.append("<p>Hello "+appRef.getFirstName()+",<BR/><BR/>");
+//		matter.append("You have been shortlisted for the interview at "+this.companyName+"<BR/>");
+//		matter.append("Job Title "+jobRef.getJobTitle()+"<BR/>");
+//		matter.append("Desc "+jobRef.getJobDesc()+"<BR/>");
+//		matter.append("You are among "+jobRef.getShortListedApplicants().size()+" first shortlisted applicants<BR/>");
+//
+//		matter.append("Please select any of the possible interview times from your SAPY dashboard.<BR/>");
+//
+//		matter.append("<ul>");
+//		for(Date date : jobRef.getAvailInterviewTimings()){
+//			matter.append("<li>"+date.toLocaleString()+"<li>");
+//		}
+//		matter.append("</ul>");
+//		matter.append("</br> We wish you all the best.");
+//		matter.append("</p>");
+
+		StringBuilder matter = new StringBuilder();
+		matter.append("Hello "+appRef.getFirstName()+",");
+		matter.append("You have been shortlisted for the interview at "+this.companyName+"");
+		matter.append("Job Title "+jobRef.getJobTitle()+"");
+		matter.append("Desc "+jobRef.getJobDesc()+"");
+		matter.append("You are among "+jobRef.getShortListedApplicants().size()+" first shortlisted applicants");
+
+		matter.append("Please select any of the possible interview times from your SAPY dashboard.");
+
+		matter.append("");
+		for(Date date : jobRef.getAvailInterviewTimings()){
+			matter.append(""+date.toLocaleString()+"");
+		}
+		matter.append("");
+		matter.append("We wish you all the best.");
+		matter.append("");
+		matter.append("Best Regards,");
+		matter.append("Team SAPY");
+
+		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
+		try {
+			EmailUtil.sendEmail(newEmail);
+			System.out.println(newEmail);
+		} catch (MessagingException | UnirestException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Sends out offer letter, with employment details to the applicant, on being successfully accepted.
+	 * @param jobRef - For which job the offer letter is being sent
+	 * @param appRef - The applicant to which it will be sent
+	 */
+	public void sendJobOfferEmail(Job jobRef, Applicant appRef) {
+
+		String subject = "Applicant Update - Job Offer";
+		String toEmail = appRef.getUserEmail().trim().strip();
+		String toName = appRef.getFirstName();
+
+		StringBuilder matter = new StringBuilder();
+		matter.append("Hello "+appRef.getFirstName()+", ");
+		matter.append("Congratulations ! ");
+		matter.append("Please find employment details below. ");
+		matter.append("Job Title "+jobRef.getJobTitle()+". ");
+		matter.append("Desc "+jobRef.getJobDesc()+". ");
+		matter.append("");
+
+		matter.append("Your employemnt Status : PENDING");
+		matter.append("Please either accept or reject this offer from your SAPY dashboard. You will not shortlisted for other jobs until you change update your employment status.");
+
+		matter.append("We wish you all the best. ");
+		matter.append("");
+		matter.append("Best Regards, ");
+		matter.append("Team SAPY ");
+
+		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
+		try {
+			EmailUtil.sendEmail(newEmail);
+			System.out.println(newEmail);
+		} catch (MessagingException | UnirestException e) {
+			e.printStackTrace();
+		}
+	}
+
 
 	/*
 	 * Getter setters starts here
