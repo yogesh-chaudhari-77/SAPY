@@ -6,8 +6,14 @@ package model.exceptions;
 
 public class ApplicantIsBlackListedException extends Exception {
 
-	public void ApplicantIsBlackListedException() {
+	// 23-09-2020
+	public ApplicantIsBlackListedException(String message) {
+		super(message);
+	}
+
+
+	public ApplicantIsBlackListedException() {
 		System.out.println("The applicant is blacklisted. Hence can't be shortlisted");
 	}
-	
+
 }

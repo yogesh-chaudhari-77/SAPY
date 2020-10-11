@@ -20,6 +20,9 @@ public class Applicant extends User {
     private ApplicantType applicantType;
     private String cvPath;
 
+    // 07-10-2020 - Added by Yogeshwar - Employer needs to update employmentStatus if made an offer
+    private EmploymentStatus employmentStatus;
+
 
     public Applicant(String id,String email, String password, String firstName, String lastName, String phoneNumber, String applicantType) {
         super(id, email, password, firstName, lastName, phoneNumber);
@@ -43,7 +46,7 @@ public class Applicant extends User {
         boolean employmentRecordFound = false;
         for (EmploymentRecord currentRecord : employmentHistory){
             if (currentRecord.getCompanyName().equals(record.getCompanyName())
-            && currentRecord.getStartDate().equals(record.getStartDate())) {
+                    && currentRecord.getStartDate().equals(record.getStartDate())) {
                 employmentRecordFound = true;
                 break;
             }
@@ -131,9 +134,38 @@ public class Applicant extends User {
         }
     }
 
-    public boolean updateAvailability(AvailabilityType availabilityType, int hoursPerWeek){
+    public boolean addAvailability(AvailabilityType availabilityType, JobCategory jobCategory, int hoursPerWeek) throws DuplicateEntryException {
+        boolean duplicateAvailability= false;
+        for(UserAvailability availability: userAvailability){
+            if((availability.getAvailabilityType() == availabilityType)
+                    && (availability.getApplicableJobCategory().getId().equalsIgnoreCase(jobCategory.getId()))
+                    && availability.getNoOfHoursAWeek() == hoursPerWeek){
+                duplicateAvailability= true;
+                break;
+            }
+        }
 
-        return true;
+        if(!duplicateAvailability){
+            userAvailability.add(new UserAvailability(jobCategory, availabilityType, hoursPerWeek));
+        }else{
+            throw new DuplicateEntryException("User Availability already present");
+        }
+        return false;
+    }
+
+    public boolean updateAvailability(UserAvailability oldRecord, UserAvailability newRecord){
+
+        for(int index=0; index<userAvailability.size();index++){
+            UserAvailability availability= userAvailability.get(index);
+            if((availability.getAvailabilityType() == oldRecord.getAvailabilityType())
+                    && (availability.getApplicableJobCategory().getId().equalsIgnoreCase(oldRecord.getApplicableJobCategory().getId()))
+                    && availability.getNoOfHoursAWeek() == oldRecord.getNoOfHoursAWeek()){
+                userAvailability.remove(index);
+                userAvailability.set(index,newRecord);
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean uploadCV(String cvPath) throws InvalidCVPathException{
@@ -282,15 +314,25 @@ public class Applicant extends User {
 
 
     public BlacklistStatus getBlacklistStat()
-	{
-		return this.blacklistStatus.getBlacklistStatus();
-	}
-		
-	
+    {
+        return this.blacklistStatus.getBlacklistStatus();
+    }
 
-	
-	public Date getBlacklistStartDate()
-	{
-		return blacklistStatus.getStartDate();
-	}
+
+
+
+    public Date getBlacklistStartDate()
+    {
+        return blacklistStatus.getStartDate();
+    }
+
+
+    // 07-10-2020 - Yogeshwar Chaudhari - Employer needs employementStatus while searching, shortlisting and making an offer
+    public EmploymentStatus getEmploymentStatus() {
+        return employmentStatus;
+    }
+
+    public void setEmploymentStatus(EmploymentStatus employmentStatus) {
+        this.employmentStatus = employmentStatus;
+    }
 }

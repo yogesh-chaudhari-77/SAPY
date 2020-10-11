@@ -33,5 +33,8 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="hamcrest-core-1.3" level="project" />
+    <orderEntry type="library" name="activation" level="project" />
+    <orderEntry type="library" name="unirest-java-1.4.7" level="project" />
+    <orderEntry type="library" name="commons-lang3-3.11" level="project" />
   </component>
 </module>

@@ -27,4 +27,18 @@ public class JobCategory {
 	public String getCategoryTitle() {
 		return categoryTitle;
 	}
+
+	public String getId() {
+		return id;
+	}
+
+	// 23-09-2020 Additional getter setters
+	public String getStatus() {
+		return status;
+	}
+
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
 }
