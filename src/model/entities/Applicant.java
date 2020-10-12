@@ -22,6 +22,7 @@ public class Applicant extends User {
 
     // 07-10-2020 - Added by Yogeshwar - Employer needs to update employmentStatus if made an offer
     private EmploymentStatus employmentStatus;
+    private List<JobApplication> jobApplications;
 
 
     public Applicant(String id,String email, String password, String firstName, String lastName, String phoneNumber, String applicantType) {
@@ -40,6 +41,8 @@ public class Applicant extends User {
             this.applicantType = ApplicantType.INTERNATIONAL;
         }
         this.cvPath = null;
+        this.employmentStatus = EmploymentStatus.AVAILABLE;
+        this.jobApplications = new ArrayList<>();
     }
 
     public boolean addEmploymentRecords(EmploymentRecord record) throws BadEmployeeRecordException, DuplicateEntryException {
@@ -217,14 +220,41 @@ public class Applicant extends User {
 
     }
 
-    public String selectInterviewTiming(){
+    public boolean selectInterviewTiming(int jobApplicationIndex, int preferredDateIndex){
 
-        return null;
+        if(jobApplicationIndex > jobApplications.size()){
+            return false;
+        }
+        JobApplication jobApplication = jobApplications.get(jobApplicationIndex);
+        if(preferredDateIndex > jobApplication.getJobRef().getAvailInterviewTimings().size()){
+            return false;
+        }
+        Date preferredDate = jobApplication.getJobRef().getAvailInterviewTimings().get(preferredDateIndex);
+        Interview interview = new Interview(preferredDate);
+        jobApplication.setInterview(interview);
+        return true;
     }
 
-    public boolean replyToJobOffer(){
-
-        return false;
+    /**
+     * Possible inputs for decision - (0 or 1)
+     * 0 -> Rejected Offer
+     * 1 -> Accepted Offer
+     */
+    public boolean replyToJobOffer(int jobApplicationIndex, int decision){
+        if(jobApplicationIndex > jobApplications.size() || jobApplications.get(jobApplicationIndex).getOfferRef() == null){
+            return false;
+        }
+        JobApplication jobApplication = jobApplications.get(jobApplicationIndex);
+        boolean update = false;
+        if(decision == 1){
+            jobApplication.getOfferRef().setOfferStatus(OfferStatus.ACCEPTED);
+            this.employmentStatus = EmploymentStatus.EMPLOYED;
+            update = true;
+        }else if(decision == 0){
+            jobApplication.getOfferRef().setOfferStatus(OfferStatus.REJECTED);
+            update = true;
+        }
+        return update;
     }
 
     public boolean changeBlacklistStatus(BlacklistStatus status){
@@ -273,6 +303,10 @@ public class Applicant extends User {
         }
 
         return jobPreferences;
+    }
+
+    public void addJobApplication(JobApplication jobApplication){
+        this.jobApplications.add(jobApplication);
     }
 
 
@@ -354,8 +388,13 @@ public class Applicant extends User {
         return this.blacklistStatus.getBlacklistStatus();
     }
 
+    public List<JobApplication> getJobApplications() {
+        return jobApplications;
+    }
 
-
+    public void setJobApplications(List<JobApplication> jobApplications) {
+        this.jobApplications = jobApplications;
+    }
 
     public Date getBlacklistStartDate()
     {

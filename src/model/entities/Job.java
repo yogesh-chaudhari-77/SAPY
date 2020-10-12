@@ -84,7 +84,11 @@ public class Job {
 	 */
 	public void rankApplicant(Applicant applicntRef, int rank) {
 
-		this.shortListedApplicants.get(applicntRef.getId()).setRank(rank);
+		//Changed by Prodip to add jobApplication to applicant
+		JobApplication applicantJobApplication = this.shortListedApplicants.get(applicntRef.getId());
+		applicantJobApplication.setRank(rank);
+		applicntRef.addJobApplication(applicantJobApplication);
+		//this.shortListedApplicants.get(applicntRef.getId()).setRank(rank);
 	}
 
 	// Getter - Setters Starts Here

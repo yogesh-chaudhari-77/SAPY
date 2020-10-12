@@ -224,7 +224,7 @@ public class Employer extends User {
 			throw new InvalidApplicationException(applicant.getId()+" has not been shortlisted for this job");
 		}
 
-		Interview interviewRef = jobRef.getShortListedApplicants().get(applicant.getId()).getInterviewRef();
+		Interview interviewRef = jobRef.getShortListedApplicants().get(applicant.getId()).getInterview();
 
 		if(interviewRef == null){
 			throw new NullEntityException("Can't find any interview for this applicant");
