@@ -1,19 +1,34 @@
 package model.entities;
 
 import model.enums.*;
+import global.*;
 import model.exceptions.*;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Period;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class MaintenanceStaff extends User{
 	
 	private JobCategory jobcategory;
 	BlacklistStatus blacklistStatus;
+	private HashMap<String, User> allUsersList = null;
+	private HashMap<String, Employer> allEmployersList = null;
+	private HashMap<String, Applicant> allApplicantsList = null;
+
+	List<Complaints> allComplaints = new ArrayList<Complaints>();
+
 
 	private int catgId = 1;
 
@@ -34,7 +49,7 @@ public class MaintenanceStaff extends User{
 		}
 		else
 		{
-			throw new DuplicateJobCategoryException();
+			throw new DuplicateJobCategoryException("Duplication Attempt: This Job Category  '" + newCategory + "' already exist in the system!");
 		}
 		
 	}
@@ -97,30 +112,6 @@ public class MaintenanceStaff extends User{
 			status = revertFullyBlacklistedUser(user);
 		
 		return status;
-		
-		
-//		if (user instanceof Employer)
-//		{
-//			System.out.println("Before\n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
-//			((Employer) user).removeBlacklistStatus();
-//			System.out.println("After \n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
-//			return true;
-//		}
-//		else if (user instanceof Applicant)
-//		{
-//			if(((Applicant)user).getBlacklistStat() != null)
-//				System.out.println("Before\n Applicant ID: " + ((Applicant)user).getId() + " Blacklist Status: " + ((Applicant)user).getBlacklistStat());
-//			((Applicant) user).removeBlacklistStatus();
-//			System.out.println("After\n Applicant ID: " + ((Applicant)user).getId() + " Blacklist Status: " + ((Applicant)user).getBlacklistStat());
-//
-//			return true;
-//		}
-//		else
-//		{
-//			System.out.println("False");
-//			return false;
-//
-//		}
 	}
 
 	
@@ -129,12 +120,10 @@ public class MaintenanceStaff extends User{
 	{
 		if (user instanceof Employer)
 		{
-//			System.out.println("Before\n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
 			Employer emp = ((Employer) user);
 			if (emp.getBlacklistStat() == blacklistStatus.PROVISIONAL_BLACKLISTED)
 			{
 				emp.removeBlacklistStatus();
-//			System.out.println("After \n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
 				return true;
 			}
 			else
@@ -146,9 +135,7 @@ public class MaintenanceStaff extends User{
 			Applicant app = ((Applicant) user);
 			if(app.getBlacklistStat() == blacklistStatus.PROVISIONAL_BLACKLISTED)
 			{
-//				System.out.println("Before\n Applicant ID: " + ((Applicant)user).getId() + " Blacklist Status: " + ((Applicant)user).getBlacklistStat());
 				app.removeBlacklistStatus();
-//			System.out.println("After\n Applicant ID: " + ((Applicant)user).getId() + " Blacklist Status: " + ((Applicant)user).getBlacklistStat());
 				return true;
 			}
 			else
@@ -158,79 +145,394 @@ public class MaintenanceStaff extends User{
 		{
 			System.out.println("False");
 			return false;
-
 		}
 	}
 
 	
 	//Reactivating Fully blacklisted user
-		public boolean revertFullyBlacklistedUser(User user) throws NotFullyBlacklistedUserException, ParseException, BlacklistedTimeNotElapsedException 
+	public boolean revertFullyBlacklistedUser(User user) throws NotFullyBlacklistedUserException, ParseException, BlacklistedTimeNotElapsedException 
+	{
+		if (user instanceof Employer)
 		{
-			if (user instanceof Employer)
+			Employer emp = ((Employer) user);
+			if (emp.getBlacklistStat() == blacklistStatus.FULL_BLACKLISTED)
 			{
-//				System.out.println("Before\n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
-				Employer emp = ((Employer) user);
-				if (emp.getBlacklistStat() == blacklistStatus.FULL_BLACKLISTED)
-				{
-					SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-					Date blacklistedDate = emp.getBlacklistStartDate();
-					Date currentDate = dateFormat.parse(dateFormat.format(new Date()));
-					
-//					Date currentDate = dateFormat.parse("23/10/2020 15:42:42");
+				SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+				Date blacklistedDate = emp.getBlacklistStartDate();
+				Date currentDate = dateFormat.parse(dateFormat.format(new Date()));
 
-					long differnceInMillies = Math.abs(currentDate.getTime() - blacklistedDate.getTime());
-				    long difference = TimeUnit.DAYS.convert(differnceInMillies, TimeUnit.MILLISECONDS);
+				long differnceInMillies = Math.abs(currentDate.getTime() - blacklistedDate.getTime());
+				long difference = TimeUnit.DAYS.convert(differnceInMillies, TimeUnit.MILLISECONDS);
 
-//				    System.out.println("Time difference: " + difference);
-					
-					if(difference > 90)
-						emp.removeBlacklistStatus();
-					else
-						throw new BlacklistedTimeNotElapsedException();
-//				System.out.println("After \n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
-					return true;
-				}
+
+				if(difference > 90)
+					emp.removeBlacklistStatus();
 				else
-					throw new NotFullyBlacklistedUserException();
+					throw new BlacklistedTimeNotElapsedException();
+				//				System.out.println("After \n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
+				return true;
 			}
-				
-			else if (user instanceof Applicant)
-			{
-				Applicant app = ((Applicant) user);
-				
-				if (app.getBlacklistStat() == blacklistStatus.FULL_BLACKLISTED)
-				{
-					SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-					Date blacklistedDate = app.getBlacklistStartDate();
-					Date currentDate = dateFormat.parse(dateFormat.format(new Date()));
-					
-					long differnceInMillies = Math.abs(currentDate.getTime() - blacklistedDate.getTime());
-				    long difference = TimeUnit.DAYS.convert(differnceInMillies, TimeUnit.MILLISECONDS);
+			else
+				throw new NotFullyBlacklistedUserException();
+		}
 
-//				    System.out.println("Time difference: " + difference);
-					
+		else if (user instanceof Applicant)
+		{
+			Applicant app = ((Applicant) user);
+
+			if (app.getBlacklistStat() == blacklistStatus.FULL_BLACKLISTED)
+			{
+				SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+				Date blacklistedDate = app.getBlacklistStartDate();
+				Date currentDate = dateFormat.parse(dateFormat.format(new Date()));
+
+				long differnceInMillies = Math.abs(currentDate.getTime() - blacklistedDate.getTime());
+				long difference = TimeUnit.DAYS.convert(differnceInMillies, TimeUnit.MILLISECONDS);
+
 				if(difference > 90)
 					app.removeBlacklistStatus();
 				else
 					throw new BlacklistedTimeNotElapsedException();
-//				System.out.println("After \n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
-					return true;
-				}
-				else
-					throw new NotFullyBlacklistedUserException();
-				
+
+				return true;
 			}
 			else
-			{
-				System.out.println("False");
-				return false;
+				throw new NotFullyBlacklistedUserException();
 
-			}
 		}
+		else
+		{
+			System.out.println("False");
+			return false;
+
+		}
+	}
 	
 	//Generation the reports to tune the system
-	public void generateReport()
+	public void generateReport(HashMap<String, User>allUsersList, HashMap<String, Employer>allEmployersList, HashMap<String, Applicant>allApplicantsList, List<Complaints> allComplaints,HashMap<String, JobCategory>allJobCategories)
 	{
+		int choice = 0;
+		this.allUsersList = allUsersList;
+		this.allComplaints = allComplaints;
+		this.allApplicantsList = allApplicantsList;
+		this.allEmployersList = allEmployersList;
+		do
+		{
+			System.out.println("The Following reports can be generated in the System."
+					+ "\n 1. List of employers making offers, sorted based on the number of offers made in the specified period"
+					+ "\n 2. List of complaints about specific applicant or employer"
+					+ "\n 3. Jobs offered and accepted by a specific applicant"
+					+ "\n 4. All past offers for a particular Job Category" 
+					+ "\n 5. Exit"
+					+ "\n Enter your choice (1,2,3,4,5) : ");
+			try
+			{
+				choice = Integer.parseInt(Global.scanner.nextLine());
+			}
+			catch (Exception e)
+			{
+				System.out.println("You have entered an invlid input.Please try again!");
+			}
+				
+		} while (choice < 1 && choice > 5);
+		
+		System.out.println("Choice: " + choice);
+		System.out.println("allUsersList: " + this.allUsersList);
+		if (this.allComplaints != null)
+		System.out.println("allComplaints: " + this.allComplaints);
+
+		
+		switch (choice)
+		{
+		case 1 : generateReport1();
+				break;
+		case 2 :
+				{
+					String user;
+					System.out.println("Enter the id of the user :  ");
+					user = Global.scanner.nextLine();
+					if (this.allUsersList.get(user) == null)
+						System.out.println("The entered user does not exist");
+					else
+						generateReport2(user);	
+					break;
+				}
+						
+		case 3 : 
+				{
+					String user;
+					System.out.println("Enter the id of the Applicant :  ");
+					user = Global.scanner.nextLine();
+					if (this.allUsersList.get(user) == null)
+						System.out.println("The entered user does not exist");
+					else
+						generateReport3(user);
+					break;
+				}
+		case 4 : 
+			{
+				String jobID;
+				System.out.println("Enter the id of the Job Category :  ");
+				jobID = Global.scanner.nextLine();
+				if (!allJobCategories.containsKey(jobID))
+					System.out.println("The entered Job Category goes not exist in the system");
+				else
+					generateReport4(jobID, allJobCategories);
+				break;
+				
+			}
+		case 5 : break;
+		
+		default: System.out.println("In defualt");
+		}
 		//Yet to implement
+	}
+
+
+	public void generateReport1() {
+		// TODO Auto-generated method stub
+		
+		TreeMap<String, Integer> empOfferCount = new TreeMap<String, Integer>();
+		Date fromDate;
+		Date toDate;
+		
+		System.out.println("Please enter specific period for which thw report needs to be generated."
+				+ " \nEnter the Starting date (Format: dd/MM/yyyy) ");
+		fromDate = getDateInput();
+		
+		System.out.println("\nEnter the Ending date (Format: dd/MM/yyyy) ");
+		toDate = getDateInput();
+		
+		
+		for (Employer e: this.allEmployersList.values())
+		{
+			HashMap<String, Job> postedJobs = e.getPostedJobs();
+			int offerCount = 0;
+			
+			for (Job j: postedJobs.values())
+			{
+				HashMap<String, JobApplication> shortlistedApplicants = j.getShortListedApplicants();
+				for (JobApplication app: shortlistedApplicants.values())
+				{
+					if (app.getOfferRef() != null)
+					{
+						if (app.getOfferRef().getOfferedOn().compareTo(fromDate) >= 0)
+							offerCount++;
+					}
+						
+				}
+			}
+			
+			//Change it  to >0 later
+			if (offerCount >= 0)
+				empOfferCount.put(e.getId(),offerCount);
+		}
+		
+		
+		String filename = "src/reports/OfferedEmployers(SpecificPeriod).csv";
+		PrintWriter pw;
+		
+		try 
+		{
+			pw = new PrintWriter(new BufferedWriter (new FileWriter(filename,true)));
+			pw.println("List of Employers who made Offers:, From:  " + fromDate + ", To: " + toDate);
+			pw.println("Employer ID, No. of Offers");
+			for (String e: empOfferCount.descendingKeySet())
+			{
+					pw.println(e + "," + empOfferCount.get(e));
+			}
+			System.out.println("\nReport: " + filename + " is successfully generated. ");
+			pw.close();
+		} 
+		catch (Exception e1) 
+		{
+			System.out.println ("\nError occured in generating report file:  " + filename);
+			System.err.println(e1);
+		}
+		
+	}
+	
+	
+	//Report containing list of complaints of particular user(Employer/Applicant)
+	public void generateReport2(String user) 
+	{
+		// TODO Auto-generated method stub
+		if(this.allUsersList.containsKey(user))
+		{
+			String filename = "src/reports/ComplaintsOn" + user + ".csv";
+			PrintWriter pw;
+			
+			try 
+			{
+				pw = new PrintWriter(new BufferedWriter (new FileWriter(filename)));
+				pw.println("Complaints on the User : " + user);
+				pw.println("Complaint MadeBy, Complaint Message");
+				for (Complaints c: this.allComplaints)
+				{
+					if (c.getComplaintOn().contentEquals(user))
+					{
+						pw.println(c);
+					}
+				}
+				System.out.println("\nReport: " + filename + " is successfully generated. ");
+				pw.close();
+			} 
+			catch (Exception e1) 
+			{
+				System.out.println ("\nError occured in generating report file:  " + filename);
+				System.err.println(e1);
+			}
+			
+		}		
+	}
+	
+	
+	
+	public void generateReport3(String user) 
+	{
+		// TODO Auto-generated method stub
+		String appID = this.allApplicantsList.get(user).getId();
+		
+		int offeredCount = 0;
+		int acceptedCount = 0;
+		ArrayList<String> offeredJobIds = new ArrayList<String>();
+		ArrayList<String> acceptedJobIds = new ArrayList<String>();
+
+		
+		for (Employer e: this.allEmployersList.values())
+		{
+			HashMap<String, Job> postedJobs = e.getPostedJobs();
+			
+			
+			for (Job j: postedJobs.values())
+			{
+				HashMap<String, JobApplication> shortlistedApplicants = j.getShortListedApplicants();
+				for (JobApplication app: shortlistedApplicants.values())
+				{
+					if (app.getApplicantRef().getId().contentEquals(user))
+					{
+						if (app.getOfferRef() != null)
+						{
+							offeredCount++;
+							offeredJobIds.add(j.getJobId());
+							
+							if (app.getOfferRef().getOfferStatus() == OfferStatus.ACCEPTED)
+							{
+								acceptedCount++;
+								acceptedJobIds.add(j.getJobId());
+							}
+						}
+					}
+				}
+						
+			}
+		}
+		
+
+		String filename = "src/reports/Applicant_"  + user + "_OfferHistory" + ".csv";
+		PrintWriter pw;
+		
+		try 
+		{
+			pw = new PrintWriter(new BufferedWriter (new FileWriter(filename)));
+			pw.println("List of Jobs offered to and accepted by Applicant " + user);
+			pw.println("No. of Offers = " + offeredCount + "," + "No. of accepted Offers = " + acceptedCount);
+			pw.println("List of Jobs offered(Job IDs)");
+			
+			for (String s: offeredJobIds)
+			{
+				pw.println(s);
+			}
+			
+			pw.println("\n\n\nList of Jobs Accepted(Job IDs)");
+			
+			for (String s: acceptedJobIds)
+			{
+				pw.println(s);
+			}
+
+			System.out.println("\nReport: " + filename + " is successfully generated. ");
+			pw.close();
+		} 
+		catch (Exception e1) 
+		{
+			System.out.println ("\nError occured in generating report file:  " + filename);
+			System.err.println(e1);
+		}		
+	}
+	
+	
+	public void generateReport4(String jobID, HashMap<String, JobCategory> allJobCategories) 
+	{
+		// TODO Auto-generated method stub
+		
+		String jobCategoryTitle = allJobCategories.get(jobID).getCategoryTitle();
+		String filename = "src/reports/OffersForCategory"  + jobCategoryTitle + ".csv";
+		PrintWriter pw;
+		
+		
+		try 
+		{
+			pw = new PrintWriter(new BufferedWriter (new FileWriter(filename)));
+			pw.println("List of Jobs offered in the Job Category: " + jobCategoryTitle);
+			pw.println("Offer To,Offerd By,EmploymentDetails");
+			
+			for (Employer e: this.allEmployersList.values())
+			{
+				HashMap<String, Job> postedJobs = e.getPostedJobs();
+				
+				
+				for (Job j: postedJobs.values())
+				{
+					HashMap<String, JobApplication> shortlistedApplicants = j.getShortListedApplicants();
+					for (JobApplication app: shortlistedApplicants.values())
+					{
+						if (app.getOfferRef() != null)
+						{
+							if (app.getJobRef().getJobCategoryID().contentEquals(jobID))
+								pw.println(app.getApplicantRef().getId() + "," + e.getId() + "," + app.getOfferRef().getEmployementDetails());
+						}
+					}
+				}
+			}
+			System.out.println("\nReport: " + filename + " is successfully generated. ");
+			pw.close();
+		} 
+		catch (Exception e1) 
+		{
+			System.out.println ("\nError occured in generating report file:  " + filename);
+			System.err.println(e1);
+		}	
+		
+	}
+
+	
+	
+	
+	public Date getDateInput(){
+
+		String datePattern = "((0?[1-9])|(1[0-9])|(2[0-9])|(3[01]))/((0?[1-9])|1[012])/(19|20)[0-9]{2}";
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+		Pattern pattern = Pattern.compile(datePattern);
+
+		Date date = null;
+		boolean wrongDate;
+		do {
+			String dateUserInput = Global.scanner.nextLine();
+
+			if(pattern.matcher(dateUserInput).matches()){
+				wrongDate = false;
+				try	{
+					date = dateFormat.parse(dateUserInput);
+				} catch (ParseException e){
+					System.out.println(e);
+				}
+			} else {
+				System.out.println("Wrong date format");
+				wrongDate = true;
+			}
+		} while (wrongDate);
+
+		return date;
 	}
 }

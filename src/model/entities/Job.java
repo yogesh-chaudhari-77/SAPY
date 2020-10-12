@@ -16,6 +16,9 @@ public class Job {
 	// Short textual description about the job
 	private String jobDesc;
 
+	// ID of the Job category
+	private String jobCategoryID;
+
 	// When is the job posted
 	private Date jobPostedDateTime;
 
@@ -58,10 +61,11 @@ public class Job {
 	}
 
 
-	public Job(String jobId, String jobTitle, String jobDesc) {
+	public Job(String jobId, String jobTitle, String jobDesc, String jobCategory) {
 		this.jobId = jobId;
 		this.jobTitle = jobTitle;
 		this.jobDesc = jobDesc;
+		this.jobCategoryID = jobCategory;
 		this.jobPostedDateTime = new Date();
 		this.jobStatus = PostedJobJStatus.ACTIVE;
 		shortListedApplicants = new HashMap<String, JobApplication>();
@@ -94,6 +98,11 @@ public class Job {
 
 	public String getJobTitle() {
 		return jobTitle;
+	}
+	
+	public String getJobCategoryID()
+	{
+		return this.jobCategoryID;
 	}
 
 	public void setJobTitle(String jobTitle) {

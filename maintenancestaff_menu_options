@@ -6,4 +6,5 @@
 2 = View BlacklistedUsers
 3 = Blacklist user
 4 = Reactivate blacklisted user
+5 = Generate Reports
 Q = quit

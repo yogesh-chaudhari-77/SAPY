@@ -1,6 +1,6 @@
 package controller;
 
-import com.mashape.unirest.http.exceptions.UnirestException;
+//import com.mashape.unirest.http.exceptions.UnirestException;
 import global.*;
 import view.*;
 import customUtils.*;
@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 
 import com.sun.jdi.InvalidTypeException;
 
-import javax.mail.MessagingException;
+//import javax.mail.MessagingException;
 import javax.management.InvalidApplicationException;
 
 // Commenting should be enough
@@ -734,6 +734,26 @@ public class SystemHandler {
 		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
 		allUsersList.put("E003", new Employer("E003", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
 		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2", "Test" ,"Employer2", "123"));
+		Complaints testComplaint = new Complaints((Applicant)this.allUsersList.get("app6"),(Employer)this.allUsersList.get("E001") , "Test Complaint");
+
+		allEmployersList.put(allUsersList.get("E001").getId(),(Employer)allUsersList.get("E001"));
+		allEmployersList.put(allUsersList.get("E002").getId(),(Employer)allUsersList.get("E002"));
+		allEmployersList.put(allUsersList.get("E003").getId(),(Employer)allUsersList.get("E003"));
+
+		// Create some job categories
+		JobCategory j1 = new JobCategory("Category1", "Active", 1);
+		JobCategory j2 = new JobCategory("Category2", "Active", 2);
+		JobCategory j3 = new JobCategory("Category3", "Active", 3);
+
+		// Adding for system level
+		this.allJobCategories.put("C1", j1);
+		this.allJobCategories.put("C2", j2);
+		this.allJobCategories.put("C3", j3);
+		
+		// Add to all complaint's list
+		this.allComplaints.add(testComplaint);
+
+		
 
 		do{
 			String choice = menu.show();
@@ -793,20 +813,27 @@ public class SystemHandler {
 				//Reactivating Blacklisted User
 				case "4":
 				{
-					String user, blacklistType;
+					String user;
+					int blacklistType;
+					String type;
 					System.out.println("Enter the blacklisted type of User to be reactivated. " +
-										"\n 'P' - Provisionally Blacklisted user \n 'F' - Fully Blacklisted user " +
-										"Enter your choice ( P / F ) : ");
+										"\n 1. 'P' - Provisionally Blacklisted user \n 2.'F' - Fully Blacklisted user " +
+										"Enter your choice ( 1 / 2 ) : ");
 					try
 					{
-						blacklistType = input.nextLine();
-						if (!blacklistType.toUpperCase().contentEquals("P") && !blacklistType.toUpperCase().contentEquals("F"))
+						blacklistType = Integer.parseInt(input.nextLine());
+						if (blacklistType < 1 && blacklistType > 2)
 							throw new Exception();
 
+						if (blacklistType == 1)
+							type = "P";
+						else
+							type = "F";
+						
 						System.out.println("Enter the id of the user to be reactivated:  ");
 						user = input.nextLine();
 				
-						if(staff.revertBlacklistedUser((User)(allUsersList.get(user)), blacklistType))
+						if(staff.revertBlacklistedUser((User)(allUsersList.get(user)), type))
 							blacklistedUsers.remove("E1");
 					}
 					catch(Exception e)
@@ -818,6 +845,10 @@ public class SystemHandler {
 				//registerMaintenanceStaff();
 				break;
 
+				case "5" :
+				{
+					staff.generateReport(this.allUsersList, this.allEmployersList, this.allApplicantsList,this.allComplaints, this.allJobCategories);
+				}
 				case "Q":
 					quit = true;
 
@@ -914,11 +945,11 @@ public class SystemHandler {
 
 				case "10" :
 				{
-					try {
-						EmailUtil.sendEmail(new EmailObject("","","",""));
-					} catch (MessagingException | UnirestException e) {
-						e.printStackTrace();
-					}
+//					try {
+//						EmailUtil.sendEmail(new EmailObject("","","",""));
+//					} catch (MessagingException | UnirestException e) {
+//						e.printStackTrace();
+//					}
 				}
 
 				case "Q":
@@ -1006,6 +1037,18 @@ public class SystemHandler {
 		String jobId = customScanner.readString("Job ID : ");
 		String jobTitle = customScanner.readString("Job Title : ");
 		String jobDesc = customScanner.readString("Description : ");
+		
+		System.out.println("Job categories avaialable in the System\n-------------------------------------------------------");
+		
+		for (String s: allJobCategories.keySet())
+		{
+			System.out.println (allJobCategories.get(s));
+		}
+		
+		String jobCategory = customScanner.readString("Job Category ID : ");
+		if(this.allJobCategories.get(jobCategory) != null)
+		{	
+		
 
 
 		// This is kind of accepting required userAvailability
@@ -1034,7 +1077,7 @@ public class SystemHandler {
 
 
 		// Create new job
-		Job tempJob = new Job(jobId, jobTitle, jobDesc);
+		Job tempJob = new Job(jobId, jobTitle, jobDesc, jobCategory);
 
 		// Add that job to the employer
 		try {
@@ -1052,6 +1095,9 @@ public class SystemHandler {
 
 
 		printPostedJobs( employer.getId() );
+		}
+		else
+			System.out.println("Entered Job category does not exist.Please try again");
 	}
 
 
@@ -1550,9 +1596,9 @@ public class SystemHandler {
 
 		Employer e = new Employer("e", "chaudhari.yogesh20@gmail.com", "123", "Yosha");
 		try {
-			e.createJob(new Job("job1", "Developer", "Developer Desc"));
-			e.createJob(new Job("job2", "Analyst", "Analyst Required"));
-			e.createJob(new Job("job3", "Designer", "Designer Required"));
+			e.createJob(new Job("job1", "Developer", "Developer Desc","C1"));
+			e.createJob(new Job("job2", "Analyst", "Analyst Required", "C1"));
+			e.createJob(new Job("job3", "Designer", "Designer Required", "C2"));
 
 			List<Date> jobInterviewTimes = new ArrayList<Date>();
 			jobInterviewTimes.add(new Date("01/10/2020"));
@@ -1588,9 +1634,9 @@ public class SystemHandler {
 		e.getPostedJobs().get("job1").getShortListedApplicants().put("app5", ja);
 
 		// Create some job categories
-		JobCategory j1 = new JobCategory("1", "Active", 1);
-		JobCategory j2 = new JobCategory("2", "Active", 2);
-		JobCategory j3 = new JobCategory("3", "Active", 3);
+		JobCategory j1 = new JobCategory("Category1", "Active", 1);
+		JobCategory j2 = new JobCategory("Category2", "Active", 2);
+		JobCategory j3 = new JobCategory("Category3", "Active", 3);
 
 		// Adding for system level
 		this.allJobCategories.put("C1", j1);

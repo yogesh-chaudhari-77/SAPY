@@ -110,7 +110,7 @@ public class TestMaintenanceStaff {
 		
 		//Pre condition
 		staff.blacklistUser(allUsersList.get("E001"), "F");
-		((Employer)allUsersList.get("E001")).setBlacklistStartDate(dateFormat.parse("15/05/2020 15:42:42"));
+		((Employer)allUsersList.get("E001")).setBlacklistStartDate(dateFormat.parse("24/06/2020 15:42:42"));
 		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.FULL_BLACKLISTED);
 		
 		//Operation
@@ -165,8 +165,8 @@ public class TestMaintenanceStaff {
 	
 	/* Negative Test Case for Re-activating Provisionally Blacklisted User 
 	 * 		-- Check the pre condition, such that  User is not blacklisted.
-	 * 		-- Then perform the operation of  reactivating the Provisionally blacklisted user on non blacklisted user
-	 * 			which should throw NotProvisionallyBlacklistedUserException
+	 * 		-- Then perform the operation of  reactivating the Fully blacklisted user on non blacklisted user
+	 * 			which should throw NotFullyBlacklistedUserException
 	 * 		
 	 */
 	
@@ -186,8 +186,8 @@ public class TestMaintenanceStaff {
 	
 	/* Negative Test Case for Re-activating Fully Blacklisted User, where the blacklisted period has not exceeded 3 months 
 	 * 		-- Check the pre condition, such that  User is Fully blacklisted.
-	 * 		-- Then perform the operation of  reactivating the Provisionally blacklisted user on non blacklisted user
-	 * 			which should throw NotProvisionallyBlacklistedUserException
+	 * 		-- Then perform the operation of  reactivating the fully blacklisted user before the duration of blacklisted period is less than 
+	 * 			3 months ,which should throw BlacklistedTimeNotElapsedException
 	 * 		
 	 */
 	

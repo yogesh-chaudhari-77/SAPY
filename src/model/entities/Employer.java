@@ -1,6 +1,6 @@
 package model.entities;
 
-import com.mashape.unirest.http.exceptions.UnirestException;
+//import com.mashape.unirest.http.exceptions.UnirestException;
 import customUtils.EmailUtil;
 import model.enums.*;
 import model.exceptions.*;
@@ -11,13 +11,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+//import org.apache.commons.lang3.StringEscapeUtils;
 
 import org.json.JSONObject;
 
 import com.sun.jdi.InvalidTypeException;
 
-import javax.mail.MessagingException;
+//import javax.mail.MessagingException;
 import javax.management.InvalidApplicationException;
 
 /*
@@ -333,13 +333,13 @@ public class Employer extends User {
 		matter.append("Best Regards,");
 		matter.append("Team SAPY");
 
-		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
-		try {
-			EmailUtil.sendEmail(newEmail);
-			System.out.println(newEmail);
-		} catch (MessagingException | UnirestException e) {
-			e.printStackTrace();
-		}
+//		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
+//		try {
+//			EmailUtil.sendEmail(newEmail);
+//			System.out.println(newEmail);
+//		} catch (MessagingException | UnirestException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	/**
@@ -369,13 +369,13 @@ public class Employer extends User {
 		matter.append("Best Regards, ");
 		matter.append("Team SAPY ");
 
-		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
-		try {
-			EmailUtil.sendEmail(newEmail);
-			System.out.println(newEmail);
-		} catch (MessagingException | UnirestException e) {
-			e.printStackTrace();
-		}
+//		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
+//		try {
+//			EmailUtil.sendEmail(newEmail);
+//			System.out.println(newEmail);
+//		} catch (MessagingException | UnirestException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 
