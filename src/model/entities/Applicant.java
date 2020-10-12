@@ -132,6 +132,24 @@ public class Applicant extends User {
 
     public boolean addAvailability(AvailabilityType availabilityType, List<JobCategory> jobCategories, int hoursPerWeek, Date periodStartDate, Date periodEndDate) throws DuplicateEntryException, BadEntryException {
         boolean duplicateAvailability= false;
+        String nullObjectExceptionMessage= "";
+        if(availabilityType == null){
+            nullObjectExceptionMessage= "Availability Type passed points to null";
+        }
+        if(jobCategories == null){
+            nullObjectExceptionMessage= "List of JobCategories passed points to null";
+        }
+        if(periodStartDate == null){
+            nullObjectExceptionMessage= "Period Start Date passed points to null";
+        }
+
+        if(periodEndDate == null){
+            nullObjectExceptionMessage= "Period End Date passed points to null";
+        }
+
+        if(!nullObjectExceptionMessage.isEmpty()){
+            throw new NullObjectException(nullObjectExceptionMessage);
+        }
 
         UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
 
@@ -151,10 +169,10 @@ public class Applicant extends User {
             userAvailability.add(availability);
         }
 
-        return false;
+        return true;
     }
 
-    public boolean validAvailability(UserAvailability availability) throws BadEntryException, DuplicateEntryException {
+    public boolean validAvailability(UserAvailability availability) throws BadEntryException {
 
 
         if(availability.getPeriodStartDate().after(availability.getPeriodEndDate())
