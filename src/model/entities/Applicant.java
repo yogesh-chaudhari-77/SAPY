@@ -1,5 +1,6 @@
 package model.entities;
 import java.io.File;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -206,19 +207,19 @@ public class Applicant extends User {
     }
 
 
-
-    //Blacklisting an user by setting type to 'P' or 'F'
-    public void setBlacklistStatus(String type)
-    {
-        blacklistStatus.setBlacklistStatus(type);
-    }
-
-
-    //Reactivating the blacklisted user
-    public void removeBlacklistStatus()
-    {
-        blacklistStatus.removeBlacklistStatus();
-    }
+		
+	//Blacklisting an user by setting type to 'P' or 'F'
+	public void setBlacklistStatus(String type) throws ParseException
+	{
+		blacklistStatus.setBlacklistStatus(type);
+	}
+	
+	
+	//Reactivating the blacklisted user
+	public void removeBlacklistStatus()
+	{
+		blacklistStatus.removeBlacklistStatus();
+	}
 
     /**
      * Extra function to preserve functionality
@@ -320,7 +321,7 @@ public class Applicant extends User {
 
 
 
-    public Date getStartDate()
+    public Date getBlacklistStartDate()
     {
         return blacklistStatus.getStartDate();
     }

@@ -1,22 +1,23 @@
 package model.entities;
 
-import com.mashape.unirest.http.exceptions.UnirestException;
+//import com.mashape.unirest.http.exceptions.UnirestException;
 import customUtils.EmailUtil;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+//import org.apache.commons.lang3.StringEscapeUtils;
 
 import org.json.JSONObject;
 
 import com.sun.jdi.InvalidTypeException;
 
-import javax.mail.MessagingException;
+//import javax.mail.MessagingException;
 import javax.management.InvalidApplicationException;
 
 /*
@@ -332,13 +333,13 @@ public class Employer extends User {
 		matter.append("Best Regards,");
 		matter.append("Team SAPY");
 
-		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
-		try {
-			EmailUtil.sendEmail(newEmail);
-			System.out.println(newEmail);
-		} catch (MessagingException | UnirestException e) {
-			e.printStackTrace();
-		}
+//		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
+//		try {
+//			EmailUtil.sendEmail(newEmail);
+//			System.out.println(newEmail);
+//		} catch (MessagingException | UnirestException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 	/**
@@ -368,13 +369,13 @@ public class Employer extends User {
 		matter.append("Best Regards, ");
 		matter.append("Team SAPY ");
 
-		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
-		try {
-			EmailUtil.sendEmail(newEmail);
-			System.out.println(newEmail);
-		} catch (MessagingException | UnirestException e) {
-			e.printStackTrace();
-		}
+//		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
+//		try {
+//			EmailUtil.sendEmail(newEmail);
+//			System.out.println(newEmail);
+//		} catch (MessagingException | UnirestException e) {
+//			e.printStackTrace();
+//		}
 	}
 
 
@@ -470,7 +471,7 @@ public class Employer extends User {
 		this.blacklistStatus.setBlacklistStatus(blacklistStatus);
 	}
 	//Blacklisting the employer by setting type to 'P' or 'F'
-	public void setBlacklistStatus(String type)
+	public void setBlacklistStatus(String type) throws ParseException
 	{
 		blacklistStatus.setBlacklistStatus(type);
 	}
@@ -481,10 +482,15 @@ public class Employer extends User {
 	{
 		blacklistStatus.removeBlacklistStatus();
 	}
-
-	public Date getStartDate()
+	
+	public Date getBlacklistStartDate()
 	{
 		return blacklistStatus.getStartDate();
+	}
+	
+	public void setBlacklistStartDate(Date startDate) throws ParseException
+	{
+		blacklistStatus.setStartDate(startDate);
 	}
 
 }

@@ -24,6 +24,12 @@ public class Complaints {
 		this.complaintMessage = message;
 	}
 	
+	public String getComplaintOn()
+	{
+		return this.complaintOnUser.getId();
+	}
+	
+	
 
 	//* Complaint made by employer on applicant
 	public Complaints(Employer emp, Applicant app, String message)
@@ -33,4 +39,10 @@ public class Complaints {
 		this.complaintMessage = message;
 	}
 
+	public String toString() 
+	{
+		String printString;
+		printString = "\n" + this.complainingUser.getId() + "," + this.complaintMessage;
+		return printString;
+	}
 }
