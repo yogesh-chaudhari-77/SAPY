@@ -14,6 +14,7 @@ public class EmploymentRecord {
     private Date endDate;
     private boolean currentCompany;
 
+
     public EmploymentRecord(String companyName, String designation, Date startDate, Date endDate, boolean currentCompany) {
         this.companyName = companyName;
         this.designation = designation;
@@ -34,6 +35,10 @@ public class EmploymentRecord {
 
     public boolean getCurrentCompany(){
         return currentCompany;
+    }
+
+    public String getDesignation() {
+        return designation;
     }
 
     @Override
