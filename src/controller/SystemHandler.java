@@ -330,6 +330,15 @@ public class SystemHandler {
 
 				case "6":
 					addUpdateAvailability(applicant);
+					break;
+
+				case "9":
+					selectInterviewTiming(applicant);
+					break;
+
+				case "10":
+					respondToJobOffer(applicant);
+					break;
 
 				case "Q":
 					quit = true;
@@ -973,6 +982,172 @@ public class SystemHandler {
 			System.out.println("Failed to add employment record. Please try again.");
 		}
 
+	}
+
+	public void selectInterviewTiming(Applicant applicant){
+		List<JobApplication> jobApplications = applicant.getJobApplications();
+		if(jobApplications.size() == 0){
+			System.out.println("You currently have no pending Interview Timings");
+		}else{
+			System.out.println("You have "+ jobApplications.size()+" pending interview(s)");
+			StringBuilder builder = new StringBuilder();
+			for(int i=0; i< jobApplications.size(); i++){
+				builder.append(i+1).append(" : ").append(jobApplications.get(i).getJobRef().getJobTitle()).append("\n");
+			}
+			System.out.println(builder.toString());
+			String choice;
+			do {
+				System.out.print("Enter the Job number for which you want to select interview timing: ");
+				choice = Global.scanner.nextLine();
+				if (!isInt(choice) || (Integer.valueOf(choice) > jobApplications.size())) {
+					System.out.println("Wrong Choice. Please try again.");
+				}else{
+					break;
+				}
+			}while(true);
+
+			JobApplication selectedJobApplication = jobApplications.get(Integer.valueOf(choice)-1);
+			int dateIndex = fetchPreferredInterViewDate(selectedJobApplication);
+			if(dateIndex != -1){
+				boolean updateSuccessful = applicant.selectInterviewTiming(Integer.valueOf(choice)-1, dateIndex);
+				if(updateSuccessful){
+					System.out.println("Job Interview has been set for "+ new SimpleDateFormat("dd/MM/yyyy").format(selectedJobApplication.getJobRef().getAvailInterviewTimings().get(dateIndex)));
+				}else{
+					System.out.println("Error setting Job Interview Time. Please try again later.");
+				}
+			}
+		}
+	}
+
+	public int fetchPreferredInterViewDate(JobApplication selectedJobApplication){
+
+		List<Date> availableDates = selectedJobApplication.getJobRef().getAvailInterviewTimings();
+		if(availableDates.size() == 0){
+			System.out.println("No dates available");
+			return -1;
+		}else{
+			StringBuilder builder = new StringBuilder();
+			builder.append("The following date(s) are available for the interview\n");
+			SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+			for(int i=0; i<availableDates.size(); i++){
+				builder.append(i+1).append(" : ").append(formatter.format(availableDates.get(i))).append("\n");
+			}
+			System.out.println(builder.toString());
+			String choice;
+			do {
+				System.out.print("Enter the number corresponding to your preferred date (Enter Q to go back to the previous menu): ");
+				choice = Global.scanner.nextLine();
+				if(choice.equalsIgnoreCase("q")){
+					return -1;
+				}else if (!isInt(choice) || (Integer.valueOf(choice) > availableDates.size())) {
+					System.out.println("Wrong Choice. Please try again.");
+				}else{
+					break;
+				}
+			}while(true);
+
+			return Integer.valueOf(choice)-1;
+		}
+
+	}
+
+	private boolean isInt(String value){
+		try {
+			Integer.valueOf(value);
+			return true;
+		}catch (NumberFormatException e){
+			return false;
+		}
+	}
+
+	public void respondToJobOffer(Applicant applicant){
+
+		List<JobApplication> jobApplications = applicant.getJobApplications();
+		if(applicant.getEmploymentStatus() == EmploymentStatus.EMPLOYED){
+			System.out.println("Employed applicants cannot accept more job offers");
+			return;
+		}
+		if(jobApplications.size() == 0){
+			System.out.println("You currently have no pending Job Offer(s)");
+		}else{
+			boolean jobOffersFound= false;
+			StringBuilder builder = new StringBuilder();
+			builder.append("You have the following pending Job Offer(s)\n");
+			for(int i=0; i< jobApplications.size(); i++){
+				JobApplication currApplication = jobApplications.get(i);
+				if(currApplication.getOfferRef() != null && currApplication.getOfferRef().getOfferStatus() == OfferStatus.PENDING) {
+					builder.append(i + 1).append(" : ").append(currApplication.getJobRef().getJobTitle()).append("\n");
+					jobOffersFound = true;
+				}
+			}
+			if(!jobOffersFound){
+				System.out.println("You currently have no pending Job Offer(s)");
+				return;
+			}
+			System.out.println(builder.toString());
+			String choice;
+			do {
+				System.out.print("Enter the Job number (or Enter Q to go back to the previous menu): ");
+				choice = Global.scanner.nextLine();
+				if(choice.equalsIgnoreCase("q")){
+					return;
+				}else if (!isInt(choice) || (Integer.valueOf(choice) > jobApplications.size())) {
+					System.out.println("Wrong Choice. Please try again.");
+				}else{
+					break;
+				}
+			}while(true);
+
+			JobApplication selectedJobApplication = jobApplications.get(Integer.valueOf(choice)-1);
+			int decision = fetchJobOfferChoice(selectedJobApplication);
+			if(decision != -1){
+				boolean updateSuccessful = applicant.replyToJobOffer(Integer.valueOf(choice)-1, decision);
+				if(updateSuccessful && applicant.getEmploymentStatus() == EmploymentStatus.EMPLOYED){
+					System.out.println("Congratulations!! You have accepted this job");
+				}else if(updateSuccessful && applicant.getEmploymentStatus() != EmploymentStatus.EMPLOYED){
+					System.out.println("You have successfully responded to the JobOffer");
+				}else{
+					System.out.println("Error setting Job Interview Time. Please try again later.");
+				}
+			}else{
+				respondToJobOffer(applicant);
+			}
+		}
+	}
+
+	/**
+	 * This function prompts user to accept or reject a JobOffer
+	 * Possible return value:
+	 * 1-> Accept,
+	 * 0-> Reject,
+	 * -1-> Undecided or force quit
+	 */
+	public int fetchJobOfferChoice(JobApplication selectedJobApplication){
+
+		StringBuilder builder = new StringBuilder();
+		builder.append("Job Offer for ").append(selectedJobApplication.getJobRef().getJobTitle()).append("\n");
+		builder.append("1 : Accept\n").append("2 : Reject\n").append("3 : Decide Later");
+		System.out.println(builder.toString());
+		String choice;
+		do {
+			System.out.print("Enter the your choice: ");
+			choice = Global.scanner.nextLine();
+			if (!isInt(choice) || (Integer.valueOf(choice) > 3)) {
+				System.out.println("Wrong Choice. Please try again.");
+			}else{
+				break;
+			}
+		}while(true);
+
+		int decision= -1;
+
+		switch (Integer.valueOf(choice)){
+			case 1: decision= 1;
+					break;
+			case 2: decision= 0;
+					break;
+		}
+		return decision;
 	}
 
 	public Date getDateInput(){
@@ -1957,6 +2132,50 @@ public class SystemHandler {
 
 		printApplicantList();
 		printPostedJobs(e.getId());
+
+
+		//Added by Prodip Guha Roy for testing
+		Applicant a10 = new Applicant("app10", "chaudhari.yogesh20@gmail.com", "123", "John", "Snow", "048888888", "l");
+		Applicant a11 = new Applicant("app11", "chaudhari.yogesh20@gmail.com", "123", "Jane", "Doe", "048888888", "l");
+		Employer employer = new Employer("emp1", "chaudhari.yogesh20@gmail.com", "123", "Yosha");
+		this.allUsersList.put("app10", a10);
+		this.allApplicantsList.put("app10", a10);
+		this.allUsersList.put("app11", a11);
+		this.allApplicantsList.put("app11", a11);
+		this.allUsersList.put("emp1", employer);
+		this.allEmployersList.put("emp1", employer);
+
+		try {
+			employer.createJob(new Job("job1", "Store Manager", "Store Manager role at Woolies","C1"));
+			employer.createJob(new Job("job2", "Team Member", "Team Member role at Woolies", "C1"));
+
+			List<Date> jobInterviewTimes = new ArrayList<Date>();
+			jobInterviewTimes.add(new Date("01/10/2020"));
+			jobInterviewTimes.add(new Date("02/10/2020"));
+			jobInterviewTimes.add(new Date("03/10/2020"));
+
+			jobInterviewTimes.add(new Date("05/10/2020"));
+			jobInterviewTimes.add(new Date("06/10/2020"));
+
+			employer.getPostedJobs().get("job2").setAvailInterviewTimings(jobInterviewTimes);
+			employer.getPostedJobs().get("job1").setAvailInterviewTimings(jobInterviewTimes);
+
+			employer.shortListCandidate(employer.getPostedJobs().get("job1"), a10);
+			employer.rankApplicant(employer.getPostedJobs().get("job1"), a10, 1);
+
+			employer.shortListCandidate(employer.getPostedJobs().get("job2"), a11);
+			employer.rankApplicant(employer.getPostedJobs().get("job2"), a11, 1);
+
+			employer.createJobOffer(employer.getPostedJobs().get("job2"), a11);
+
+		}
+		catch (DuplicateJobIdException | AlreadyPresentInYourShortListedListException | ApplicantIsBlackListedException | NullApplicantException | NullJobReferenceException | NullJobException | InvalidApplicationException | NullEntityException e1) {
+			e1.printStackTrace();
+		}
+
+
+
+
 	}
 
 	/**
