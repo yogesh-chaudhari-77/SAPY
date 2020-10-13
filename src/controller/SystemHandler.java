@@ -89,15 +89,7 @@ public class SystemHandler {
 			// read a value from the user
 			// switch statement, call appropriate method.
 			choice = choice.toUpperCase();
-//			System.out.println("you just entered in " + choice);
-//
-//			if (choice.equals("1")) {
-//				System.out.println("Option 1 processing");
-//			}
-//
-//			if (choice.equalsIgnoreCase("q")) {
-//				quit = true;
-//			}
+
 			switch(choice){
 				case "1":
 					register();
@@ -119,7 +111,7 @@ public class SystemHandler {
 		} while (!quit);
 	}
 
-	public void register(){
+	public void register() throws ParseException {
 		boolean quit = false;
 		Menu menu = null;
 
@@ -131,7 +123,7 @@ public class SystemHandler {
 			System.out.println();
 		}
 
-		do{
+
 			System.out.println("====Registration Menu====");
 			String choice = menu.show();
 			choice = choice.toUpperCase();
@@ -147,17 +139,14 @@ public class SystemHandler {
 						System.out.println("Employer registration successful");
 						System.out.println(retEmp.toString());
 					}
+					showEmployerMenu(retEmp);
 					break;
 
-//				case "3":
-//					//registerMaintenanceStaff();
-//					break;
-
 				case "Q":
-					quit = true;
+					break;
 
 			}
-		} while (!quit);
+
 
 	}
 
@@ -183,7 +172,7 @@ public class SystemHandler {
 				allApplicantsList.put(id, applicant);
 				System.out.println("Applicant account created successfully\n"+applicant.toString());
 				exitLoop = true;
-
+				showApplicantMenu(applicant);
 			} else {
 				System.out.println("Wrong choice. Please try again");
 			}
@@ -324,11 +313,10 @@ public class SystemHandler {
 					break;
 
 				case "2":
-					registerEmployer();
+					addUpdateReferences(applicant);
 					break;
 
 				case "3":
-					//employmentRecords
 					addUpdateEmploymentHistory(applicant);
 					break;
 
@@ -367,7 +355,7 @@ public class SystemHandler {
 		if (operation.equals("add")){
 			addQualification(applicant);
 		} else if (operation.equals("update")){
-			//updateQualification(applicant);
+			updateQualification(applicant);
 		} else if (operation.equals("view")){
 			showQualification(applicant);
 		} else {
@@ -375,6 +363,11 @@ public class SystemHandler {
 			return ;
 		}
 	}
+
+	public void addUpdateReferences(Applicant applicant){
+
+	}
+
 	public void addUpdateEmploymentHistory(Applicant applicant){
 		boolean continueMessageDisplay = true;
 		do {
@@ -384,7 +377,7 @@ public class SystemHandler {
 				if (operation.equals("add")) {
 					addEmploymentHistory(applicant);
 				} else if (operation.equals("update")) {
-					//updateEmploymentHistory(applicant);
+					updateEmploymentHistory(applicant);
 				} else if (operation.equals("view")) {
 					showEmploymentRecords(applicant);
 				} else {
@@ -396,6 +389,228 @@ public class SystemHandler {
 				//continueMessageDisplay= true;
 			}
 		}while (continueMessageDisplay);
+	}
+
+	public void updateEmploymentHistory(Applicant applicant){
+		String printStatement;
+
+		if(!showEmploymentRecords(applicant)){
+			return;
+		}
+		int numOfRecords = applicant.getEmploymentHistory().size();
+		printStatement = "Enter the Employment record number to update : ";
+		System.out.print(printStatement);
+		int recordNo = validInput(printStatement, numOfRecords) - 1;
+
+		String companyName, designation;
+		Date startDate, endDate;
+		boolean currentCompany;
+
+		EmploymentRecord updateEmpRec = applicant.getEmploymentHistory().get(recordNo);
+
+		companyName = updateEmpRec.getCompanyName();
+		designation = updateEmpRec.getDesignation();
+		startDate = updateEmpRec.getStartDate();
+		endDate = updateEmpRec.getEndDate();
+		currentCompany = updateEmpRec.getCurrentCompany();
+
+		boolean runLoop = true;
+
+		do{
+			System.out.println("\n===Details that can be updated===");
+			System.out.println("1. Company Name\n" +
+					"2. Start Date\n" +
+					"3. End Date\n" +
+					"4. Designation\n" +
+					"5. Current Company Status\n" +
+					"U. Update and exit.\n" +
+					"Q. Exit without updating");
+			System.out.print("Enter Option to update : ");
+			String choice = Global.scanner.nextLine();
+
+			switch(choice){
+				case "1":
+					System.out.print("Enter the Company name to update : ");
+					companyName = Global.scanner.nextLine();
+					break;
+				case "2":
+					System.out.print("Enter the start date to update : ");
+					startDate = getDateInput();
+					break;
+				case "3":
+					System.out.print("Enter the end date to update : ");
+					endDate = getDateInput();
+					break;
+				case "4":
+					System.out.print("Enter the Designation to update : ");
+					designation = Global.scanner.nextLine();
+					break;
+				case "5":
+					boolean exitLoop = true;
+					do{
+						System.out.print("Are you still working in this company?(Y/N): ");
+						String input= Global.scanner.nextLine();
+						if(input.equalsIgnoreCase("y")) {
+							currentCompany = true;
+							endDate = null;
+							exitLoop = true;
+						} else if (input.equalsIgnoreCase("n")){
+							currentCompany = false;
+							System.out.print("Enter the end date to update : ");
+							endDate = getDateInput();
+							exitLoop = true;
+						} else {
+							System.out.println("Wrong Input!! Enter Y or N");
+							exitLoop = false;
+						}
+					} while (!exitLoop);
+					break;
+				case "U":
+					EmploymentRecord updateEmpRecord = new EmploymentRecord(companyName, designation, startDate, endDate, currentCompany);
+					try {
+						applicant.updateEmploymentRecords(updateEmpRecord, recordNo);
+						System.out.println("Employment Record updated successfully.");
+						System.out.println(applicant.getEmploymentHistory().get(recordNo));
+					} catch (NoSuchRecordException | BadEmployeeRecordException e) {
+						System.out.println(e);
+					}
+					runLoop = false;
+					break;
+				case "Q":
+					System.out.println("Exiting without updating.");
+					runLoop = false;
+				default:
+					System.out.println("Wrong input!!!\nKindly check option and try again.");
+					break;
+			}
+		} while (runLoop);
+	}
+
+	public void updateQualification(Applicant applicant){
+		String printStatement;
+		List<Qualification> qualifications = applicant.getQualifications();
+		int numOfQualifications = qualifications.size();
+
+		if (numOfQualifications == 0){
+			System.out.println("No Qualification Exists. Please Add a Qualification to profile.");
+			return;
+		}
+
+		int recordNo;
+		for (int i =0 ; i < numOfQualifications; i++){
+			recordNo = i+1;
+			System.out.println(recordNo+". "+ qualifications.get(i));
+		}
+
+		printStatement = "Enter the qualification number to update : ";
+		System.out.print(printStatement);
+
+		recordNo = validInput(printStatement, numOfQualifications) - 1;
+		String qualificationLevel, fieldOfStudy;
+		double marks;
+		Date startDate, endDate;
+		Qualification updateQual = qualifications.get(recordNo);
+
+		qualificationLevel = updateQual.getQualificationLevel();
+		fieldOfStudy = updateQual.getFieldOfStudy();
+		marks = updateQual.getMarksObtained();
+		startDate = updateQual.getStartDate();
+		endDate = updateQual.getEndDate();
+
+		boolean exitLoop = false;
+
+		do{
+			System.out.println("\n===Details that can be updated===");
+			System.out.println("1. Qualification Level\n" +
+							"2. Start Date\n" +
+							"3. End Date\n" +
+							"4. Field of Study\n" +
+							"5. Marks Obtained\n" +
+							"U. Update and exit.\n" +
+							"Q. Exit without updating");
+			System.out.print("Enter Option to update : ");
+			Global.scanner.nextLine();
+			String choice = Global.scanner.nextLine();
+
+			switch(choice){
+				case "1":
+					System.out.print("Enter the Qualification to update : ");
+					qualificationLevel = Global.scanner.nextLine();
+					break;
+				case "2":
+					System.out.print("Enter the start date to update : ");
+					startDate = getDateInput();
+					break;
+				case "3":
+					System.out.print("Enter the end date to update : ");
+					endDate = getDateInput();
+					break;
+				case "4":
+					System.out.print("Enter the Field of Study to update : ");
+					fieldOfStudy = Global.scanner.nextLine();
+					break;
+				case "5":
+					printStatement = "Enter the marks Obtained : ";
+					System.out.print(printStatement);
+					marks = doubleInput(printStatement);
+				case "U":
+					Qualification updateQualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marks);
+					try {
+						applicant.updateQualifications(updateQualification, recordNo);
+						System.out.println("Qualification updated successfully.");
+						System.out.println(applicant.getQualifications().get(recordNo));
+					} catch (NoSuchRecordException | BadEntryException e) {
+						System.out.println(e);
+					}
+					exitLoop = true;
+					break;
+				case "Q":
+					System.out.println("Exiting without updating.");
+					exitLoop = true;
+				default:
+					System.out.println("Wrong input!!!\nKindly check option and try again.");
+					break;
+
+			}
+		}while(!exitLoop);
+	}
+
+	public int validInput(String printStatement, int maxValue){
+		int intInput = 0;
+		boolean flag = false;
+		do {
+			try {
+				intInput = Global.scanner.nextInt();
+				if (intInput > maxValue || intInput <= 0){
+					System.out.println("Invalid Record Number!!\n Please check list of options.\n"+ printStatement);
+					flag = false;
+				} else {
+					flag = true;
+				}
+
+			}
+			catch (InputMismatchException e) {
+				input.nextLine();
+				System.out.print("\nInvalid Input Type!!\nProgram is expecting an integer input.\n"+ printStatement);
+			}
+		} while (!flag);
+		return intInput;
+	}
+
+	public double doubleInput(String printStatement){
+		double doubleInput = 0.0;
+		boolean doubleFlag = false;
+		do {
+			try {
+				doubleInput = Global.scanner.nextDouble();
+				doubleFlag = true;
+			}
+			catch(InputMismatchException e) {
+				Global.scanner.nextLine();
+				System.out.print("\nInvalid Input Type!!\nApplication is expecting an decimal(double) input.\n" + printStatement);
+			}
+		} while (!doubleFlag);
+		return doubleInput;
 	}
 
 	public void uploadApplicantCV(Applicant applicant){
@@ -474,18 +689,19 @@ public class SystemHandler {
 
 	}
 
-	private void showEmploymentRecords(Applicant applicant){
+	private boolean showEmploymentRecords(Applicant applicant){
 		List<EmploymentRecord> allEmploymentHistory = applicant.getEmploymentHistory();
 
 		if(allEmploymentHistory.size() == 0){
-			System.out.println("No Employment Records present.");
+			System.out.println("No Employment Records present. Please add Employment history to profile.");
+			return false;
 		}else{
 			for(int i=0; i<allEmploymentHistory.size();i++){
 				System.out.println("Employment Record "+(i+1)+":");
 				System.out.println(allEmploymentHistory.get(i).toString());
 			}
+			return true;
 		}
-
 	}
 
 	public String subMenu(){
@@ -554,10 +770,7 @@ public class SystemHandler {
 		try{
 			applicant.addQualifications(qualification);
 			System.out.println("Qualification added successfully");
-		} catch (BadQualificationException e){
-			System.out.println(e);
-			System.out.println("!! Adding qualification failed !!");
-		} catch (DuplicateEntryException e){
+		} catch (BadQualificationException | DuplicateEntryException | BadEntryException e){
 			System.out.println(e);
 			System.out.println("!! Adding qualification failed !!");
 		}
@@ -579,14 +792,13 @@ public class SystemHandler {
 		if (operation.equals("add")){
 			addLicense(applicant);
 		} else if (operation.equals("update")){
-			//updateLicense(applicant);
+			updateLicense(applicant);
 		} else if (operation.equals("view")){
 			showLicenses(applicant);
 		} else {
 			System.out.println("Exiting Sub Menu");
 			return ;
 		}
-
 	}
 
 	public void addLicense(Applicant applicant) {
@@ -607,20 +819,93 @@ public class SystemHandler {
 		try {
 			applicant.addLicenses(license);
 			System.out.println("License added successfully");
-		} catch (DuplicateEntryException e) {
+		} catch (DuplicateEntryException | BadEntryException e) {
 			System.out.println(e);
 			System.out.println("!! Adding License failed !!");
 		}
 	}
 
-	public void showLicenses(Applicant applicant){
+	public boolean showLicenses(Applicant applicant){
 		List<License> licenses = new ArrayList<License>();
 		licenses = applicant.getLicenses();
 
+		if (licenses.size() == 0){
+			System.out.println("No License Exist. Please add License to the profile.");
+			return false;
+		}
 		int i =1;
 		for (License license: licenses){
 			System.out.println("License "+ i++ + ". " + license);
 		}
+		return true;
+	}
+
+	public void updateLicense(Applicant applicant){
+		String printStatement;
+
+		if(!showLicenses(applicant)){
+			return;
+		}
+		int numOfLicenses = applicant.getLicenses().size();
+		printStatement = "Enter the License number to update : ";
+		System.out.print(printStatement);
+		int recordNo = validInput(printStatement, numOfLicenses) - 1;
+
+		String type, id;
+		Date validTill;
+
+		License updateLicense = applicant.getLicenses().get(recordNo);
+
+		type = updateLicense.getType();
+		id = updateLicense.getId();
+		validTill = updateLicense.getValidTill();
+
+		boolean runLoop = true;
+
+		do {
+			System.out.println("\n===Details that can be updated===");
+			System.out.println("1. Type\n" +
+					"2. Identification Number\n" +
+					"3. Validity\n" +
+					"U. Update and exit.\n" +
+					"Q. Exit without updating");
+			System.out.print("Enter Option to update : ");
+			String choice = Global.scanner.nextLine();
+
+			switch(choice){
+				case "1":
+					System.out.print("Enter the Type to update : ");
+					type = Global.scanner.nextLine();
+					break;
+				case "2":
+					System.out.print("Enter the ID to update : ");
+					id = Global.scanner.nextLine();
+					break;
+				case "3":
+					System.out.print("Enter the Valid till date to update : ");
+					validTill = getDateInput();
+					break;
+				case "U":
+					License newLicense = new License(type,id, validTill);
+					try {
+						applicant.updateLicense(newLicense, recordNo);
+						System.out.println("License updated successfully.");
+						System.out.println(applicant.getLicenses().get(recordNo));
+					} catch (NoSuchRecordException | BadEntryException e) {
+						System.out.println(e);
+					}
+					runLoop = false;
+					break;
+				case "Q":
+					System.out.println("Exiting without updating.");
+					runLoop = false;
+				default:
+					System.out.println("Wrong input!!!\nKindly check option and try again.");
+					break;
+			}
+
+		} while (runLoop);
+
 	}
 
 	public void addEmploymentHistory(Applicant applicant) throws DuplicateEntryException{
