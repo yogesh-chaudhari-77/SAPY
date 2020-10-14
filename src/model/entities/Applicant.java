@@ -33,7 +33,6 @@ public class Applicant extends User {
         this.licenses = new ArrayList<>();
         this.references = new ArrayList<>();
         this.qualifications = new ArrayList<>();
-        //this.blacklistStatus = null;
         this.blacklistStatus = new Blacklist();
         if(applicantType.equalsIgnoreCase("l")){
             this.applicantType = ApplicantType.LOCAL;
@@ -56,29 +55,41 @@ public class Applicant extends User {
         }
         if (!employmentRecordFound) {
             System.out.println();
-            if (!record.getCurrentCompany() && (record.getStartDate().after(record.getEndDate()) || record.getStartDate().equals(record.getEndDate()))) {
-                throw new BadEmployeeRecordException("Start Date should be less then end date");
-            } else {
+            if (validEmploymentRecord(record)){
                 employmentHistory.add(record);
                 return true;
             }
         } else{
             throw new DuplicateEntryException("This Employment record is already present");
         }
-    }
-
-    public boolean updateEmploymentRecords(EmploymentRecord oldRecord, EmploymentRecord newRecord){
-        for(int i=0; i<employmentHistory.size();i++){
-            if (employmentHistory.get(i).getCompanyName().equals(oldRecord.getCompanyName())) {
-                employmentHistory.remove(i);
-                employmentHistory.set(i,newRecord);
-                return true;
-            }
-        }
         return false;
     }
 
-    public boolean addQualifications(Qualification qualification) throws BadQualificationException, DuplicateEntryException {
+    public boolean validEmploymentRecord(EmploymentRecord record) throws BadEmployeeRecordException {
+
+        if(!record.getCurrentCompany()) {
+            if (record.getStartDate().after(record.getEndDate()) || record.getStartDate().equals(record.getEndDate())) {
+                throw new BadEmployeeRecordException("Start Date should be less then end date");
+            }
+        }
+
+        return true;
+    }
+
+    public boolean updateEmploymentRecords(EmploymentRecord record, int recordIndex) throws NoSuchRecordException, BadEmployeeRecordException {
+        if (recordIndex > employmentHistory.size()){
+            throw new NoSuchRecordException("No Such Qualification Exists");
+        }
+
+        if (validEmploymentRecord(record)){
+            employmentHistory.set(recordIndex,record);
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean addQualifications(Qualification qualification) throws BadQualificationException, DuplicateEntryException, BadEntryException {
         boolean qualificationFound = false;
 
         for(Qualification currentQual:qualifications){
@@ -88,16 +99,38 @@ public class Applicant extends User {
             }
         }
         if (!qualificationFound) {
-            if (qualification.getStartDate().after(qualification.getEndDate()) || qualification.getStartDate().equals(qualification.getEndDate())) {
-                throw new BadQualificationException("Start Date should be less then end date");
-            } else {
+            if (validQualification(qualification)) {
                 qualifications.add(qualification);
                 return true;
             }
         } else{
             throw new DuplicateEntryException("This qualification is already present");
         }
+        return false;
+    }
 
+    public boolean validQualification(Qualification qualification) throws BadEntryException {
+
+        if(qualification.getStartDate().after(qualification.getEndDate())
+                || qualification.getStartDate().equals(qualification.getEndDate())){
+            throw new BadEntryException("Start date must be less than end date");
+        } else if (qualification.getMarksObtained() <= 0){
+            throw new BadEntryException("Marks Obtained for the Qualification cannot be  equal to or less than 0 ");
+        }
+        return true;
+    }
+
+    public boolean updateQualifications(Qualification qualification, int recordIndex) throws NoSuchRecordException, BadEntryException {
+        if (recordIndex > qualifications.size()){
+            throw new NoSuchRecordException("No Such Qualification Exists");
+        }
+
+        if (validQualification(qualification)){
+            qualifications.set(recordIndex,qualification);
+            return true;
+        }
+
+        return false;
     }
 
     public boolean addReferences(Reference reference) throws DuplicateEntryException{
@@ -119,7 +152,17 @@ public class Applicant extends User {
 
     }
 
-    public boolean addLicenses(License license) throws DuplicateEntryException {
+    public boolean updateReferences(Reference reference, int recordIndex) throws NoSuchRecordException {
+        if (recordIndex > references.size()){
+            throw new NoSuchRecordException("No Such License Exists");
+        }
+
+        references.set(recordIndex, reference);
+
+        return true;
+    }
+
+    public boolean addLicenses(License license) throws DuplicateEntryException, BadEntryException {
         boolean licenseFound = false;
 
         for(License currentLicense : licenses) {
@@ -129,12 +172,40 @@ public class Applicant extends User {
             }
         }
 
-        if(!licenseFound){
-            licenses.add(license);
-            return true;
-        } else {
-            throw new DuplicateEntryException("This License already present");
+        if (validLicense(license)){
+            if(!licenseFound){
+                licenses.add(license);
+                return true;
+            } else {
+                throw new DuplicateEntryException("This License already present");
+            }
         }
+        return true;
+    }
+
+    public boolean validLicense(License license) throws BadEntryException {
+
+        Date date = new Date();
+
+        if (date.after(license.getValidTill()) || date.equals(license.getValidTill())){
+            throw new BadEntryException("Validity date of the license should be more than current date.");
+        }
+
+        return true;
+    }
+
+    public boolean updateLicense(License license, int recordIndex) throws NoSuchRecordException, BadEntryException {
+        if (recordIndex > licenses.size()){
+            throw new NoSuchRecordException("No Such License Exists");
+        }
+
+        if (validLicense(license)){
+            licenses.set(recordIndex,license);
+            return true;
+        }
+
+        return false;
+
     }
 
     public boolean addAvailability(AvailabilityType availabilityType, List<JobCategory> jobCategories, int hoursPerWeek, Date periodStartDate, Date periodEndDate) throws DuplicateEntryException, BadEntryException {
@@ -190,21 +261,22 @@ public class Applicant extends User {
         return true;
     }
 
-    public boolean updateAvailability(AvailabilityType availabilityType, List<JobCategory> jobCategories, int hoursPerWeek, Date periodStartDate, Date periodEndDate, int recordIndex) throws BadEntryException, DuplicateEntryException, NoSuchRecordException {
+    public boolean updateAvailability(UserAvailability availability, int recordIndex) throws BadEntryException, DuplicateEntryException, NoSuchRecordException {
 
 
-        UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
+        //UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
 
         if (recordIndex > userAvailability.size()){
             throw new NoSuchRecordException("No Such Job Preference");
         }
 
         if(validAvailability(availability)){
-            userAvailability.remove(recordIndex);
+            //userAvailability.remove(recordIndex);
             userAvailability.set(recordIndex,availability);
+            return true;
         }
 
-        return true;
+       return false;
     }
 
     public boolean uploadCV(String cvPath) throws InvalidCVPathException{
