@@ -1,0 +1,6 @@
+# Employment Status menu options
+# comments begin with # and empty lines are ignored
+
+
+1 = Update Employment Status
+Q = Go back to previous menu

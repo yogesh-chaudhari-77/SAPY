@@ -1,0 +1,8 @@
+# Update Employment Status menu options
+# comments begin with # and empty lines are ignored
+
+1 = Available (Still looking for a job)
+2 = Pending (Shortlisted and awaiting confirmation)
+3 = Employed
+4 = Unavailable (Currently not looking for a job)
+Q = Go back to previous menu

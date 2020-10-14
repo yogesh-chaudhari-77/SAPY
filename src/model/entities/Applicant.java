@@ -22,6 +22,7 @@ public class Applicant extends User {
 
     // 07-10-2020 - Added by Yogeshwar - Employer needs to update employmentStatus if made an offer
     private EmploymentStatus employmentStatus;
+    private Date lastStatusUpdateDate;
     private List<JobApplication> jobApplications;
 
 
@@ -41,6 +42,7 @@ public class Applicant extends User {
         }
         this.cvPath = null;
         this.employmentStatus = EmploymentStatus.AVAILABLE;
+        this.lastStatusUpdateDate = new Date();
         this.jobApplications = new ArrayList<>();
     }
 
@@ -481,5 +483,13 @@ public class Applicant extends User {
 
     public void setEmploymentStatus(EmploymentStatus employmentStatus) {
         this.employmentStatus = employmentStatus;
+    }
+
+    public Date getLastStatusUpdateDate() {
+        return lastStatusUpdateDate;
+    }
+
+    public void setLastStatusUpdateDate(Date lastStatusUpdateDate) {
+        this.lastStatusUpdateDate = lastStatusUpdateDate;
     }
 }

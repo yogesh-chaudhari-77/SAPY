@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import com.sun.jdi.InvalidTypeException;
@@ -72,7 +73,7 @@ public class SystemHandler {
 
 
 		allUsersList.put("Staff001", staff);
-
+		changeStatusOfInactiveApplicants();
 
 		try {
 			menu = new Menu("main_menu_options");
@@ -330,6 +331,10 @@ public class SystemHandler {
 
 				case "6":
 					addUpdateAvailability(applicant);
+					break;
+
+				case "7":
+					updateEmploymentStatus(applicant);
 					break;
 
 				case "9":
@@ -611,6 +616,113 @@ public class SystemHandler {
 			}
 		} while (!doubleFlag);
 		return doubleInput;
+	}
+
+	public void updateEmploymentStatus(Applicant applicant){
+		System.out.println("***** Employment Status *****");
+		System.out.println("Your current employment status is "+ applicant.getEmploymentStatus());
+		System.out.println("Your status was last updated on "+ applicant.getLastStatusUpdateDate());
+		try {
+			Menu menu = new Menu("employmentStatus_menu_options");
+			boolean wrongOption = false;
+
+			do {
+				String choice = menu.show();
+				choice = choice.toUpperCase();
+
+				switch (choice) {
+					case "1":
+						updateEmploymentStatusOfApplicant(applicant);
+						break;
+
+					case "Q":
+						return;
+
+					default:
+						System.out.println("!! Wrong Option !! Kindly select the correct one");
+						wrongOption = true;
+				}
+			} while(wrongOption);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	public void updateEmploymentStatusOfApplicant(Applicant applicant){
+		System.out.println("Please choose from the below options to update for Employment Status");
+		try {
+			Menu menu = new Menu("menu_options/updateEmploymentStatus_menu_options");
+			boolean wrongOption = false;
+
+			do {
+				String choice = menu.show();
+				choice = choice.toUpperCase();
+
+				switch (choice) {
+					case "1":
+						applicant.setEmploymentStatus(EmploymentStatus.AVAILABLE);
+						applicant.setLastStatusUpdateDate(new Date());
+						break;
+
+					case "2":
+						applicant.setEmploymentStatus(EmploymentStatus.PENDING);
+						applicant.setLastStatusUpdateDate(new Date());
+						break;
+
+					case "3":
+						applicant.setEmploymentStatus(EmploymentStatus.EMPLOYED);
+						applicant.setLastStatusUpdateDate(new Date());
+						break;
+
+					case "4":
+						applicant.setEmploymentStatus(EmploymentStatus.UNKNOWN);
+						applicant.setLastStatusUpdateDate(new Date());
+						break;
+
+					case "Q":
+						return;
+
+					default:
+						System.out.println("!! Wrong Option !! Kindly select the correct one");
+						wrongOption = true;
+				}
+			} while(wrongOption);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println(applicant.getEmploymentStatus());
+		System.out.println("Employment Status updated successfully");
+	}
+
+	private void changeStatusOfInactiveApplicants(){
+		Set<String> allUsers = allUsersList.keySet();
+
+		for(String userId : allUsers){
+			User user = allUsersList.get(userId);
+			if(user instanceof Applicant){
+				Applicant applicant = (Applicant) user;
+				Date currDate = new Date();
+				long noOfInactiveDays = findDifferenceInDays(currDate, applicant.getLastStatusUpdateDate());
+				if(noOfInactiveDays > 14){
+					applicant.setEmploymentStatus(EmploymentStatus.UNKNOWN);
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * @param firstDate
+	 * @param secondDate
+	 * @return firstDate - secondDate as no of days in long
+	 */
+	private long findDifferenceInDays(Date firstDate, Date secondDate){
+
+		long differenceInMilliseconds = Math.abs(firstDate.getTime() - secondDate.getTime());
+		long differenceInDays = TimeUnit.DAYS.convert(differenceInMilliseconds, TimeUnit.MILLISECONDS);
+
+		return differenceInDays;
 	}
 
 	public void uploadApplicantCV(Applicant applicant){
@@ -2137,14 +2249,18 @@ public class SystemHandler {
 		//Added by Prodip Guha Roy for testing
 		Applicant a10 = new Applicant("app10", "chaudhari.yogesh20@gmail.com", "123", "John", "Snow", "048888888", "l");
 		Applicant a11 = new Applicant("app11", "chaudhari.yogesh20@gmail.com", "123", "Jane", "Doe", "048888888", "l");
+		Applicant a12 = new Applicant("app12", "chaudhari.yogesh20@gmail.com", "123", "Tim", "Gordon", "048888888", "l");
 		Employer employer = new Employer("emp1", "chaudhari.yogesh20@gmail.com", "123", "Yosha");
 		this.allUsersList.put("app10", a10);
 		this.allApplicantsList.put("app10", a10);
 		this.allUsersList.put("app11", a11);
 		this.allApplicantsList.put("app11", a11);
+		this.allUsersList.put("app12", a12);
+		this.allApplicantsList.put("app12", a12);
 		this.allUsersList.put("emp1", employer);
 		this.allEmployersList.put("emp1", employer);
 
+		a12.setLastStatusUpdateDate(new SimpleDateFormat("dd/MM/yyyy").parse("29/09/2020"));
 		try {
 			employer.createJob(new Job("job1", "Store Manager", "Store Manager role at Woolies","C1"));
 			employer.createJob(new Job("job2", "Team Member", "Team Member role at Woolies", "C1"));
