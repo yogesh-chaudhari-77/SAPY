@@ -17,8 +17,8 @@ public class JobCategory {
 		this.status = status;
 		idNo++;
 	}
-	
-	
+
+	@Override
 	public String toString()
 	{
 		return "Category id:\t " + this.id + "\t\tCategory Title:\t " + this.categoryTitle ;

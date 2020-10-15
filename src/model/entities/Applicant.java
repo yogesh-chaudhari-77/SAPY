@@ -76,6 +76,7 @@ public class Applicant extends User {
         return true;
     }
 
+
     public boolean updateEmploymentRecords(EmploymentRecord record, int recordIndex) throws NoSuchRecordException, BadEmployeeRecordException {
         if (recordIndex > employmentHistory.size()){
             throw new NoSuchRecordException("No Such Qualification Exists");
@@ -261,7 +262,7 @@ public class Applicant extends User {
         return true;
     }
 
-    public boolean updateAvailability(UserAvailability availability, int recordIndex) throws BadEntryException, DuplicateEntryException, NoSuchRecordException {
+    public boolean updateAvailability(UserAvailability availability, int recordIndex) throws BadEntryException, NoSuchRecordException {
 
 
         //UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);

@@ -4,12 +4,13 @@
 
 1 = Qualifications
 2 = References
-3 = Employment Record
+3 = Employment Records
 4 = Licenses
 5 = Upload CV
-6 = Availability
-7 = Change Applicant Type
+6 = Job Preferences
+7 = Update Employment Status
 8 = Complaint about Employer
 9 = Select Interview Time
 10 = Respond to Job Offer
-Q = Go back to previous Menu
+11 = Change Credentials
+Q = Logout

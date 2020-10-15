@@ -1,5 +1,6 @@
 package model.entities;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -102,4 +103,18 @@ public class UserAvailability {
         return onlyIds;
     }
 
+    @Override
+    public String toString() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+
+        String sDate = dateFormat.format(periodStartDate);
+        String eDate = dateFormat.format(periodEndDate);
+
+        return
+                "Applicable Job Categories = " + applicableJobCategories +
+                "\nAvailability Type = " + availabilityType +
+                "\nNumber Of HoursAWeek = " + noOfHoursAWeek +
+                "\nPeriod Start Date = " + sDate +
+                "\nPeriod End Date = " + eDate;
+    }
 }
