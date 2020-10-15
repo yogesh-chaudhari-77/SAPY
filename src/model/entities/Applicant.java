@@ -81,7 +81,7 @@ public class Applicant extends User {
 
     public boolean updateEmploymentRecords(EmploymentRecord record, int recordIndex) throws NoSuchRecordException, BadEmployeeRecordException {
         if (recordIndex > employmentHistory.size()){
-            throw new NoSuchRecordException("No Such Qualification Exists");
+            throw new NoSuchRecordException("No Such Employment Record Exists");
         }
 
         if (validEmploymentRecord(record)){
@@ -157,7 +157,7 @@ public class Applicant extends User {
 
     public boolean updateReferences(Reference reference, int recordIndex) throws NoSuchRecordException {
         if (recordIndex > references.size()){
-            throw new NoSuchRecordException("No Such License Exists");
+            throw new NoSuchRecordException("No Such Reference Exists");
         }
 
         references.set(recordIndex, reference);

@@ -257,6 +257,14 @@ public class SystemHandler {
 
 	}
 
+	public boolean validPhoneNumberCheck(String phoneNumber){
+		String phoneNumberPattern = "^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\\s\\./0-9]*$";
+
+		Pattern pattern = Pattern.compile(phoneNumberPattern);
+
+		return pattern.matcher(phoneNumber).matches();
+	}
+
 	public void login () throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException, ParseException, NotFullyBlacklistedUserException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException {
 
 		String id;
@@ -281,7 +289,18 @@ public class SystemHandler {
 
 	public void showUserMenu(User user) throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException, ParseException, NotFullyBlacklistedUserException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException {
 		if (user instanceof Applicant){
-			showApplicantMenu(((Applicant) user));
+			Applicant applicant = (Applicant) user;
+			// Blacklisting check - Before accessing any of the functionality.
+			if( applicant.getBlacklistStat() == BlacklistStatus.FULL_BLACKLISTED) {
+				System.out.println("You have been blacklisted. Your profile is disabled.");
+				System.out.println("Contact support for more details.");
+				System.out.println("Press any key to logout: ");
+				Global.scanner.nextLine();
+				return;
+			}else if(applicant.getBlacklistStat() == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+				System.out.println("You have been provisionally blacklisted. In this state, you will not be able to perform some functionalities.");
+			}
+			showApplicantMenu(applicant);
 		} else if (user instanceof Employer){
 
 			// Blacklisting check - Before accessing any of the functionality.
@@ -362,45 +381,103 @@ public class SystemHandler {
 
 	public void addUpdateQualification(Applicant applicant){
 		System.out.println("****** Qualifications ******");
-		String operation = subMenu();
 
-		if (operation.equals("add")){
-			addQualification(applicant);
-		} else if (operation.equals("update")){
-			updateQualification(applicant);
-		} else if (operation.equals("view")){
-			showQualification(applicant);
-		} else {
-			System.out.println("Exiting Sub Menu");
-			return ;
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			String operation = showViewMenu();
+			if (operation.equals("view")) {
+				showQualification(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
+		}else {
+			String operation = subMenu();
+
+			if (operation.equals("add")) {
+				addQualification(applicant);
+			} else if (operation.equals("update")) {
+				updateQualification(applicant);
+			} else if (operation.equals("view")) {
+				showQualification(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
 		}
 	}
 
 	public void addUpdateReferences(Applicant applicant){
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			String operation = showViewMenu();
+			if (operation.equals("view")) {
+				showReferences(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
+		}else {
+			boolean continueMessageDisplay = true;
+			do {
+				try {
+					System.out.println("\n****** References ******");
+					String operation = subMenu();
+					if (operation.equals("add")) {
+						addReferences(applicant);
+					} else if (operation.equals("update")) {
+						updateReferences(applicant);
+					} else if (operation.equals("view")) {
+						showReferences(applicant);
+					} else {
+						System.out.println("Exiting Sub Menu");
+						return;
+					}
+				} catch (DuplicateEntryException duplicate) {
+					System.out.println("Reference Already exists. Please try again.");
+					//continueMessageDisplay= true;
+				}
+			} while (continueMessageDisplay);
+		}
 
 	}
 
 	public void addUpdateEmploymentHistory(Applicant applicant){
-		boolean continueMessageDisplay = true;
-		do {
-			try {
-				System.out.println("\n****** Employment Records ******");
-				String operation = subMenu();
-				if (operation.equals("add")) {
-					addEmploymentHistory(applicant);
-				} else if (operation.equals("update")) {
-					updateEmploymentHistory(applicant);
-				} else if (operation.equals("view")) {
-					showEmploymentRecords(applicant);
-				} else {
-					System.out.println("Exiting Sub Menu");
-					return;
-				}
-			} catch (DuplicateEntryException duplicate) {
-				System.out.println("Employment Record Already exists. Please try again.");
-				//continueMessageDisplay= true;
+
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			String operation = showViewMenu();
+			if (operation.equals("view")) {
+				showEmploymentRecords(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
 			}
-		}while (continueMessageDisplay);
+		}else {
+			boolean continueMessageDisplay = true;
+			do {
+				try {
+					System.out.println("\n****** Employment Records ******");
+					String operation = subMenu();
+					if (operation.equals("add")) {
+						addEmploymentHistory(applicant);
+					} else if (operation.equals("update")) {
+						updateEmploymentHistory(applicant);
+					} else if (operation.equals("view")) {
+						showEmploymentRecords(applicant);
+					} else {
+						System.out.println("Exiting Sub Menu");
+						return;
+					}
+				} catch (DuplicateEntryException duplicate) {
+					System.out.println("Employment Record Already exists. Please try again.");
+					//continueMessageDisplay= true;
+				}
+			} while (continueMessageDisplay);
+		}
 	}
 
 	public void updateEmploymentHistory(Applicant applicant){
@@ -594,7 +671,7 @@ public class SystemHandler {
 			try {
 				intInput = Global.scanner.nextInt();
 				if (intInput > maxValue || intInput <= 0){
-					System.out.println("Invalid Record Number!!\n Please check list of options.\n"+ printStatement);
+					System.out.println("Invalid Selection!!\n Please check list of options.\n"+ printStatement);
 					flag = false;
 				} else {
 					flag = true;
@@ -629,6 +706,12 @@ public class SystemHandler {
 		System.out.println("***** Employment Status *****");
 		System.out.println("Your current employment status is "+ applicant.getEmploymentStatus());
 		System.out.println("Your status was last updated on "+ applicant.getLastStatusUpdateDate());
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			System.out.println("You cannot update your employment status in your current state");
+			return;
+		}
 		try {
 			Menu menu = new Menu("employmentStatus_menu_options");
 			boolean wrongOption = false;
@@ -740,6 +823,12 @@ public class SystemHandler {
 		}else{
 			System.out.println("Current CV in the system: "+currentCV);
 		}
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			System.out.println("You cannot upload cv in current state");
+			return;
+		}
 		try {
 			Menu menu = new Menu("cv_menu_options");
 			boolean wrongOption = false;
@@ -785,26 +874,39 @@ public class SystemHandler {
 	}
 
 	private void addUpdateJobPreferences(Applicant applicant){
-		boolean continueMessageDisplay = true;
-		do {
-			try {
-				System.out.println("\n****** Job Preferences ******");
-				String operation = subMenu();
-				if (operation.equals("add")) {
-					addJobPreference(applicant);
-				} else if (operation.equals("update")) {
-					updateJobPreference(applicant);
-				} else if (operation.equals("view")) {
-					showJobPreferences(applicant);
-				} else {
-					System.out.println("Exiting Sub Menu");
-					return;
-				}
-			} catch (DuplicateEntryException duplicate) {
-				System.out.println("Availability Already exists. Please try again.");
-				//continueMessageDisplay= true;
+
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			String operation = showViewMenu();
+			if (operation.equals("view")) {
+				showJobPreferences(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
 			}
-		}while (continueMessageDisplay);
+		}else {
+			boolean continueMessageDisplay = true;
+			do {
+				try {
+					System.out.println("\n****** Job Preferences ******");
+					String operation = subMenu();
+					if (operation.equals("add")) {
+						addJobPreference(applicant);
+					} else if (operation.equals("update")) {
+						updateJobPreference(applicant);
+					} else if (operation.equals("view")) {
+						showJobPreferences(applicant);
+					} else {
+						System.out.println("Exiting Sub Menu");
+						return;
+					}
+				} catch (DuplicateEntryException duplicate) {
+					System.out.println("Availability Already exists. Please try again.");
+					//continueMessageDisplay= true;
+				}
+			} while (continueMessageDisplay);
+		}
 
 	}
 
@@ -821,6 +923,36 @@ public class SystemHandler {
 			}
 			return true;
 		}
+	}
+
+	public String showViewMenu(){
+
+		System.out.println("Kindly Select an operation to perform");
+
+		boolean wrongOption = false;
+		StringBuilder menu = new StringBuilder();
+		menu.append("1: View\n");
+		menu.append("2: Go back to previous menu\n");
+		menu.append("Choice: ");
+
+		do {
+			System.out.print(menu.toString());
+			String choice = Global.scanner.next();
+
+			switch (choice) {
+				case "1":
+					return "view";
+
+				case "2":
+					return "exit";
+
+				default:
+					System.out.println("!! Wrong Option !! Kindly select the correct one");
+					wrongOption = true;
+			}
+		} while(wrongOption);
+
+		return null;
 	}
 
 	public String subMenu(){
@@ -906,17 +1038,30 @@ public class SystemHandler {
 	}
 
 	public void addUpdateLicenses(Applicant applicant){
-		String operation = subMenu();
 
-		if (operation.equals("add")){
-			addLicense(applicant);
-		} else if (operation.equals("update")){
-			updateLicense(applicant);
-		} else if (operation.equals("view")){
-			showLicenses(applicant);
-		} else {
-			System.out.println("Exiting Sub Menu");
-			return ;
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			String operation = showViewMenu();
+			if (operation.equals("view")) {
+				showLicenses(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
+		}else {
+			String operation = subMenu();
+
+			if (operation.equals("add")) {
+				addLicense(applicant);
+			} else if (operation.equals("update")) {
+				updateLicense(applicant);
+			} else if (operation.equals("view")) {
+				showLicenses(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
 		}
 	}
 
@@ -1286,7 +1431,205 @@ public class SystemHandler {
 		} while (runLoop);
 	}
 
+	private void addReferences(Applicant applicant) throws DuplicateEntryException {
+
+		System.out.println("Enter Below details for adding a new Reference\n");
+		Reference newReference = fetchNewReferenceFromUser();
+
+		if (newReference == null) {
+			return;
+		}
+
+		applicant.addReferences(newReference);
+		System.out.println("Reference added successfully");
+	}
+
+	private Reference fetchNewReferenceFromUser() {
+
+		System.out.println("Enter Q at any point to exit the form.");
+		System.out.print("Enter the First Name: ");
+		String firstName = Global.scanner.nextLine();
+		if(firstName.equalsIgnoreCase("q")){
+			return null;
+		}
+
+		System.out.print("Enter the Last Name: ");
+		String lastName = Global.scanner.nextLine();
+		if(lastName.equalsIgnoreCase("q")){
+			return null;
+		}
+
+		String email;
+		do {
+			System.out.print("Enter the email: ");
+			email = Global.scanner.nextLine();
+			if(email.equalsIgnoreCase("q")){
+				return null;
+			}
+			if(!validEmailCheck(email)){
+				System.out.println("Invalid email id. Please enter a valid email id.");
+				continue;
+			}else{
+				break;
+			}
+		} while(true);
+
+		System.out.print("Enter the Designation: ");
+		String designation = Global.scanner.nextLine();
+		if(designation.equalsIgnoreCase("q")){
+			return null;
+		}
+
+		System.out.print("Enter the Company Name: ");
+		String companyName = Global.scanner.nextLine();
+		if(companyName.equalsIgnoreCase("q")){
+			return null;
+		}
+
+		String phoneNumber;
+		do {
+			System.out.print("Enter the phone number: ");
+			phoneNumber = Global.scanner.nextLine();
+			if(phoneNumber.equalsIgnoreCase("q")){
+				return null;
+			}
+			if(!validPhoneNumberCheck(phoneNumber)){
+				System.out.println("Invalid phone number. Please enter a valid phone number.");
+				continue;
+			}else{
+				break;
+			}
+		} while(true);
+
+		Reference newReference = new Reference(firstName, lastName, email, designation, companyName, phoneNumber);
+		return newReference;
+	}
+
+	private void updateReferences(Applicant applicant) {
+		{
+			String printStatement;
+
+			if(!showReferences(applicant)){
+				return;
+			}
+			int numOfRecords = applicant.getReferences().size();
+			printStatement = "Enter the Reference number to update : ";
+			System.out.print(printStatement);
+			int recordNo = validInput(printStatement, numOfRecords) - 1;
+
+			Reference reference = applicant.getReferences().get(recordNo);
+
+			String firstname= reference.getFirstname();
+			String lastname= reference.getLastname();
+			String email = reference.getEmail();
+			String designation = reference.getDesignation();
+			String companyName = reference.getCompanyName();
+			String phoneNumber = reference.getPhoneNumber();
+
+			boolean runLoop = true;
+
+			do{
+				System.out.println("\n===Details that can be updated===");
+				System.out.println("1. Name\n" +
+						"2. Email\n" +
+						"3. Designation\n" +
+						"4. Company Name\n" +
+						"5. Phone Number\n" +
+						"U. Update and exit.\n" +
+						"Q. Exit without updating");
+				System.out.print("Enter Option to update : ");
+				String choice = Global.scanner.next();
+
+				switch(choice){
+					case "1":
+						System.out.print("Enter the First Name: ");
+						firstname = Global.scanner.next();
+						System.out.print("Enter the Last Name: ");
+						lastname = Global.scanner.next();
+						break;
+
+					case "2":
+						do {
+							System.out.print("Enter the email: ");
+							email = Global.scanner.next();
+							if(!validEmailCheck(email)){
+								System.out.println("Invalid email id. Please enter a valid email id.");
+								continue;
+							}else{
+								break;
+							}
+						} while(true);
+						break;
+
+					case "3":
+						System.out.print("Enter the Designation: ");
+						designation = Global.scanner.next();
+						break;
+
+					case "4":
+						System.out.print("Enter the Company Name: ");
+						companyName = Global.scanner.next();
+						break;
+
+					case "5":
+						do {
+							System.out.print("Enter the phone number: ");
+							phoneNumber = Global.scanner.next();
+							if(!validPhoneNumberCheck(phoneNumber)){
+								System.out.println("Invalid phone number. Please enter a valid phone number.");
+								continue;
+							}else{
+								break;
+							}
+						} while(true);
+						break;
+
+					case "U":
+						Reference updatedReference = new Reference(firstname, lastname, email, designation, companyName, phoneNumber);
+						try {
+							applicant.updateReferences(updatedReference, recordNo);
+							System.out.println("Job Preference updated successfully.");
+							System.out.println(applicant.getReferences().get(recordNo));
+						} catch (NoSuchRecordException e) {
+							System.out.println(e);
+						}
+						runLoop = false;
+						break;
+					case "Q":
+						System.out.println("Exiting without updating.");
+						runLoop = false;
+					default:
+						System.out.println("Wrong input!!!\nKindly check option and try again.");
+						break;
+				}
+			} while (runLoop);
+		}
+
+	}
+
+	private boolean showReferences(Applicant applicant) {
+		List<Reference> allReferences = applicant.getReferences();
+
+		if(allReferences.size() == 0){
+			System.out.println("No References present. Please add References to profile to view them.");
+			return false;
+		}else{
+			for(int i=0; i<allReferences.size();i++){
+				System.out.println("Reference "+(i+1)+":");
+				System.out.println(allReferences.get(i).toString());
+			}
+			return true;
+		}
+	}
+
 	public void selectInterviewTiming(Applicant applicant){
+
+		//Checking Blacklist status
+		if(applicant.getBlacklistStat() == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			System.out.println("You cannot select interview timings in your current state.");
+			return;
+		}
+
 		List<JobApplication> jobApplications = applicant.getJobApplications();
 		if(jobApplications.size() == 0){
 			System.out.println("You currently have no pending Interview Timings");
@@ -1364,6 +1707,12 @@ public class SystemHandler {
 
 	public void respondToJobOffer(Applicant applicant){
 
+		//Checking Blacklist status
+		if(applicant.getBlacklistStat() == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			System.out.println("You cannot respond to job offers timings in your current state.");
+			return;
+		}
+
 		List<JobApplication> jobApplications = applicant.getJobApplications();
 		if(applicant.getEmploymentStatus() == EmploymentStatus.EMPLOYED){
 			System.out.println("Employed applicants cannot accept more job offers");
@@ -1426,7 +1775,7 @@ public class SystemHandler {
 				"3. Go back to previous menu");
 		printStatement = "Enter the option to change : ";
 		System.out.print(printStatement);
-		int option = validInput(printStatement, 2);
+		int option = validInput(printStatement, 3);
 
 		switch(option) {
 			case 1:
