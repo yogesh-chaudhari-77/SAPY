@@ -1449,13 +1449,20 @@ public class SystemHandler {
 	public void updateJobPreference(Applicant applicant){
 		String printStatement;
 
-		if(!showJobPreferences(applicant)){
+		boolean preferencesPresent = showJobPreferences(applicant);
+
+		if(!preferencesPresent){
 			return;
 		}
 		int numOfRecords = applicant.getUserAvailability().size();
 		printStatement = "Enter the Job Preference number to update (or 0 to exit): ";
 		System.out.print(printStatement);
 		int input = validInput(printStatement, numOfRecords);
+
+		if (input == 0) {
+			System.out.println("Exiting Update Job Preference");
+			return;
+		}
 
 		int recordNo = input - 1;
 
