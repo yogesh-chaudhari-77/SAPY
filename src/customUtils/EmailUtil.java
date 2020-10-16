@@ -2,10 +2,18 @@ package customUtils;
 
 //import com.mashape.unirest.http.Unirest;
 //import com.mashape.unirest.http.exceptions.UnirestException;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import model.entities.EmailObject;
 import netscape.javascript.JSObject;
 import org.json.JSONObject;
 
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.Properties;
@@ -20,18 +28,17 @@ import java.util.Properties;
  */
 public class EmailUtil {
 
-//    public static void sendEmail(EmailObject email) throws MessagingException, UnirestException {
-//
-//
-//        System.out.println(Unirest.post("https://api.pepipost.com/v5/mail/send")
-//                .header("api_key", "7643511c0216843e5c2ee340a035d49a")
-//                .header("content-type", "application/json")
-//                .body("{\"from\":{\"email\":\"chaudhariyogesh20@pepisandbox.com\",\"name\":\"chaudhariyogesh20\"},\"subject\":\""+email.getSubject()+"\",\"content\":[{\"type\":\"html\",\"value\":\""+email.getMatter()+"\"}],\"personalizations\":[{\"to\":[{\"email\":\"chaudhari.yogesh20@gmail.com\",\"name\":\"Lionel Messi\"}]}]}")
-//                .asString());
-//
-//        String body = "{\"from\":{\"email\":\"chaudhariyogesh20@pepisandbox.com\",\"name\":\"chaudhariyogesh20\"},\"subject\":\""+email.getSubject()+"\",\"content\":[{\"type\":\"html\",\"value\":\""+email.getMatter()+"\"}],\"personalizations\":[{\"to\":[{\"email\":\""+email.getToEmail()+"\",\"name\":\""+email.getToName()+"\"}]}]}";
-//        System.out.println(body);
-//        return;
+    public static void sendEmail(EmailObject email) throws MessagingException, UnirestException, UnirestException {
+
+
+        Unirest.post("https://api.pepipost.com/v5/mail/send")
+                .header("api_key", "7643511c0216843e5c2ee340a035d49a")
+                .header("content-type", "application/json")
+                .body("{\"from\":{\"email\":\"chaudhariyogesh20@pepisandbox.com\",\"name\":\"chaudhariyogesh20\"},\"subject\":\""+email.getSubject()+"\",\"content\":[{\"type\":\"html\",\"value\":\""+email.getMatter()+"\"}],\"personalizations\":[{\"to\":[{\"email\":\"chaudhari.yogesh20@gmail.com\",\"name\":\"Lionel Messi\"}]}]}")
+                .asString();
+
+        //String body = "{\"from\":{\"email\":\"chaudhariyogesh20@pepisandbox.com\",\"name\":\"chaudhariyogesh20\"},\"subject\":\""+email.getSubject()+"\",\"content\":[{\"type\":\"html\",\"value\":\""+email.getMatter()+"\"}],\"personalizations\":[{\"to\":[{\"email\":\""+email.getToEmail()+"\",\"name\":\""+email.getToName()+"\"}]}]}";
+        //System.out.println(body);
 
 //        String host="smtp.pepipost.com";
 //        final String user="chaudhariyogesh20";
@@ -48,7 +55,7 @@ public class EmailUtil {
 //        properties.put("mail.smtp.host", host);
 //        properties.put("mail.smtp.port", 25);
 //        properties.put("mail.smtp.auth", "true");
-//        //properties.put("mail.smtp.starttls.enable", "true");
+        //properties.put("mail.smtp.starttls.enable", "true");
 //// *** BEGIN CHANGE
 //        properties.put("mail.smtp.user", user);
 //
@@ -75,6 +82,6 @@ public class EmailUtil {
 //        t.close();
 //// *** END CHANGE
 
-//    }
+    }
 
 }
