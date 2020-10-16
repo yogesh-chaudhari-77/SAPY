@@ -3,7 +3,9 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
-public abstract class User {
+import java.io.Serializable;
+
+public abstract class User implements Serializable {
 
 	private String id;
 

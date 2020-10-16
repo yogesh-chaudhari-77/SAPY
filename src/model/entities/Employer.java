@@ -6,6 +6,7 @@ import customUtils.EmailUtil;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,7 +28,7 @@ import javax.management.InvalidApplicationException;
  * Class implements all employer related functionality
  */
 
-public class Employer extends User {
+public class Employer extends User implements Serializable {
 
 	private String companyName = null;
 	private String address = null;
@@ -500,6 +501,7 @@ public class Employer extends User {
 	public void removeBlacklistStatus()
 	{
 		blacklistStatus.removeBlacklistStatus();
+		this.complaintsCount = 0;
 	}
 	
 	public Date getBlacklistStartDate()

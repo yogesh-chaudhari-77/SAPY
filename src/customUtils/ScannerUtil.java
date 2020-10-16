@@ -1,9 +1,11 @@
 package customUtils;
 
-import java.util.HashSet;
-import java.util.InputMismatchException;
-import java.util.Scanner;
-import java.util.Set;
+import global.Global;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /*
  *  Singleton class returns only one reference of scannerUtil which is being used everywhere for accepting user input.
@@ -260,5 +262,36 @@ public class ScannerUtil {
 	}
 
 
+	/**
+	 * Reads the date string and converts that into date object and returns it
+	 * @return Date object parsed from user input
+	 */
+	public Date readDateInput(String inputMsg){
+
+		String datePattern = "((0?[1-9])|(1[0-9])|(2[0-9])|(3[01]))/((0?[1-9])|1[012])/(19|20)[0-9]{2}";
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+		Pattern pattern = Pattern.compile(datePattern);
+
+		Date date = null;
+		boolean wrongDate;
+		do {
+			System.out.print(inputMsg);
+			String dateUserInput = ScannerUtil.scannerInstance.consoleIn.nextLine();
+
+			if(pattern.matcher(dateUserInput).matches()){
+				wrongDate = false;
+				try	{
+					date = dateFormat.parse(dateUserInput);
+				} catch (ParseException e){
+					System.out.println(e);
+				}
+			} else {
+				System.out.println("Wrong date format");
+				wrongDate = true;
+			}
+		} while (wrongDate);
+
+		return date;
+	}
 }
 

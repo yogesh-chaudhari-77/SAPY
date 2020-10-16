@@ -6,11 +6,10 @@ import model.exceptions.*;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,10 +18,9 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-public class MaintenanceStaff extends User{
+public class MaintenanceStaff extends User implements Serializable {
 	
 	private JobCategory jobcategory;
-	BlacklistStatus blacklistStatus;
 	private HashMap<String, User> allUsersList = null;
 	private HashMap<String, Employer> allEmployersList = null;
 	private HashMap<String, Applicant> allApplicantsList = null;
@@ -53,34 +51,7 @@ public class MaintenanceStaff extends User{
 		}
 		
 	}
-	
-	
-	//Viewing the list of all Blacklisted Users
-	public void viewBlackListedMembers(HashMap<String, User> blacklistedUsers)
-	{
-		System.out.format("\n%111s\n","|-------------------------------------------------------------------------------------------------------------|");
-		System.out.format("|%-20s%-89s|\n","","BlackListed Users");
-		System.out.format("%111s\n","|-------------------------------------------------------------------------------------------------------------|");
-		System.out.format("|%-20s|%-20s|%-36s|%-30s|\n","User Id", "User Type", "Blacklisted Type", "Blacklisted Date");
-		System.out.format("%20s%20s%36s%30s\n","|--------------------|","--------------------|","------------------------------------|","------------------------------|");
-		
-		
-		for (String s : blacklistedUsers.keySet())
-		{
-			if(blacklistedUsers.get(s) instanceof Employer )
-			{
-				if (((Employer)blacklistedUsers.get(s)).getBlacklistStat() != blacklistStatus.NOT_BLACKLISTED)
-				System.out.format("|%-20s|%-20s|%-36s|%-30s|\n",blacklistedUsers.get(s).getId(), "Employer", ((Employer)blacklistedUsers.get(s)).getBlacklistStat(),((Employer)blacklistedUsers.get(s)).getBlacklistStartDate());
-			}
-			else
-			{
-				if (((Applicant)blacklistedUsers.get(s)).getBlacklistStat() != blacklistStatus.NOT_BLACKLISTED)
-				System.out.format("|%-20s|%-20s|%-36s|%-30s|\n",blacklistedUsers.get(s).getId(), "Applicant", ((Applicant)blacklistedUsers.get(s)).getBlacklistStat(),((Applicant)blacklistedUsers.get(s)).getBlacklistStartDate());
-			}
-		}
-		System.out.format("%20s%20s%36s%30s\n","|--------------------|","--------------------|","------------------------------------|","------------------------------|");
-	}
-	
+
 	
 	// Blacklisting the User(Employer/Applicant) either provisionally or fully based on type
 	public boolean blacklistUser(User user,String type) throws ParseException
@@ -121,7 +92,7 @@ public class MaintenanceStaff extends User{
 		if (user instanceof Employer)
 		{
 			Employer emp = ((Employer) user);
-			if (emp.getBlacklistStat() == blacklistStatus.PROVISIONAL_BLACKLISTED)
+			if (emp.getBlacklistStat() == BlacklistStatus.PROVISIONAL_BLACKLISTED)
 			{
 				emp.removeBlacklistStatus();
 				return true;
@@ -133,7 +104,7 @@ public class MaintenanceStaff extends User{
 		else if (user instanceof Applicant)
 		{
 			Applicant app = ((Applicant) user);
-			if(app.getBlacklistStat() == blacklistStatus.PROVISIONAL_BLACKLISTED)
+			if(app.getBlacklistStat() == BlacklistStatus.PROVISIONAL_BLACKLISTED)
 			{
 				app.removeBlacklistStatus();
 				return true;
@@ -155,21 +126,21 @@ public class MaintenanceStaff extends User{
 		if (user instanceof Employer)
 		{
 			Employer emp = ((Employer) user);
-			if (emp.getBlacklistStat() == blacklistStatus.FULL_BLACKLISTED)
+			if (emp.getBlacklistStat() == BlacklistStatus.FULL_BLACKLISTED)
 			{
 				SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 				Date blacklistedDate = emp.getBlacklistStartDate();
 				Date currentDate = dateFormat.parse(dateFormat.format(new Date()));
 
 				long differnceInMillies = Math.abs(currentDate.getTime() - blacklistedDate.getTime());
-				long difference = TimeUnit.DAYS.convert(differnceInMillies, TimeUnit.MILLISECONDS);
+				long duration = TimeUnit.DAYS.convert(differnceInMillies, TimeUnit.MILLISECONDS);
 
 
-				if(difference > 90)
+				if(duration > 90)
 					emp.removeBlacklistStatus();
 				else
 					throw new BlacklistedTimeNotElapsedException();
-				//				System.out.println("After \n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
+				//	System.out.println("After \n Employer ID: " + ((Employer)user).getId() + " Blacklist Status: " + ((Employer)user).getBlacklistStat());
 				return true;
 			}
 			else
@@ -180,7 +151,7 @@ public class MaintenanceStaff extends User{
 		{
 			Applicant app = ((Applicant) user);
 
-			if (app.getBlacklistStat() == blacklistStatus.FULL_BLACKLISTED)
+			if (app.getBlacklistStat() == BlacklistStatus.FULL_BLACKLISTED)
 			{
 				SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 				Date blacklistedDate = app.getBlacklistStartDate();

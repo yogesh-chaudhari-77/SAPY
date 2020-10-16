@@ -3,13 +3,14 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.time.format.DateTimeFormatter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;  
 
-public class Blacklist {
+public class Blacklist implements Serializable {
 
 	
 //	private String blacklistStatus = "";

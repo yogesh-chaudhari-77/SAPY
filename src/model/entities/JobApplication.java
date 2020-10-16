@@ -2,6 +2,7 @@ package model.entities;
 
 import model.enums.ApplicationStatus;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Date;
  * Model class implementing logic for job application class.
  * For every candidate shortlisted by the employer, a job application is created.
  */
-public class JobApplication {
+public class JobApplication implements Serializable {
 
     Job jobRef;
     Applicant applicantRef;

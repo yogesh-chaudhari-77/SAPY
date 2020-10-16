@@ -1,5 +1,6 @@
 package model.entities;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,7 +9,7 @@ import java.util.List;
 import model.enums.AvailabilityType;
 
 
-public class UserAvailability {
+public class UserAvailability implements Serializable {
 
 
     // 23-09-2020 - Multiple job categories can be specified by applicant

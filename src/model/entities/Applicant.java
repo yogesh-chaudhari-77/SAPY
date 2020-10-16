@@ -1,5 +1,6 @@
 package model.entities;
 import java.io.File;
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,7 +9,7 @@ import java.util.List;
 import model.enums.*;
 import model.exceptions.*;
 
-public class Applicant extends User {
+public class Applicant extends User implements Serializable {
 
     private List<EmploymentRecord> employmentHistory;
     private List <UserAvailability> userAvailability;
@@ -390,6 +391,7 @@ public class Applicant extends User {
 	public void removeBlacklistStatus()
 	{
 		blacklistStatus.removeBlacklistStatus();
+		this.complaintCount = 0;
 	}
 
     /**
@@ -399,7 +401,15 @@ public class Applicant extends User {
     public List<String> getJobPreferences(){
         List<String> jobPreferences= new ArrayList<>();
         for(UserAvailability availability : userAvailability){
+
             if(availability.getAvailabilityType() != AvailabilityType.UNKNOWN) {
+
+                for(JobCategory jobCategory : availability.getApplicableJobCategories()){
+                    if(!jobPreferences.contains(jobCategory.getId())){
+                        jobPreferences.add(jobCategory.getId());
+                    }
+                }
+
                 //String preference = availability.getApplicableJobCategory().getCategoryTitle();
 //                if(!jobPreferences.contains(preference)){
 //                    jobPreferences.add(preference);

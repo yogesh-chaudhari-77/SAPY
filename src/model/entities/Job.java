@@ -1,11 +1,12 @@
 package model.entities;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import model.enums.PostedJobJStatus;
 
-public class Job {
+public class Job implements Serializable {
 
 	// System identifier
 	private String jobId;

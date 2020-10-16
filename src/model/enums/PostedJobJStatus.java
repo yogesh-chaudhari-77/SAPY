@@ -1,5 +1,7 @@
 package model.enums;
 
-public enum PostedJobJStatus {
+import java.io.Serializable;
+
+public enum PostedJobJStatus implements Serializable {
 	ACTIVE, INACTIVE
 }

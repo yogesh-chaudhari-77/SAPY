@@ -1,5 +1,7 @@
 package model.entities;
 import model.enums.OfferStatus;
+
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -8,7 +10,7 @@ import java.util.Date;
  * When employer has finalized the candidate, then he releases job offer to the applicant.
  * Applicant can accept or reject the offer - represented by OfferStatus
  */
-public class JobOffer {
+public class JobOffer implements Serializable {
 
     String employementDetails;
     Date offeredOn;
