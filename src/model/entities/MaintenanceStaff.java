@@ -21,11 +21,7 @@ import java.util.regex.Pattern;
 public class MaintenanceStaff extends User implements Serializable {
 	
 	private JobCategory jobcategory;
-	private HashMap<String, User> allUsersList = null;
-	private HashMap<String, Employer> allEmployersList = null;
-	private HashMap<String, Applicant> allApplicantsList = null;
-
-	List<Complaints> allComplaints = new ArrayList<Complaints>();
+	
 
 
 	private int catgId = 1;
