@@ -324,12 +324,42 @@ public class Applicant extends User {
         if(decision == 1){
             jobApplication.getOfferRef().setOfferStatus(OfferStatus.ACCEPTED);
             this.employmentStatus = EmploymentStatus.EMPLOYED;
+            this.lastStatusUpdateDate = new Date();
             update = true;
         }else if(decision == 0){
             jobApplication.getOfferRef().setOfferStatus(OfferStatus.REJECTED);
             update = true;
         }
         return update;
+    }
+
+    public boolean incrementComplaintCountAndUpdateStatus(){
+
+        this.complaintCount++;
+
+        if(complaintCount >= 3 && blacklistStatus.getBlacklistStatus() != BlacklistStatus.PROVISIONAL_BLACKLISTED){
+            blacklistStatus.setBlacklistStatus("P");
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Employer registers complaint against any employer
+     * @param employer
+     * @param message
+     * @return Complaints : The newly formed complaint
+     * @throws NullObjectException : Thrown when a null reference employer has been passed
+     */
+    public Complaints registerComplaintAgainstEmployer(Employer employer, String message) throws NullObjectException{
+
+        // Basic error checking
+        if(employer == null) {
+            throw new NullObjectException("Invalid employer ID. Please verify employer ID and try again.");
+        }
+
+        Complaints tempComplaint = new Complaints(this, employer, message);
+        return tempComplaint;
     }
 
     public boolean changeBlacklistStatus(BlacklistStatus status){

@@ -39,7 +39,7 @@ public class TestEmployer {
 		sysHandler.loadDummyDataForEmployeFunctions();
 
 		// Creating an employer
-		employer = new Employer("E1", "employer@gmail.com", "qwerty", "Sample", "Employer", "123456789");
+		employer = new Employer("E1", "employer@gmail.com", "qwerty","Microsoft", "Sample", "Employer", "123456789");
 
 		// With certain jobs
 		employer.createJob(new Job("job1", "Developer", "Developer Desc", "C2"));

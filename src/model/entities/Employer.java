@@ -49,11 +49,11 @@ public class Employer extends User {
 	/*
 	 * Default constructor
 	 */
-	public Employer(String id, String userEmail, String password, String firstName, String lastName, String phoneNumber)
-	{
-		super(id, userEmail, password, firstName, lastName, phoneNumber);
-		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
-	}
+//	public Employer(String id, String userEmail, String password, String firstName, String lastName, String phoneNumber)
+//	{
+//		super(id, userEmail, password, firstName, lastName, phoneNumber);
+//		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
+//	}
 
 	/*
 	 *
@@ -61,6 +61,13 @@ public class Employer extends User {
 	public Employer(String id, String userEmail, String password, String companyName)
 	{
 		super(id, userEmail, password);
+		this.companyName = companyName;
+		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
+	}
+
+	public Employer(String id, String userEmail, String password, String companyName,String firstname, String lastname, String phoneNumber)
+	{
+		super(id, userEmail, password, firstname, lastname, phoneNumber);
 		this.companyName = companyName;
 		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
 	}
@@ -377,6 +384,17 @@ public class Employer extends User {
 		} catch (MessagingException | UnirestException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public boolean incrementComplaintCountAndUpdateStatus(){
+
+		this.complaintsCount++;
+
+		if(complaintsCount >= 3 && blacklistStatus.getBlacklistStatus() != BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			blacklistStatus.setBlacklistStatus("P");
+			return true;
+		}
+		return false;
 	}
 
 

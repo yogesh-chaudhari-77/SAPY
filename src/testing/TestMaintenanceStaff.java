@@ -30,9 +30,9 @@ public class TestMaintenanceStaff {
 	public void setUp() throws Exception 
 	{
 		staff = new MaintenanceStaff("Staff001", "maintenancestaff@mail.com", "test123", "System", "Admin", "415414478");
-		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
+		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Company1","Test" ,"Employer", "123"));
 		allUsersList.put("S001", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123",""));
-		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2", "Test" ,"Employer2", "123"));
+		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2","Company2", "Test" ,"Employer2", "123"));
 		
 		dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		

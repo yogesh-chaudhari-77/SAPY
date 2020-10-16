@@ -21,14 +21,14 @@ public class Blacklist {
 //	DateTimeFormatter dateFormatter = new DateTimeFormatter("dd/MM/yyyy HH:mm:ss");
 	
 	//Blacklisting an user
-	public void setBlacklistStatus(String type) throws ParseException
+	public void setBlacklistStatus(String type)
 	{
 		if (type.toUpperCase().contentEquals("P"))
 			this.blacklistStatus = blacklistStatus.PROVISIONAL_BLACKLISTED;
 		else
 			this.blacklistStatus = blacklistStatus.FULL_BLACKLISTED;
 
-		startDate = dateFormat.parse(dateFormat.format(new Date()));
+		startDate = new Date();
 		endDate = null;
 	}
 	

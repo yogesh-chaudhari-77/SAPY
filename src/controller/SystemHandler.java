@@ -367,6 +367,10 @@ public class SystemHandler {
 					updateEmploymentStatus(applicant);
 					break;
 
+				case "8":
+					registerComplaintAgaintEmployer(applicant);
+					break;
+
 				case "9":
 					selectInterviewTiming(applicant);
 					break;
@@ -1933,9 +1937,9 @@ public class SystemHandler {
 
 		BlacklistStatus blacklistStatus = BlacklistStatus.NOT_BLACKLISTED ;
 
-		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
-		allUsersList.put("E003", new Employer("E003", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
-		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2", "Test" ,"Employer2", "123"));
+		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Company1","Test" ,"Employer", "123"));
+		allUsersList.put("E003", new Employer("E003", "E@mail.com", "Emp123","Company2", "Test" ,"Employer", "123"));
+		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2","Company3", "Test" ,"Employer2", "123"));
 
 		allEmployersList.put(allUsersList.get("E001").getId(),(Employer)allUsersList.get("E001"));
 		allEmployersList.put(allUsersList.get("E002").getId(),(Employer)allUsersList.get("E002"));
@@ -2673,6 +2677,7 @@ public class SystemHandler {
 	 */
 	public void registerComplaintAgaintApplicnt(Employer emp) {
 
+		printApplicantList();
 		String appcntId = this.customScanner.readString("Please enter applicant ID: ");
 
 		Applicant applcntRef = (Applicant) this.allUsersList.get(appcntId);
@@ -2686,12 +2691,73 @@ public class SystemHandler {
 			// Add to all complaint's list
 			this.allComplaints.add(newComplaint);
 
-			((Applicant)applcntRef).setComplaintCount( ((Applicant)applcntRef).getComplaintCount() + 1 );
-
+			//((Applicant)applcntRef).setComplaintCount( ((Applicant)applcntRef).getComplaintCount() + 1 );
+			((Applicant)applcntRef).incrementComplaintCountAndUpdateStatus();
 			// Call provisionally blacklisting login here which accepts applicant's reference
 
 		} catch (NullApplicantException | InvalidTypeException e) {
 			System.err.println(e.getMessage());
+		}
+
+	}
+
+	/**
+	 * 16/10/2020
+	 * @author Prodip
+	 * Applicant can register compaint against any Employer.
+	 */
+	public void registerComplaintAgaintEmployer(Applicant applicant) {
+
+
+		printEmployers();
+		User user;
+		do {
+			String empId = this.customScanner.readString("Please enter employer ID (or Q to exit): ");
+			if(empId.equalsIgnoreCase("q")){
+				return;
+			}
+			user = this.allUsersList.get(empId);
+			if ((user instanceof Employer)) {
+				break;
+			}
+			System.out.println("Entered id does not belong to any employer. Please try again.");
+		}while(true);
+		Employer employer = (Employer) user;
+
+		String message = customScanner.readString("*Enter Message : ");
+		try {
+
+			// Create new complaint
+			Complaints newComplaint = applicant.registerComplaintAgainstEmployer(employer, message);
+
+			// Add to all complaint's list
+			this.allComplaints.add(newComplaint);
+
+			employer.incrementComplaintCountAndUpdateStatus();
+
+		} catch (NullObjectException e) {
+			System.err.println(e.getMessage());
+		}
+
+	}
+
+	/**
+	 * @author Prodip
+	 * Prints the list of all Employers in the system
+	 */
+	public void printEmployers() {
+
+		System.out.println("List of all employers");
+
+		System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+		System.out.format("%-3s|%-10s|%-32s|%-10s|\n", "Sr", "ID", "Full Name", "Company Name");
+		System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+
+		int i = 1;
+		for(Employer emp : this.allEmployersList.values()) {
+			System.out.format("%-3s|%-10s|%-32s|%-10s|\n", i, emp.getId(), emp.getFirstName()+" "+emp.getLastName(), emp.getCompanyName());
+			System.out.format("%3s%10s%32s%10s\n", "---+","----------+","--------------------------------+","----------+");
+			i++;
 		}
 
 	}
@@ -2929,9 +2995,6 @@ public class SystemHandler {
 		this.allUsersList.put("e", e);
 		this.allEmployersList.put("e", e);
 
-		printApplicantList();
-		printPostedJobs(e.getId());
-
 
 		//Added by Prodip Guha Roy for testing
 		Applicant a10 = new Applicant("app10", "chaudhari.yogesh20@gmail.com", "123", "John", "Snow", "048888888", "l");
@@ -2976,8 +3039,9 @@ public class SystemHandler {
 			e1.printStackTrace();
 		}
 
-
-
+		printApplicantList();
+		printEmployers();
+		printPostedJobs(e.getId());
 
 	}
 
