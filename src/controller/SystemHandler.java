@@ -2058,18 +2058,6 @@ public class SystemHandler {
 		}
 
 
-// this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app5"));
-// this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app2"));
-//		try {
-//			this.allEmployersList.get("e").createJob(new Job("job5", "Designer", "Designer Required", "C2"));
-//		} catch (DuplicateJobIdException e1) {
-//// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-// this.allEmployersList.get("e1").createJobOffer(this.allEmployersList.get("e1").getPostedJobs().get("job2"), this.allApplicantsList.get("app1"));
-// this.allEmployersList.get("e1").createJobOffer(this.allEmployersList.get("e1").getPostedJobs().get("job2"), this.allApplicantsList.get("app2"));
-
-
 		// Create some job categories
 		JobCategory j1 = new JobCategory("Category1", "Active", 1);
 		JobCategory j2 = new JobCategory("Category2", "Active", 2);
@@ -2079,7 +2067,7 @@ public class SystemHandler {
 		this.allJobCategories.put("C1", j1);
 		this.allJobCategories.put("C2", j2);
 		this.allJobCategories.put("C3", j3);
-// Add to all complaint's list
+		// Add to all complaint's list
 		this.allComplaints.add(testComplaint1);
 		this.allComplaints.add(testComplaint2);
 		this.allComplaints.add(testComplaint3);
@@ -2176,7 +2164,8 @@ public class SystemHandler {
 
 				case "5" :
 				{
-					staff.generateReport(this.allUsersList, this.allEmployersList, this.allApplicantsList,this.allComplaints, this.allJobCategories);
+					this.generateReport(staff);
+					//staff.generateReport(this.allUsersList, this.allEmployersList, this.allApplicantsList,this.allComplaints, this.allJobCategories);
 				}
 				case "Q":
 					quit = true;
@@ -2184,6 +2173,97 @@ public class SystemHandler {
 			}
 		} while (!quit);
 
+	}
+	
+
+	/* Report creation process - Function of Maintenance Staff */
+	//Generation the reports to tune the system
+	public void generateReport(MaintenanceStaff staff)
+	{
+		int choice = 0;
+		
+		do
+		{
+			System.out.println("The Following reports can be generated in the System."
+					+ "\n 1. List of employers making offers, number of offers made in the specified period"
+					+ "\n 2. List of complaints about specific applicant or employer"
+					+ "\n 3. Jobs offered and accepted by a specific applicant"
+					+ "\n 4. All past offers for a particular Job Category" 
+					+ "\n 5. Exit"
+					+ "\n Enter your choice (1,2,3,4,5) : ");
+			try
+			{
+				choice = Integer.parseInt(Global.scanner.nextLine());
+			}
+			catch (Exception e)
+			{
+				System.out.println("You have entered an invlid input.Please try again!");
+			}
+
+		} while (choice < 1 && choice > 5);
+
+		//			System.out.println("Choice: " + choice);
+		//			System.out.println("allUsersList: " + this.allUsersList);
+		//			if (this.allComplaints != null)
+		//			System.out.println("allComplaints: " + this.allComplaints);
+
+
+		switch (choice)
+		{
+			case 1 : 
+				{
+					Date fromDate, toDate;
+					
+					System.out.println("Please enter specific period for which thw report needs to be generated."
+							+ " \nEnter the Starting date (Format: dd/MM/yyyy) ");
+					fromDate = getDateInput();
+					
+					System.out.println("\nEnter the Ending date (Format: dd/MM/yyyy) ");
+					toDate = getDateInput();
+					
+					staff.generateReport1(this.allEmployersList,fromDate,toDate);
+				}
+					break;
+					
+			case 2 :
+			{
+				String user;
+				System.out.println("Enter the id of the user :  ");
+				user = Global.scanner.nextLine();
+				if (this.allUsersList.get(user) == null)
+					System.out.println("The entered user does not exist");
+				else
+					staff.generateReport2(this.allUsersList,this.allComplaints,user);	
+				break;
+			}
+	
+			case 3 : 
+			{
+				String user;
+				System.out.println("Enter the id of the Applicant :  ");
+				user = Global.scanner.nextLine();
+				if (this.allUsersList.get(user) == null)
+					System.out.println("The entered user does not exist");
+				else
+					staff.generateReport3(this.allApplicantsList,this.allEmployersList, user);
+				break;
+			}
+			
+			case 4 : 
+			{
+				String jobID;
+				System.out.println("Enter the id of the Job Category :  ");
+				jobID = Global.scanner.nextLine();
+				if (!allJobCategories.containsKey(jobID))
+					System.out.println("The entered Job Category goes not exist in the system");
+				else
+					staff.generateReport4(jobID, this.allJobCategories, this.allEmployersList);
+				break;
+	
+			}
+			
+			case 5 : break;
+		}
 	}
 
 

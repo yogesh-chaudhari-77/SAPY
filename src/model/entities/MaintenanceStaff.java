@@ -158,9 +158,9 @@ public class MaintenanceStaff extends User implements Serializable {
 				Date currentDate = dateFormat.parse(dateFormat.format(new Date()));
 
 				long differnceInMillies = Math.abs(currentDate.getTime() - blacklistedDate.getTime());
-				long difference = TimeUnit.DAYS.convert(differnceInMillies, TimeUnit.MILLISECONDS);
+				long duration = TimeUnit.DAYS.convert(differnceInMillies, TimeUnit.MILLISECONDS);
 
-				if(difference > 90)
+				if(duration > 90)
 					app.removeBlacklistStatus();
 				else
 					throw new BlacklistedTimeNotElapsedException();
@@ -179,103 +179,94 @@ public class MaintenanceStaff extends User implements Serializable {
 		}
 	}
 	
-	//Generation the reports to tune the system
-	public void generateReport(HashMap<String, User>allUsersList, HashMap<String, Employer>allEmployersList, HashMap<String, Applicant>allApplicantsList, List<Complaints> allComplaints,HashMap<String, JobCategory>allJobCategories)
-	{
-		int choice = 0;
-		this.allUsersList = allUsersList;
-		this.allComplaints = allComplaints;
-		this.allApplicantsList = allApplicantsList;
-		this.allEmployersList = allEmployersList;
-		do
-		{
-			System.out.println("The Following reports can be generated in the System."
-					+ "\n 1. List of employers making offers, number of offers made in the specified period"
-					+ "\n 2. List of complaints about specific applicant or employer"
-					+ "\n 3. Jobs offered and accepted by a specific applicant"
-					+ "\n 4. All past offers for a particular Job Category" 
-					+ "\n 5. Exit"
-					+ "\n Enter your choice (1,2,3,4,5) : ");
-			try
-			{
-				choice = Integer.parseInt(Global.scanner.nextLine());
-			}
-			catch (Exception e)
-			{
-				System.out.println("You have entered an invlid input.Please try again!");
-			}
-				
-		} while (choice < 1 && choice > 5);
-		
-//		System.out.println("Choice: " + choice);
-//		System.out.println("allUsersList: " + this.allUsersList);
-//		if (this.allComplaints != null)
-//		System.out.println("allComplaints: " + this.allComplaints);
+//	//Generation the reports to tune the system
+//	public void generateReport(HashMap<String, User>allUsersList, HashMap<String, Employer>allEmployersList, HashMap<String, Applicant>allApplicantsList, List<Complaints> allComplaints,HashMap<String, JobCategory>allJobCategories)
+//	{
+//		int choice = 0;
+//		this.allUsersList = allUsersList;
+//		this.allComplaints = allComplaints;
+//		this.allApplicantsList = allApplicantsList;
+//		this.allEmployersList = allEmployersList;
+//		do
+//		{
+//			System.out.println("The Following reports can be generated in the System."
+//					+ "\n 1. List of employers making offers, number of offers made in the specified period"
+//					+ "\n 2. List of complaints about specific applicant or employer"
+//					+ "\n 3. Jobs offered and accepted by a specific applicant"
+//					+ "\n 4. All past offers for a particular Job Category" 
+//					+ "\n 5. Exit"
+//					+ "\n Enter your choice (1,2,3,4,5) : ");
+//			try
+//			{
+//				choice = Integer.parseInt(Global.scanner.nextLine());
+//			}
+//			catch (Exception e)
+//			{
+//				System.out.println("You have entered an invlid input.Please try again!");
+//			}
+//				
+//		} while (choice < 1 && choice > 5);
+//		
+////		System.out.println("Choice: " + choice);
+////		System.out.println("allUsersList: " + this.allUsersList);
+////		if (this.allComplaints != null)
+////		System.out.println("allComplaints: " + this.allComplaints);
+//
+//		
+//		switch (choice)
+//		{
+//		case 1 : generateReport1();
+//				break;
+//		case 2 :
+//				{
+//					String user;
+//					System.out.println("Enter the id of the user :  ");
+//					user = Global.scanner.nextLine();
+//					if (this.allUsersList.get(user) == null)
+//						System.out.println("The entered user does not exist");
+//					else
+//						generateReport2(user);	
+//					break;
+//				}
+//						
+//		case 3 : 
+//				{
+//					String user;
+//					System.out.println("Enter the id of the Applicant :  ");
+//					user = Global.scanner.nextLine();
+//					if (this.allUsersList.get(user) == null)
+//						System.out.println("The entered user does not exist");
+//					else
+//						generateReport3(user);
+//					break;
+//				}
+//		case 4 : 
+//			{
+//				String jobID;
+//				System.out.println("Enter the id of the Job Category :  ");
+//				jobID = Global.scanner.nextLine();
+//				if (!allJobCategories.containsKey(jobID))
+//					System.out.println("The entered Job Category goes not exist in the system");
+//				else
+//					generateReport4(jobID, allJobCategories);
+//				break;
+//				
+//			}
+//		case 5 : break;
+//		
+//		default: System.out.println("In defualt");
+//		}
+//		//Yet to implement
+//	}
 
-		
-		switch (choice)
-		{
-		case 1 : generateReport1();
-				break;
-		case 2 :
-				{
-					String user;
-					System.out.println("Enter the id of the user :  ");
-					user = Global.scanner.nextLine();
-					if (this.allUsersList.get(user) == null)
-						System.out.println("The entered user does not exist");
-					else
-						generateReport2(user);	
-					break;
-				}
-						
-		case 3 : 
-				{
-					String user;
-					System.out.println("Enter the id of the Applicant :  ");
-					user = Global.scanner.nextLine();
-					if (this.allUsersList.get(user) == null)
-						System.out.println("The entered user does not exist");
-					else
-						generateReport3(user);
-					break;
-				}
-		case 4 : 
-			{
-				String jobID;
-				System.out.println("Enter the id of the Job Category :  ");
-				jobID = Global.scanner.nextLine();
-				if (!allJobCategories.containsKey(jobID))
-					System.out.println("The entered Job Category goes not exist in the system");
-				else
-					generateReport4(jobID, allJobCategories);
-				break;
-				
-			}
-		case 5 : break;
-		
-		default: System.out.println("In defualt");
-		}
-		//Yet to implement
-	}
 
-
-	public void generateReport1() {
+	public void generateReport1(HashMap<String, Employer>allEmployersList, Date fromDate, Date toDate) {
 		// TODO Auto-generated method stub
 		
 		TreeMap<String, Integer> empOfferCount = new TreeMap<String, Integer>();
-		Date fromDate;
-		Date toDate;
+			
 		
-		System.out.println("Please enter specific period for which thw report needs to be generated."
-				+ " \nEnter the Starting date (Format: dd/MM/yyyy) ");
-		fromDate = getDateInput();
-		
-		System.out.println("\nEnter the Ending date (Format: dd/MM/yyyy) ");
-		toDate = getDateInput();
-		
-		
-		for (Employer e: this.allEmployersList.values())
+		for (Employer e: allEmployersList.values())
 		{
 			HashMap<String, Job> postedJobs = e.getPostedJobs();
 			int offerCount = 0;
@@ -325,10 +316,10 @@ public class MaintenanceStaff extends User implements Serializable {
 	
 	
 	//Report containing list of complaints of particular user(Employer/Applicant)
-	public void generateReport2(String user) 
+	public void generateReport2(HashMap<String, User>allUsersList,List<Complaints> allComplaints,String user) 
 	{
 		// TODO Auto-generated method stub
-		if(this.allUsersList.containsKey(user))
+		if(allUsersList.containsKey(user))
 		{
 			String filename = "src/reports/ComplaintsOn" + user + ".csv";
 			PrintWriter pw;
@@ -338,7 +329,7 @@ public class MaintenanceStaff extends User implements Serializable {
 				pw = new PrintWriter(new BufferedWriter (new FileWriter(filename)));
 				pw.println("Complaints on the User ,"+ user);
 				pw.println("Complaint MadeBy, Complaint Message");
-				for (Complaints c: this.allComplaints)
+				for (Complaints c: allComplaints)
 				{
 					if (c.getComplaintOn().contentEquals(user))
 					{
@@ -359,10 +350,10 @@ public class MaintenanceStaff extends User implements Serializable {
 	
 	
 	
-	public void generateReport3(String user) 
+	public void generateReport3(HashMap<String, Applicant>allApplicantsList,HashMap<String, Employer>allEmployersList,String user) 
 	{
 		// TODO Auto-generated method stub
-		String appID = this.allApplicantsList.get(user).getId();
+		String appID = allApplicantsList.get(user).getId();
 		
 		int offeredCount = 0;
 		int acceptedCount = 0;
@@ -370,7 +361,7 @@ public class MaintenanceStaff extends User implements Serializable {
 		ArrayList<String> acceptedJobIds = new ArrayList<String>();
 
 		
-		for (Employer e: this.allEmployersList.values())
+		for (Employer e: allEmployersList.values())
 		{
 			HashMap<String, Job> postedJobs = e.getPostedJobs();
 			
@@ -433,7 +424,7 @@ public class MaintenanceStaff extends User implements Serializable {
 	}
 	
 	
-	public void generateReport4(String jobID, HashMap<String, JobCategory> allJobCategories) 
+	public void generateReport4(String jobID, HashMap<String, JobCategory> allJobCategories, HashMap<String, Employer> allEmployersList) 
 	{
 		// TODO Auto-generated method stub
 		
@@ -448,7 +439,7 @@ public class MaintenanceStaff extends User implements Serializable {
 			pw.println("List of Jobs offered in the Job Category: " + jobCategoryTitle);
 			pw.println("Offer To,Offerd By,EmploymentDetails");
 			
-			for (Employer e: this.allEmployersList.values())
+			for (Employer e: allEmployersList.values())
 			{
 				HashMap<String, Job> postedJobs = e.getPostedJobs();
 				
