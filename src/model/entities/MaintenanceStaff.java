@@ -219,7 +219,7 @@ public class MaintenanceStaff extends User{
 		do
 		{
 			System.out.println("The Following reports can be generated in the System."
-					+ "\n 1. List of employers making offers, sorted based on the number of offers made in the specified period"
+					+ "\n 1. List of employers making offers, number of offers made in the specified period"
 					+ "\n 2. List of complaints about specific applicant or employer"
 					+ "\n 3. Jobs offered and accepted by a specific applicant"
 					+ "\n 4. All past offers for a particular Job Category" 
@@ -236,10 +236,10 @@ public class MaintenanceStaff extends User{
 				
 		} while (choice < 1 && choice > 5);
 		
-		System.out.println("Choice: " + choice);
-		System.out.println("allUsersList: " + this.allUsersList);
-		if (this.allComplaints != null)
-		System.out.println("allComplaints: " + this.allComplaints);
+//		System.out.println("Choice: " + choice);
+//		System.out.println("allUsersList: " + this.allUsersList);
+//		if (this.allComplaints != null)
+//		System.out.println("allComplaints: " + this.allComplaints);
 
 		
 		switch (choice)
@@ -324,7 +324,7 @@ public class MaintenanceStaff extends User{
 			}
 			
 			//Change it  to >0 later
-			if (offerCount >= 0)
+			if (offerCount > 0)
 				empOfferCount.put(e.getId(),offerCount);
 		}
 		
@@ -365,7 +365,7 @@ public class MaintenanceStaff extends User{
 			try 
 			{
 				pw = new PrintWriter(new BufferedWriter (new FileWriter(filename)));
-				pw.println("Complaints on the User : " + user);
+				pw.println("Complaints on the User ,"+ user);
 				pw.println("Complaint MadeBy, Complaint Message");
 				for (Complaints c: this.allComplaints)
 				{

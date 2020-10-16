@@ -299,7 +299,15 @@ public class SystemHandler {
 
 			showEmployerMenu(((Employer) user));
 		} else {
-			showMaintenanceStaffMenu(staff);
+			try {
+				showMaintenanceStaffMenu(staff);
+			} catch (InvalidApplicationException e) {
+				e.printStackTrace();
+			} catch (NullApplicantException e) {
+				e.printStackTrace();
+			} catch (NullEntityException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -892,7 +900,7 @@ public class SystemHandler {
 		return date;
 	}
 
-	public void showMaintenanceStaffMenu(MaintenanceStaff staff) throws DuplicateJobCategoryException, NotFullyBlacklistedUserException, ParseException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException
+	public void showMaintenanceStaffMenu(MaintenanceStaff staff) throws DuplicateJobCategoryException, NotFullyBlacklistedUserException, ParseException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException, InvalidApplicationException, NullApplicantException, NullEntityException
 	{
 		boolean quit = false;
 		Menu menu = null;
@@ -905,15 +913,69 @@ public class SystemHandler {
 
 		BlacklistStatus blacklistStatus = BlacklistStatus.NOT_BLACKLISTED ;
 
-
 		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
 		allUsersList.put("E003", new Employer("E003", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
 		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2", "Test" ,"Employer2", "123"));
-		Complaints testComplaint = new Complaints((Applicant)this.allUsersList.get("app6"),(Employer)this.allUsersList.get("E001") , "Test Complaint");
 
 		allEmployersList.put(allUsersList.get("E001").getId(),(Employer)allUsersList.get("E001"));
 		allEmployersList.put(allUsersList.get("E002").getId(),(Employer)allUsersList.get("E002"));
 		allEmployersList.put(allUsersList.get("E003").getId(),(Employer)allUsersList.get("E003"));
+		try {
+			this.allEmployersList.get("E001").createJob(new Job("job1", "Developer", "Developer Desc","C1"));
+		} catch (DuplicateJobIdException e3) {
+// TODO Auto-generated catch block
+			e3.printStackTrace();
+		}
+
+		Complaints testComplaint1 = new Complaints((Applicant)this.allUsersList.get("app1"),(Employer)this.allUsersList.get("E001") , "Employer is not punctual");
+		Complaints testComplaint2 = new Complaints((Applicant)this.allUsersList.get("app2"),(Employer)this.allUsersList.get("E001") , "Interview process is lengthy");
+		Complaints testComplaint3 = new Complaints((Applicant)this.allUsersList.get("app3"),(Employer)this.allUsersList.get("E001") , "Interview started after 1 hour of scheduled time.");
+		Complaints testComplaint4 = new Complaints((Applicant)this.allUsersList.get("app4"),(Employer)this.allUsersList.get("E001") , "Wrong JD");
+		Complaints testComplaint5 = new Complaints((Applicant)this.allUsersList.get("app5"),(Employer)this.allUsersList.get("E001") , "Paying less than what is advertised");
+
+
+
+		try {
+			this.allEmployersList.get("e").shortListCandidate(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app5"));
+			this.allEmployersList.get("e").shortListCandidate(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app2"));
+			this.allEmployersList.get("e").shortListCandidate(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app1"));
+
+			this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app5"));
+			this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app2"));
+			this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app1"));
+
+			this.allEmployersList.get("E001").shortListCandidate(this.allEmployersList.get("E001").getPostedJobs().get("job1"), this.allApplicantsList.get("app5"));
+			this.allEmployersList.get("E001").shortListCandidate(this.allEmployersList.get("E001").getPostedJobs().get("job1"), this.allApplicantsList.get("app2"));
+
+			this.allEmployersList.get("E001").createJobOffer(this.allEmployersList.get("E001").getPostedJobs().get("job1"), this.allApplicantsList.get("app5"));
+			this.allEmployersList.get("E001").createJobOffer(this.allEmployersList.get("E001").getPostedJobs().get("job1"), this.allApplicantsList.get("app2"));
+
+		} catch (AlreadyPresentInYourShortListedListException e2) {
+			// TODO Auto-generated catch block
+			//e2.printStackTrace();
+		} catch (ApplicantIsBlackListedException e2) {
+			// TODO Auto-generated catch block
+			//e2.printStackTrace();
+		} catch (NullApplicantException e2) {
+			// TODO Auto-generated catch block
+			//e2.printStackTrace();
+		} catch (NullJobReferenceException e2) {
+			// TODO Auto-generated catch block
+			//e2.printStackTrace();
+		}
+
+
+// this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app5"));
+// this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app2"));
+//		try {
+//			this.allEmployersList.get("e").createJob(new Job("job5", "Designer", "Designer Required", "C2"));
+//		} catch (DuplicateJobIdException e1) {
+//// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+// this.allEmployersList.get("e1").createJobOffer(this.allEmployersList.get("e1").getPostedJobs().get("job2"), this.allApplicantsList.get("app1"));
+// this.allEmployersList.get("e1").createJobOffer(this.allEmployersList.get("e1").getPostedJobs().get("job2"), this.allApplicantsList.get("app2"));
+
 
 		// Create some job categories
 		JobCategory j1 = new JobCategory("Category1", "Active", 1);
@@ -924,20 +986,18 @@ public class SystemHandler {
 		this.allJobCategories.put("C1", j1);
 		this.allJobCategories.put("C2", j2);
 		this.allJobCategories.put("C3", j3);
-		
-		// Add to all complaint's list
-		this.allComplaints.add(testComplaint);
-
-		
+// Add to all complaint's list
+		this.allComplaints.add(testComplaint1);
+		this.allComplaints.add(testComplaint2);
+		this.allComplaints.add(testComplaint3);
+		this.allComplaints.add(testComplaint4);
+		this.allComplaints.add(testComplaint5);
 
 		do{
 			String choice = menu.show();
 			choice = choice.toUpperCase();
 
 			//mock testing
-
-
-
 
 			switch(choice){
 				case "1":
@@ -952,12 +1012,13 @@ public class SystemHandler {
 
 					System.out.println("Enter the title of the Job category: ");
 					title = input.nextLine();
-					
-					
-						
-					allJobCategories.put(title,staff.addJobCategory(allJobCategories,title));
-					
-					
+
+					try {
+						allJobCategories.put(title,staff.addJobCategory(allJobCategories,title));
+					} catch (DuplicateJobCategoryException e) {
+						e.printStackTrace();
+					}
+
 					System.out.println("Job categories avaialable in the System\n-------------------------------------------------------");
 					for (String s: allJobCategories.keySet())
 					{
@@ -1039,17 +1100,16 @@ public class SystemHandler {
 	 * @throws ParseException 
 	 */
 	
-	public void showEmployerMenu(Employer employer) throws ParseException{
+	public void showEmployerMenu(Employer employer){
 		boolean quit = false;
 		Menu menu = null;
-
-		try {
-			menu = new Menu("employer_menu_options");
-		} catch (Exception e) {
-			System.out.println();
-		}
-
 		do{
+			try {
+				menu = new Menu("employer_menu_options");
+			} catch (Exception e) {
+				System.out.println();
+			}
+
 			String choice = menu.show();
 			choice = choice.toUpperCase();
 
@@ -1693,7 +1753,7 @@ public class SystemHandler {
 
 		do{
 
-			String results = customScanner.readString("Enter Applicant ID and Result : [app1 success app2 fail]");
+			String results = customScanner.readString("Enter Applicant ID and Result : [app1 success app2 fail] : ");
 
 			// Format expected = app1 success app2 failed app3 success
 			StringTokenizer resultTokens = new StringTokenizer(results);
@@ -1720,7 +1780,7 @@ public class SystemHandler {
 
 			exit = customScanner.readYesNo("Exit ? [y/n]");
 
-		}while (exit.trim().strip().equalsIgnoreCase("y"));
+		}while (exit.trim().strip().equalsIgnoreCase("n"));
 	}
 
 
@@ -1741,21 +1801,25 @@ public class SystemHandler {
 
 		printShortListedApplicntsForJob(e, jobRef);
 
-		String applntIds = customScanner.readString("Applicant IDs : [app1 app2]");
+		String applntIds = customScanner.readString("Applicant IDs : [app1 app2] : ");
 
-		StringTokenizer applntIdTokens = new StringTokenizer(applntIds);
+		//StringTokenizer applntIdTokens = new StringTokenizer(applntIds);
+		String [] applntIdTokens = applntIds.split(" ");
 
-		while(applntIdTokens.hasMoreTokens()){
+		int i = 0;
+		while(applntIdTokens.length > i){
 
 			try {
-				e.createJobOffer(jobRef, (Applicant) this.allUsersList.get( applntIdTokens.nextToken() ));
+				e.createJobOffer(jobRef, (Applicant) this.allUsersList.get( applntIdTokens[i]));
 
 				// On successing at interview, automated email notification will be sent to the applicant
-				e.sendJobOfferEmail(jobRef, (Applicant) this.allUsersList.get( applntIdTokens.nextToken() ));
+				e.sendJobOfferEmail(jobRef, (Applicant) this.allUsersList.get( applntIdTokens[i] ));
 
 			} catch (InvalidApplicationException | NullApplicantException | NullEntityException excep) {
 				System.err.println(excep.getMessage());
 			}
+
+			i++;
 		}
 
 

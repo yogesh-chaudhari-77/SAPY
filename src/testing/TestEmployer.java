@@ -16,7 +16,7 @@ import model.exceptions.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.*;
 
 public class TestEmployer {
 
@@ -42,14 +42,17 @@ public class TestEmployer {
 		employer = new Employer("E1", "employer@gmail.com", "qwerty", "Sample", "Employer", "123456789");
 
 		// With certain jobs
-		employer.createJob(new Job("job1", "Developer", "Developer Desc"));
-		employer.createJob(new Job("job2", "Analyst", "Analyst Required"));
-		employer.createJob(new Job("job3", "Designer", "Designer Required"));
+		employer.createJob(new Job("job1", "Developer", "Developer Desc", "C2"));
+		employer.createJob(new Job("job2", "Analyst", "Analyst Required","C2"));
+		employer.createJob(new Job("job3", "Designer", "Designer Required", "C2"));
 
 		// Creating an applicant
 		applicant = new Applicant("A1", "a@gmail.com", "123", "John", "Doe", "048888888", "l");
 
-		applicant.getUserAvailability().add(new UserAvailability(sysHandler.getAllJobCategories().get("C2"), AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("11/11/2021"))));
+		List<JobCategory> uc = new ArrayList<JobCategory>();
+		uc.add(sysHandler.getAllJobCategories().get("C2"));
+
+		applicant.getUserAvailability().add(new UserAvailability(uc, AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("11/11/2021"))));
 
 	}
 
@@ -145,7 +148,7 @@ public class TestEmployer {
 	 */
 
 	@Test (expected = ApplicantIsBlackListedException.class)
-	public void test_shortListBlackListedApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException {
+	public void test_shortListBlackListedApplicant() throws AlreadyPresentInYourShortListedListException, ApplicantIsBlackListedException, NullApplicantException, NullJobReferenceException, ParseException {
 
 		// Job Reference Against which we are shortlisting
 		Job jobRef = employer.getPostedJobs().get("job1");
@@ -217,7 +220,7 @@ public class TestEmployer {
 	public void test_createJob() throws DuplicateJobIdException {
 
 		// Creating a job job
-		Job j1 = new Job("j1","Test Job", "Test Job Description");
+		Job j1 = new Job("j1","Test Job", "Test Job Description", "C2");
 
 		// Validating the state before the
 		Assert.assertEquals("Validating Posted Jobs List Count Before : ", 3, this.employer.getPostedJobs().size());
@@ -241,7 +244,7 @@ public class TestEmployer {
 	public void test_createJobDuplicateId() throws DuplicateJobIdException {
 
 		// Creating a job job
-		Job j1 = new Job("j1","Test Job", "Test Job Description");
+		Job j1 = new Job("j1","Test Job", "Test Job Description", "C2");
 
 		// Validating the state before the
 		Assert.assertEquals("Jobs Count Before : ", 3, this.employer.getPostedJobs().size());
@@ -250,7 +253,7 @@ public class TestEmployer {
 
 		Assert.assertEquals("Jobs Count After: ", 4, this.employer.getPostedJobs().size());
 
-		Job j2 = new Job("j1","Test Job 2", "Test Job Description 2");
+		Job j2 = new Job("j1","Test Job 2", "Test Job Description 2", "C2");
 
 		// Expecting exception because IDs are same
 		this.employer.createJob(j2);
