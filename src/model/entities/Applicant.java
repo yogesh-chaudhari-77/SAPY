@@ -234,6 +234,8 @@ public class Applicant extends User implements Serializable {
     }
 
     public boolean checkDuplicateAvailability(AvailabilityType availabilityType, int hoursPerWeek){
+
+
         for(UserAvailability currentAvailability: userAvailability){
             if((currentAvailability.getAvailabilityType() == availabilityType)
                     && currentAvailability.getNoOfHoursAWeek() == hoursPerWeek){
@@ -246,16 +248,17 @@ public class Applicant extends User implements Serializable {
 
     public boolean validAvailability(UserAvailability availability) throws BadEntryException {
 
+        Date startDate = availability.getPeriodStartDate();
+        Date endDate = availability.getPeriodEndDate();
 
-        if(availability.getPeriodStartDate().after(availability.getPeriodEndDate())
-                || availability.getPeriodStartDate().equals(availability.getPeriodEndDate())){
+        if(startDate.after(endDate) || startDate.equals(endDate)){
             throw new BadEntryException("Start date must be less than end date");
+        }else {
+            return true;
         }
-
-        return true;
     }
 
-    public boolean updateAvailability(UserAvailability availability, int recordIndex) throws BadEntryException, NoSuchRecordException {
+    public void updateAvailability(UserAvailability availability, int recordIndex) throws BadEntryException, NoSuchRecordException {
 
 
         //UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
@@ -264,13 +267,14 @@ public class Applicant extends User implements Serializable {
             throw new NoSuchRecordException("No Such Job Preference");
         }
 
-        if(validAvailability(availability)){
+        boolean ifValid = validAvailability(availability);
+
+        if(ifValid){
             //userAvailability.remove(recordIndex);
             userAvailability.set(recordIndex,availability);
-            return true;
         }
 
-       return false;
+
     }
 
     public boolean uploadCV(String cvPath) throws InvalidCVPathException{

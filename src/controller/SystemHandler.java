@@ -1453,9 +1453,11 @@ public class SystemHandler {
 			return;
 		}
 		int numOfRecords = applicant.getUserAvailability().size();
-		printStatement = "Enter the Job Preference number to update : ";
+		printStatement = "Enter the Job Preference number to update (or 0 to exit): ";
 		System.out.print(printStatement);
-		int recordNo = validInput(printStatement, numOfRecords) - 1;
+		int input = validInput(printStatement, numOfRecords);
+
+		int recordNo = input - 1;
 
 		UserAvailability updateAvailability = applicant.getUserAvailability().get(recordNo);
 
@@ -1466,7 +1468,7 @@ public class SystemHandler {
 		Date periodEndDate = updateAvailability.getPeriodEndDate();
 
 		boolean runLoop = true;
-
+		String choice;
 		do{
 			System.out.println("\n===Details that can be updated===");
 			System.out.println("1. Availability Type\n" +
@@ -1477,7 +1479,7 @@ public class SystemHandler {
 					"U. Update and exit.\n" +
 					"Q. Exit without updating");
 			System.out.print("Enter Option to update : ");
-			String choice = Global.scanner.nextLine();
+			choice = Global.scanner.nextLine();
 
 			switch(choice){
 				case "1":
@@ -1505,14 +1507,6 @@ public class SystemHandler {
 					applicableJobCategories = getJobCategories((ArrayList) applicableJobCategories);
 					break;
 				case "U":
-					UserAvailability availability = new UserAvailability(applicableJobCategories, availabilityType, noOfHoursAWeek, periodStartDate, periodEndDate);
-					try {
-						applicant.updateAvailability(availability, recordNo);
-						System.out.println("Job Preference updated successfully.");
-						System.out.println(applicant.getUserAvailability().get(recordNo));
-					} catch (NoSuchRecordException |  BadEntryException e) {
-						System.out.println(e);
-					}
 					runLoop = false;
 					break;
 				case "Q":
@@ -1523,6 +1517,16 @@ public class SystemHandler {
 					break;
 			}
 		} while (runLoop);
+
+		if(choice.equals("U")){
+			UserAvailability availability = new UserAvailability(applicableJobCategories, availabilityType, noOfHoursAWeek, periodStartDate, periodEndDate);
+			try {
+				applicant.updateAvailability(availability, recordNo);
+				System.out.println("Job Preference updated successfully.");
+			} catch (NoSuchRecordException |  BadEntryException e) {
+				System.out.println(e);
+			}
+		}
 	}
 
 	private void addReferences(Applicant applicant) throws DuplicateEntryException {
