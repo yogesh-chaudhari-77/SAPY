@@ -26,9 +26,12 @@ public class Applicant extends User implements Serializable {
     private Date lastStatusUpdateDate;
     private List<JobApplication> jobApplications;
 
+    //for synchronizing thread calls
+    private transient static Object mutex = new Object();
 
     public Applicant(String id,String email, String password, String firstName, String lastName, String phoneNumber, String applicantType) {
         super(id, email, password, firstName, lastName, phoneNumber);
+        System.out.println("Constructor");
         this.employmentHistory = new ArrayList<>();
         this.userAvailability = new ArrayList<>();
         this.complaintCount = 0;
@@ -213,45 +216,32 @@ public class Applicant extends User implements Serializable {
     }
 
     public boolean addAvailability(AvailabilityType availabilityType, List<JobCategory> jobCategories, int hoursPerWeek, Date periodStartDate, Date periodEndDate) throws DuplicateEntryException, BadEntryException {
-        boolean duplicateAvailability= false;
-        String nullObjectExceptionMessage= "";
-        if(availabilityType == null){
-            nullObjectExceptionMessage= "Availability Type passed points to null";
-        }
-        if(jobCategories == null){
-            nullObjectExceptionMessage= "List of JobCategories passed points to null";
-        }
-        if(periodStartDate == null){
-            nullObjectExceptionMessage= "Period Start Date passed points to null";
+
+        if(availabilityType == null || jobCategories == null || periodStartDate == null || periodEndDate == null){
+            throw new NullObjectException("Null values passed as input in addAvailability");
         }
 
-        if(periodEndDate == null){
-            nullObjectExceptionMessage= "Period End Date passed points to null";
-        }
+        boolean isDuplicate= checkDuplicateAvailability(availabilityType, hoursPerWeek);
 
-        if(!nullObjectExceptionMessage.isEmpty()){
-            throw new NullObjectException(nullObjectExceptionMessage);
+        if(isDuplicate) {
+            throw new DuplicateEntryException("User Availability already present");
         }
 
         UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
-
-        if(validAvailability(availability)){
-            for(UserAvailability currentAvailability: userAvailability){
-                if((currentAvailability.getAvailabilityType() == availability.getAvailabilityType())
-                        && currentAvailability.getNoOfHoursAWeek() == availability.getNoOfHoursAWeek()){
-                    duplicateAvailability= true;
-                    break;
-                }
-            }
-
-            if(duplicateAvailability) {
-                throw new DuplicateEntryException("User Availability already present");
-            }
-
-            userAvailability.add(availability);
-        }
+        userAvailability.add(availability);
 
         return true;
+    }
+
+    public boolean checkDuplicateAvailability(AvailabilityType availabilityType, int hoursPerWeek){
+        for(UserAvailability currentAvailability: userAvailability){
+            if((currentAvailability.getAvailabilityType() == availabilityType)
+                    && currentAvailability.getNoOfHoursAWeek() == hoursPerWeek){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public boolean validAvailability(UserAvailability availability) throws BadEntryException {
@@ -324,8 +314,7 @@ public class Applicant extends User implements Serializable {
         boolean update = false;
         if(decision == 1){
             jobApplication.getOfferRef().setOfferStatus(OfferStatus.ACCEPTED);
-            this.employmentStatus = EmploymentStatus.EMPLOYED;
-            this.lastStatusUpdateDate = new Date();
+            setEmploymentStatus(EmploymentStatus.EMPLOYED);
             update = true;
         }else if(decision == 0){
             jobApplication.getOfferRef().setOfferStatus(OfferStatus.REJECTED);
@@ -519,18 +508,27 @@ public class Applicant extends User implements Serializable {
 
     // 07-10-2020 - Yogeshwar Chaudhari - Employer needs employementStatus while searching, shortlisting and making an offer
     public EmploymentStatus getEmploymentStatus() {
-        return employmentStatus;
+        synchronized (mutex) {
+            return employmentStatus;
+        }
     }
 
     public void setEmploymentStatus(EmploymentStatus employmentStatus) {
-        this.employmentStatus = employmentStatus;
+        synchronized (mutex) {
+            this.employmentStatus = employmentStatus;
+            this.lastStatusUpdateDate = new Date();
+        }
     }
 
     public Date getLastStatusUpdateDate() {
-        return lastStatusUpdateDate;
+        synchronized (mutex) {
+            return lastStatusUpdateDate;
+        }
     }
 
     public void setLastStatusUpdateDate(Date lastStatusUpdateDate) {
-        this.lastStatusUpdateDate = lastStatusUpdateDate;
+        synchronized (mutex) {
+            this.lastStatusUpdateDate = lastStatusUpdateDate;
+        }
     }
 }

@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -159,7 +161,10 @@ public class SystemHandler {
 
 
 		allUsersList.put("Staff001", staff);
-		changeStatusOfInactiveApplicants();
+
+		CheckEmploymentStatusThread checkEmploymentStatusThread = new CheckEmploymentStatusThread(allUsersList);
+		ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+		executorService.scheduleAtFixedRate(checkEmploymentStatusThread,0,24, TimeUnit.HOURS);
 
 		try {
 			menu = new Menu("main_menu_options");
@@ -197,6 +202,7 @@ public class SystemHandler {
 
 		} while (!quit);
 
+		executorService.shutdown();
 		saveDataToFiles();
 	}
 
@@ -845,22 +851,18 @@ public class SystemHandler {
 				switch (choice) {
 					case "1":
 						applicant.setEmploymentStatus(EmploymentStatus.AVAILABLE);
-						applicant.setLastStatusUpdateDate(new Date());
 						break;
 
 					case "2":
 						applicant.setEmploymentStatus(EmploymentStatus.PENDING);
-						applicant.setLastStatusUpdateDate(new Date());
 						break;
 
 					case "3":
 						applicant.setEmploymentStatus(EmploymentStatus.EMPLOYED);
-						applicant.setLastStatusUpdateDate(new Date());
 						break;
 
 					case "4":
 						applicant.setEmploymentStatus(EmploymentStatus.UNKNOWN);
-						applicant.setLastStatusUpdateDate(new Date());
 						break;
 
 					case "Q":
@@ -878,35 +880,6 @@ public class SystemHandler {
 		System.out.println("Employment Status updated successfully");
 	}
 
-	private void changeStatusOfInactiveApplicants(){
-		Set<String> allUsers = allUsersList.keySet();
-
-		for(String userId : allUsers){
-			User user = allUsersList.get(userId);
-			if(user instanceof Applicant){
-				Applicant applicant = (Applicant) user;
-				Date currDate = new Date();
-				long noOfInactiveDays = findDifferenceInDays(currDate, applicant.getLastStatusUpdateDate());
-				if(noOfInactiveDays > 14){
-					applicant.setEmploymentStatus(EmploymentStatus.UNKNOWN);
-				}
-			}
-		}
-
-	}
-
-	/**
-	 * @param firstDate
-	 * @param secondDate
-	 * @return firstDate - secondDate as no of days in long
-	 */
-	private long findDifferenceInDays(Date firstDate, Date secondDate){
-
-		long differenceInMilliseconds = Math.abs(firstDate.getTime() - secondDate.getTime());
-		long differenceInDays = TimeUnit.DAYS.convert(differenceInMilliseconds, TimeUnit.MILLISECONDS);
-
-		return differenceInDays;
-	}
 
 	public void uploadApplicantCV(Applicant applicant){
 		System.out.println("***** Upload CV *****");
@@ -1326,9 +1299,23 @@ public class SystemHandler {
 		return null;
 	}
 
-	public int getNoOfHours(){
-		System.out.print("Number of Hours per week: ");
-		 return Global.scanner.nextInt();
+	public int getNoOfHours(Applicant applicant, AvailabilityType type){
+		boolean runLoop;
+		int noOfHours;
+		do{
+			runLoop = false;
+			System.out.print("Number of Hours per week: ");
+			noOfHours = Global.scanner.nextInt();
+			if(applicant.getApplicantType() == ApplicantType.INTERNATIONAL &&
+					type == AvailabilityType.PART_TIME){
+				if (noOfHours>20){
+					System.out.println("International student are not allowed to work more than 20 hours per week for Part-Time employment.\n" +
+							"Please provide less than 20 hours availability");
+					runLoop = true;
+				}
+			}
+		}while(runLoop);
+		return noOfHours;
 	}
 
 	public Date dateForAvailability(String date){
@@ -1419,10 +1406,18 @@ public class SystemHandler {
 		System.out.println("Enter Below details for adding Job Preference\n");
 
 		availabilityType = getAvailabilityType();
-		noOfHoursAWeek = getNoOfHours();
+		noOfHoursAWeek = getNoOfHours(applicant,availabilityType);
 		Global.scanner.nextLine();
 		periodStartDate = dateForAvailability("Start Date: ");
-		periodEndDate = dateForAvailability("End Date: ");
+		do {
+			periodEndDate = dateForAvailability("End Date: ");
+			if (periodStartDate.after(periodEndDate) || periodStartDate.equals(periodEndDate)) {
+				System.out.println("Start date must be less than end date. Please try again.");
+				continue;
+			}
+			break;
+		}while(true);
+
 		applicableJobCategories = getJobCategories(applicableJobCategories);
 
 		try {
@@ -1487,6 +1482,14 @@ public class SystemHandler {
 			switch(choice){
 				case "1":
 					availabilityType = getAvailabilityType();
+					if (availabilityType == AvailabilityType.PART_TIME &&
+							applicant.getApplicantType() == ApplicantType.INTERNATIONAL){
+						if(noOfHoursAWeek > 20 ){
+							System.out.println("International student are not allowed to work more than 20 hours per week for Part-Time employment.\n" +
+									"Please provide less than 20 hours availability");
+							noOfHoursAWeek = getNoOfHours(applicant,availabilityType);
+						}
+					}
 					break;
 				case "2":
 					periodStartDate = dateForAvailability("Period Start Date: ");
@@ -1496,7 +1499,7 @@ public class SystemHandler {
 
 					break;
 				case "4":
-					noOfHoursAWeek = getNoOfHours();
+					noOfHoursAWeek = getNoOfHours(applicant,availabilityType);
 					break;
 				case "5":
 					applicableJobCategories = getJobCategories((ArrayList) applicableJobCategories);
@@ -3018,7 +3021,6 @@ public class SystemHandler {
 
 				// 16-10-2020 - If the offer has been made, then the applicant status should be changed to employed
 				((Applicant) this.allUsersList.get( applntIdTokens[i])).setEmploymentStatus(EmploymentStatus.PENDING);
-				((Applicant) this.allUsersList.get( applntIdTokens[i])).setLastStatusUpdateDate(new Date());
 
 				// On successing at interview, automated email notification will be sent to the applicant
 				e.sendJobOfferEmail(jobRef, (Applicant) this.allUsersList.get( applntIdTokens[i] ));
