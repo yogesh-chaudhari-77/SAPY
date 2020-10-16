@@ -1,5 +1,7 @@
 package model.enums;
 
-public enum ApplicationStatus {
+import java.io.Serializable;
+
+public enum ApplicationStatus implements Serializable {
         SUCCESS, FAILURE, ONGOING;
 }

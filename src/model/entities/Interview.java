@@ -1,12 +1,13 @@
 package model.entities;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * @author Yogeshwar Chaudhari
  * Applicant can create interview after selected one of the many available times provided by employer
  */
-public class Interview {
+public class Interview implements Serializable {
 
     String result;
     Date interviewDate;

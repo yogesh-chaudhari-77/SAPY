@@ -3,16 +3,18 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class EmploymentRecord {
+public class EmploymentRecord implements Serializable {
 
     private String companyName;
     private String designation;
     private Date startDate;
     private Date endDate;
     private boolean currentCompany;
+
 
     public EmploymentRecord(String companyName, String designation, Date startDate, Date endDate, boolean currentCompany) {
         this.companyName = companyName;
@@ -34,6 +36,10 @@ public class EmploymentRecord {
 
     public boolean getCurrentCompany(){
         return currentCompany;
+    }
+
+    public String getDesignation() {
+        return designation;
     }
 
     @Override

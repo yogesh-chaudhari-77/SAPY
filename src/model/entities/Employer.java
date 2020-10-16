@@ -1,30 +1,28 @@
 package model.entities;
 
-//import com.mashape.unirest.http.exceptions.UnirestException;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import customUtils.EmailUtil;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.io.Serializable;
 import java.text.ParseException;
-import java.util.ArrayList;
+
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Set;
-
-//import org.apache.commons.lang3.StringEscapeUtils;
-
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.JSONObject;
 
 import com.sun.jdi.InvalidTypeException;
 
-//import javax.mail.MessagingException;
+import javax.mail.MessagingException;
 import javax.management.InvalidApplicationException;
 
 /*
  * Class implements all employer related functionality
  */
 
-public class Employer extends User {
+public class Employer extends User implements Serializable {
 
 	private String companyName = null;
 	private String address = null;
@@ -46,11 +44,11 @@ public class Employer extends User {
 	/*
 	 * Default constructor
 	 */
-	public Employer(String id, String userEmail, String password, String firstName, String lastName, String phoneNumber)
-	{
-		super(id, userEmail, password, firstName, lastName, phoneNumber);
-		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
-	}
+//	public Employer(String id, String userEmail, String password, String firstName, String lastName, String phoneNumber)
+//	{
+//		super(id, userEmail, password, firstName, lastName, phoneNumber);
+//		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
+//	}
 
 	/*
 	 *
@@ -58,6 +56,13 @@ public class Employer extends User {
 	public Employer(String id, String userEmail, String password, String companyName)
 	{
 		super(id, userEmail, password);
+		this.companyName = companyName;
+		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
+	}
+
+	public Employer(String id, String userEmail, String password, String companyName,String firstname, String lastname, String phoneNumber)
+	{
+		super(id, userEmail, password, firstname, lastname, phoneNumber);
 		this.companyName = companyName;
 		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
 	}
@@ -224,7 +229,7 @@ public class Employer extends User {
 			throw new InvalidApplicationException(applicant.getId()+" has not been shortlisted for this job");
 		}
 
-		Interview interviewRef = jobRef.getShortListedApplicants().get(applicant.getId()).getInterviewRef();
+		Interview interviewRef = jobRef.getShortListedApplicants().get(applicant.getId()).getInterview();
 
 		if(interviewRef == null){
 			throw new NullEntityException("Can't find any interview for this applicant");
@@ -297,23 +302,6 @@ public class Employer extends User {
 		String toEmail = appRef.getUserEmail().trim().strip();
 		String toName = appRef.getFirstName();
 
-//		StringBuilder matter = new StringBuilder();
-//		matter.append("<p>Hello "+appRef.getFirstName()+",<BR/><BR/>");
-//		matter.append("You have been shortlisted for the interview at "+this.companyName+"<BR/>");
-//		matter.append("Job Title "+jobRef.getJobTitle()+"<BR/>");
-//		matter.append("Desc "+jobRef.getJobDesc()+"<BR/>");
-//		matter.append("You are among "+jobRef.getShortListedApplicants().size()+" first shortlisted applicants<BR/>");
-//
-//		matter.append("Please select any of the possible interview times from your SAPY dashboard.<BR/>");
-//
-//		matter.append("<ul>");
-//		for(Date date : jobRef.getAvailInterviewTimings()){
-//			matter.append("<li>"+date.toLocaleString()+"<li>");
-//		}
-//		matter.append("</ul>");
-//		matter.append("</br> We wish you all the best.");
-//		matter.append("</p>");
-
 		StringBuilder matter = new StringBuilder();
 		matter.append("Hello "+appRef.getFirstName()+",");
 		matter.append("You have been shortlisted for the interview at "+this.companyName+"");
@@ -333,13 +321,12 @@ public class Employer extends User {
 		matter.append("Best Regards,");
 		matter.append("Team SAPY");
 
-//		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
-//		try {
-//			EmailUtil.sendEmail(newEmail);
-//			System.out.println(newEmail);
-//		} catch (MessagingException | UnirestException e) {
-//			e.printStackTrace();
-//		}
+		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
+		try {
+			EmailUtil.sendEmail(newEmail);
+		} catch (MessagingException | UnirestException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -361,21 +348,31 @@ public class Employer extends User {
 		matter.append("Desc "+jobRef.getJobDesc()+". ");
 		matter.append("");
 
-		matter.append("Your employemnt Status : PENDING");
+		matter.append("Your employemnt Status : PENDING ");
 		matter.append("Please either accept or reject this offer from your SAPY dashboard. You will not shortlisted for other jobs until you change update your employment status.");
 
 		matter.append("We wish you all the best. ");
-		matter.append("");
 		matter.append("Best Regards, ");
 		matter.append("Team SAPY ");
 
-//		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
-//		try {
-//			EmailUtil.sendEmail(newEmail);
-//			System.out.println(newEmail);
-//		} catch (MessagingException | UnirestException e) {
-//			e.printStackTrace();
-//		}
+		EmailObject newEmail = new EmailObject(toEmail, toName, subject, StringEscapeUtils.escapeHtml4(matter.toString()));
+		try {
+			EmailUtil.sendEmail(newEmail);
+			//System.out.println(newEmail);
+		} catch (MessagingException | UnirestException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public boolean incrementComplaintCountAndUpdateStatus(){
+
+		this.complaintsCount++;
+
+		if(complaintsCount >= 3 && blacklistStatus.getBlacklistStatus() != BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			blacklistStatus.setBlacklistStatus("P");
+			return true;
+		}
+		return false;
 	}
 
 
@@ -481,6 +478,7 @@ public class Employer extends User {
 	public void removeBlacklistStatus()
 	{
 		blacklistStatus.removeBlacklistStatus();
+		this.complaintsCount = 0;
 	}
 	
 	public Date getBlacklistStartDate()

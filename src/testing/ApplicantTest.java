@@ -2,6 +2,7 @@ package testing;
 
 import model.entities.*;
 import model.enums.ApplicantType;
+import model.enums.AvailabilityType;
 import model.exceptions.*;
 import org.junit.After;
 import org.junit.Before;
@@ -18,6 +19,7 @@ import static org.junit.Assert.*;
 public class ApplicantTest {
 
     List<Applicant> applicants;
+    List<JobCategory> jobCategories;
 
     @Before
     public void setUp() throws Exception {
@@ -32,11 +34,86 @@ public class ApplicantTest {
         applicants.add(a3);
         applicants.add(a4);
 
+        JobCategory jc1 = new JobCategory("Software Engineer", "Active", 1);
+        JobCategory jc2 = new JobCategory("Store Manager", "Active", 2);
+        JobCategory jc3 = new JobCategory("Picker/Packer", "Active", 3);
+
+        //List<JobCategory> jobCategoryList = new ArrayList<>();
+
+        jobCategories= new ArrayList<>();
+        jobCategories.add(jc1);
+        jobCategories.add(jc2);
+        jobCategories.add(jc3);
+
+       // UserAvailability availability = new UserAvailability(jobCategoryList, )
+
+       // applicants.get(0).addAvailability();
+
     }
 
     @After
     public void tearDown() throws Exception {
     }
+
+    @Test
+    public void testValidAddAvailability() throws ParseException, BadEntryException, DuplicateEntryException {
+        SimpleDateFormat parser = new SimpleDateFormat("dd/MM/yyyy");
+        int currentAvailabilityCount= applicants.get(0).getUserAvailability().size();
+        List<JobCategory> applyingJobs= new ArrayList<>();
+        applyingJobs.add(jobCategories.get(0));
+        applyingJobs.add(jobCategories.get(1));
+        applicants.get(0).addAvailability(AvailabilityType.PART_TIME, applyingJobs, 20,  parser.parse("20/10/2020"), parser.parse("20/01/2021"));
+        assertEquals(currentAvailabilityCount+1, applicants.get(0).getUserAvailability().size());
+    }
+
+    @Test(expected = DuplicateEntryException.class)
+    public void testDuplicateEntryOfAvailability() throws ParseException, BadEntryException, DuplicateEntryException{
+        SimpleDateFormat parser = new SimpleDateFormat("dd/MM/yyyy");
+        List<JobCategory> applyingJobs= new ArrayList<>();
+        applyingJobs.add(jobCategories.get(0));
+        applicants.get(1).addAvailability(AvailabilityType.INTERNSHIP, applyingJobs, 40,  parser.parse("20/11/2020"), parser.parse("20/02/2021"));
+
+        //adding duplicate entry
+        applicants.get(1).addAvailability(AvailabilityType.INTERNSHIP, applyingJobs, 40,  parser.parse("20/11/2020"), parser.parse("20/02/2021"));
+    }
+
+
+    @Test
+    public void testValidMultipleAddAvailability() throws ParseException, BadEntryException, DuplicateEntryException{
+        SimpleDateFormat parser = new SimpleDateFormat("dd/MM/yyyy");
+        int currentAvailabilityCount= applicants.get(2).getUserAvailability().size();
+        List<JobCategory> partTimeJobs= new ArrayList<>();
+        partTimeJobs.add(jobCategories.get(1));
+        partTimeJobs.add(jobCategories.get(2));
+
+        List<JobCategory> intershipJobs= new ArrayList<>();
+        intershipJobs.add(jobCategories.get(0));
+
+        //Adding first availability
+        applicants.get(2).addAvailability(AvailabilityType.PART_TIME, partTimeJobs, 20,  parser.parse("30/09/2020"), parser.parse("15/11/2021"));
+
+        //Adding second availability
+        applicants.get(2).addAvailability(AvailabilityType.INTERNSHIP, intershipJobs, 40, parser.parse("01/12/2020"), parser.parse("28/02/2021"));
+
+        int changedAvailabilityCount = applicants.get(2).getUserAvailability().size();
+        assertEquals(currentAvailabilityCount+2, changedAvailabilityCount);
+
+        //Checking last added availability
+        UserAvailability lastAdded = applicants.get(2).getUserAvailability().get(changedAvailabilityCount-1);
+        assertEquals(AvailabilityType.INTERNSHIP, lastAdded.getAvailabilityType());
+        assertEquals(40, lastAdded.getNoOfHoursAWeek());
+    }
+
+    @Test(expected = BadEntryException.class)
+    public void testInvalidAvailabilty() throws ParseException, BadEntryException, DuplicateEntryException{
+        SimpleDateFormat parser = new SimpleDateFormat("dd/MM/yyyy");
+        List<JobCategory> applyingJobs= new ArrayList<>();
+        applyingJobs.add(jobCategories.get(0));
+
+        //Trying to add availability where startDate > endDate
+        applicants.get(0).addAvailability(AvailabilityType.FULL_TIME, applyingJobs, 40,  parser.parse("20/11/2020"), parser.parse("20/10/2020"));
+    }
+
 
     //passing correct employment records
     @Test
@@ -121,7 +198,6 @@ public class ApplicantTest {
         applicants.get(1).addQualifications(new Qualification("B.Tech",
                 parser.parse("21/03/2012"), parser.parse("17/03/2016"), "Test Field", 93.3));
         assertEquals(1, applicants.get(1).getQualifications().size());
-
     }
 
     //passing qualification with start date greater than end date
@@ -132,41 +208,4 @@ public class ApplicantTest {
                 parser.parse("21/03/2012"), parser.parse("21/03/2012"), "Test Field", 93.3));
     }
 
-    //passing complaint (this test case will fail as this functionality is not developed.
-    @Test
-    public void complaint() {
-
-        assertTrue(applicants.get(1).registerComplaint(new Complaints(new Employer("E1", "testEmail", "testPassword", "TestFirstName", "testLastName", "023456777"),
-                applicants.get(1), "Test Complaint Message")));
-    }
-
-
-
-    //Below commented code is written by my team member Prodip.
-
-//    @Test(expected = InvalidCVPathException.class)
-//    public void testInvalidPathForUploadCV() {
-//        applicants.get(1).uploadCV("");
-//    }
-//
-//    @Test
-//    public void testNormalUploadCV() {
-//        assertTrue(applicants.get(1).uploadCV("/Users/prodip/Desktop/Resume.pdf"));
-//    }
-//
-//    @Test
-//    public void testChangeBlackListStatus(){
-//        applicants.get(0).changeBlacklistStatus(BlacklistStatus.PROVISIONAL_BLACKLISTED);
-//        assertEquals(BlacklistStatus.PROVISIONAL_BLACKLISTED, applicants.get(0).getBlacklistStatus());
-//    }
-//
-//    @Test
-//    public void testInvalidAvailabilityUpdate(){
-//        assertFalse(applicants.get(1).updateAvailability(AvailabilityType.PART_TIME, 40));
-//    }
-//
-//    @Test
-//    public void testValidAvailabilityUpdate(){
-//        assertTrue(applicants.get(1).updateAvailability(AvailabilityType.FULL_TIME, 40));
-//    }
 }

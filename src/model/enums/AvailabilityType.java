@@ -1,5 +1,7 @@
 package model.enums;
 
-public enum AvailabilityType {
+import java.io.Serializable;
+
+public enum AvailabilityType implements Serializable {
     PART_TIME, FULL_TIME, INTERNSHIP, UNKNOWN
 }

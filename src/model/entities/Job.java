@@ -1,11 +1,12 @@
 package model.entities;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import model.enums.PostedJobJStatus;
 
-public class Job {
+public class Job implements Serializable {
 
 	// System identifier
 	private String jobId;
@@ -84,7 +85,11 @@ public class Job {
 	 */
 	public void rankApplicant(Applicant applicntRef, int rank) {
 
-		this.shortListedApplicants.get(applicntRef.getId()).setRank(rank);
+		//Changed by Prodip to add jobApplication to applicant
+		JobApplication applicantJobApplication = this.shortListedApplicants.get(applicntRef.getId());
+		applicantJobApplication.setRank(rank);
+		applicntRef.addJobApplication(applicantJobApplication);
+		//this.shortListedApplicants.get(applicntRef.getId()).setRank(rank);
 	}
 
 	// Getter - Setters Starts Here

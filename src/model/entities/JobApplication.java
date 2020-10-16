@@ -2,6 +2,7 @@ package model.entities;
 
 import model.enums.ApplicationStatus;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -9,15 +10,17 @@ import java.util.Date;
  * Model class implementing logic for job application class.
  * For every candidate shortlisted by the employer, a job application is created.
  */
-public class JobApplication {
+public class JobApplication implements Serializable {
 
     Job jobRef;
     Applicant applicantRef;
     Date dateAdded;
     ApplicationStatus applnStatus;
     int rank;
-    Interview interviewRef = null;
-    JobOffer offerRef = null;
+    Interview interviewRemark;
+    JobOffer jobOffer;
+
+
 
     // Constructor
     public JobApplication(Job jobRef, Applicant appRef){
@@ -26,6 +29,8 @@ public class JobApplication {
         dateAdded = new Date();
         applnStatus = ApplicationStatus.ONGOING;
         rank = -1;
+        interviewRemark = null;
+        jobOffer = null;
     }
 
     // Getter-Setters starts here
@@ -70,20 +75,20 @@ public class JobApplication {
         this.rank = rank;
     }
 
-    public Interview getInterviewRef() {
-        return interviewRef;
+    public Interview getInterview() {
+        return interviewRemark;
     }
 
-    public void setInterviewRef(Interview interviewRef) {
-        this.interviewRef = interviewRef;
+    public void setInterview(Interview interviewRef) {
+        this.interviewRemark = interviewRef;
     }
 
     public JobOffer getOfferRef() {
-        return offerRef;
+        return jobOffer;
     }
 
     public void setOfferRef(JobOffer offerRef) {
-        this.offerRef = offerRef;
+        this.jobOffer = offerRef;
     }
 
     // Gettee-Setters ends here

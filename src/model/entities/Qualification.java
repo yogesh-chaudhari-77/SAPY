@@ -3,11 +3,12 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class Qualification {
+public class Qualification implements Serializable {
 
     private String qualificationLevel;
     private Date startDate;
@@ -23,6 +24,10 @@ public class Qualification {
         this.marksObtained = marksObtained;
     }
 
+    public String getFieldOfStudy() {
+        return fieldOfStudy;
+    }
+
     public String getQualificationLevel() {
         return qualificationLevel;
     }
@@ -34,6 +39,8 @@ public class Qualification {
     public Date getEndDate() {
         return endDate;
     }
+
+    public double getMarksObtained() { return marksObtained; }
 
     @Override
     public String toString() {

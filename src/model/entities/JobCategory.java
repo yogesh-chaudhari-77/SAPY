@@ -3,7 +3,9 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
-public class JobCategory {
+import java.io.Serializable;
+
+public class JobCategory implements Serializable {
 
 	private String id;
 	private String categoryTitle;
@@ -17,8 +19,8 @@ public class JobCategory {
 		this.status = status;
 		idNo++;
 	}
-	
-	
+
+	@Override
 	public String toString()
 	{
 		return "Category id:\t " + this.id + "\t\tCategory Title:\t " + this.categoryTitle ;

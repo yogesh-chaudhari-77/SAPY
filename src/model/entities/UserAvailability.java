@@ -1,5 +1,7 @@
 package model.entities;
 
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -7,13 +9,11 @@ import java.util.List;
 import model.enums.AvailabilityType;
 
 
-public class UserAvailability {
+public class UserAvailability implements Serializable {
 
-    // 23-09-2020 - To be removed - User can specify one or more job categories in availability
-    private JobCategory applicableJobCategory;
 
-    // 23-09-2020 - Mutiple job categories can be specified by applicant
-    private List<JobCategory> applicableJobCategories;
+    // 23-09-2020 - Multiple job categories can be specified by applicant
+    private List<JobCategory> applicableJobCategories = new ArrayList<JobCategory>();;
 
     private AvailabilityType availabilityType;
     private int noOfHoursAWeek;
@@ -23,39 +23,21 @@ public class UserAvailability {
     private Date periodStartDate = null;
     private Date periodEndDate = null;
 
-    public UserAvailability(JobCategory applicableJobCategory, AvailabilityType availabilityType, int noOfHoursAWeek) {
-        this.applicableJobCategory = applicableJobCategory;
-        this.availabilityType = availabilityType;
-        this.noOfHoursAWeek = noOfHoursAWeek;
-    }
+//    public UserAvailability(JobCategory applicableJobCategory, AvailabilityType availabilityType, int noOfHoursAWeek) {
+//        this.availabilityType = availabilityType;
+//        this.noOfHoursAWeek = noOfHoursAWeek;
+//    }
 
 
     /**
      * Constructor with all fields
      */
-    public UserAvailability(JobCategory applicableJobCategory, AvailabilityType availabilityType, int noOfHoursAWeek, Date periodStartDate, Date periodEndDate) {
-
-        // To be removed
-        this.applicableJobCategory = applicableJobCategory;
+    public UserAvailability(List<JobCategory> applicableJobCategory, AvailabilityType availabilityType, int noOfHoursAWeek, Date periodStartDate, Date periodEndDate) {
         this.availabilityType = availabilityType;
         this.noOfHoursAWeek = noOfHoursAWeek;
         this.periodStartDate = periodStartDate;
         this.periodEndDate = periodEndDate;
-
-        this.applicableJobCategories = new ArrayList<JobCategory>();
-
-        // Timebeing
-        applicableJobCategories.add(applicableJobCategory);
-    }
-
-    // To be removed - Changed to arraylist
-    public JobCategory getApplicableJobCategory() {
-        return applicableJobCategory;
-    }
-
-    // To be removed - Changed to arrayList
-    public void setApplicableJobCategory(JobCategory applicableJobCategory) {
-        this.applicableJobCategory = applicableJobCategory;
+        this.applicableJobCategories = applicableJobCategory;
     }
 
     public int getNoOfHoursAWeek() {
@@ -122,4 +104,18 @@ public class UserAvailability {
         return onlyIds;
     }
 
+    @Override
+    public String toString() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+
+        String sDate = dateFormat.format(periodStartDate);
+        String eDate = dateFormat.format(periodEndDate);
+
+        return
+                "Applicable Job Categories = " + applicableJobCategories +
+                "\nAvailability Type = " + availabilityType +
+                "\nNumber Of HoursAWeek = " + noOfHoursAWeek +
+                "\nPeriod Start Date = " + sDate +
+                "\nPeriod End Date = " + eDate;
+    }
 }
