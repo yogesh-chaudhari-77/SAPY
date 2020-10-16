@@ -1,6 +1,5 @@
 package model.entities;
 
-//import com.mashape.unirest.http.exceptions.UnirestException;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import customUtils.EmailUtil;
 import model.enums.*;
@@ -8,19 +7,14 @@ import model.exceptions.*;
 
 import java.io.Serializable;
 import java.text.ParseException;
-import java.util.ArrayList;
+
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Set;
-
-//import org.apache.commons.lang3.StringEscapeUtils;
-
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.JSONObject;
 
 import com.sun.jdi.InvalidTypeException;
 
-//import javax.mail.MessagingException;
 import javax.mail.MessagingException;
 import javax.management.InvalidApplicationException;
 
@@ -307,23 +301,6 @@ public class Employer extends User implements Serializable {
 		String subject = "Applicant Update";
 		String toEmail = appRef.getUserEmail().trim().strip();
 		String toName = appRef.getFirstName();
-
-//		StringBuilder matter = new StringBuilder();
-//		matter.append("<p>Hello "+appRef.getFirstName()+",<BR/><BR/>");
-//		matter.append("You have been shortlisted for the interview at "+this.companyName+"<BR/>");
-//		matter.append("Job Title "+jobRef.getJobTitle()+"<BR/>");
-//		matter.append("Desc "+jobRef.getJobDesc()+"<BR/>");
-//		matter.append("You are among "+jobRef.getShortListedApplicants().size()+" first shortlisted applicants<BR/>");
-//
-//		matter.append("Please select any of the possible interview times from your SAPY dashboard.<BR/>");
-//
-//		matter.append("<ul>");
-//		for(Date date : jobRef.getAvailInterviewTimings()){
-//			matter.append("<li>"+date.toLocaleString()+"<li>");
-//		}
-//		matter.append("</ul>");
-//		matter.append("</br> We wish you all the best.");
-//		matter.append("</p>");
 
 		StringBuilder matter = new StringBuilder();
 		matter.append("Hello "+appRef.getFirstName()+",");
