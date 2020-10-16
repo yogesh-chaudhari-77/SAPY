@@ -11,10 +11,13 @@ import model.enums.*;
 
 
 import java.io.FileNotFoundException;
+import java.sql.SQLOutput;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import com.sun.jdi.InvalidTypeException;
 
@@ -72,7 +75,7 @@ public class SystemHandler {
 
 
 		allUsersList.put("Staff001", staff);
-
+		changeStatusOfInactiveApplicants();
 
 		try {
 			menu = new Menu("main_menu_options");
@@ -89,15 +92,7 @@ public class SystemHandler {
 			// read a value from the user
 			// switch statement, call appropriate method.
 			choice = choice.toUpperCase();
-//			System.out.println("you just entered in " + choice);
-//
-//			if (choice.equals("1")) {
-//				System.out.println("Option 1 processing");
-//			}
-//
-//			if (choice.equalsIgnoreCase("q")) {
-//				quit = true;
-//			}
+
 			switch(choice){
 				case "1":
 					register();
@@ -119,7 +114,7 @@ public class SystemHandler {
 		} while (!quit);
 	}
 
-	public void register(){
+	public void register() throws ParseException {
 		boolean quit = false;
 		Menu menu = null;
 
@@ -131,7 +126,7 @@ public class SystemHandler {
 			System.out.println();
 		}
 
-		do{
+
 			System.out.println("====Registration Menu====");
 			String choice = menu.show();
 			choice = choice.toUpperCase();
@@ -147,17 +142,14 @@ public class SystemHandler {
 						System.out.println("Employer registration successful");
 						System.out.println(retEmp.toString());
 					}
+					showEmployerMenu(retEmp);
 					break;
 
-//				case "3":
-//					//registerMaintenanceStaff();
-//					break;
-
 				case "Q":
-					quit = true;
+					break;
 
 			}
-		} while (!quit);
+
 
 	}
 
@@ -183,7 +175,7 @@ public class SystemHandler {
 				allApplicantsList.put(id, applicant);
 				System.out.println("Applicant account created successfully\n"+applicant.toString());
 				exitLoop = true;
-
+				showApplicantMenu(applicant);
 			} else {
 				System.out.println("Wrong choice. Please try again");
 			}
@@ -192,8 +184,9 @@ public class SystemHandler {
 	}
 
 	public void setUserDetails(){
-		boolean idFound = false;
+		boolean idFound;
 		do {
+			idFound = false;
 			System.out.print("Enter the User id: ");
 			id = Global.scanner.nextLine();
 			if (!freeIdCheck(id)){
@@ -264,6 +257,14 @@ public class SystemHandler {
 
 	}
 
+	public boolean validPhoneNumberCheck(String phoneNumber){
+		String phoneNumberPattern = "^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\\s\\./0-9]*$";
+
+		Pattern pattern = Pattern.compile(phoneNumberPattern);
+
+		return pattern.matcher(phoneNumber).matches();
+	}
+
 	public void login () throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException, ParseException, NotFullyBlacklistedUserException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException {
 
 		String id;
@@ -288,7 +289,18 @@ public class SystemHandler {
 
 	public void showUserMenu(User user) throws BadQualificationException, DuplicateEntryException, DuplicateJobCategoryException, ParseException, NotFullyBlacklistedUserException, NotProvisionallyBlacklistedUserException, BlacklistedTimeNotElapsedException {
 		if (user instanceof Applicant){
-			showApplicantMenu(((Applicant) user));
+			Applicant applicant = (Applicant) user;
+			// Blacklisting check - Before accessing any of the functionality.
+			if( applicant.getBlacklistStat() == BlacklistStatus.FULL_BLACKLISTED) {
+				System.out.println("You have been blacklisted. Your profile is disabled.");
+				System.out.println("Contact support for more details.");
+				System.out.println("Press any key to logout: ");
+				Global.scanner.nextLine();
+				return;
+			}else if(applicant.getBlacklistStat() == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+				System.out.println("You have been provisionally blacklisted. In this state, you will not be able to perform some functionalities.");
+			}
+			showApplicantMenu(applicant);
 		} else if (user instanceof Employer){
 
 			// Blacklisting check - Before accessing any of the functionality.
@@ -332,11 +344,10 @@ public class SystemHandler {
 					break;
 
 				case "2":
-					registerEmployer();
+					addUpdateReferences(applicant);
 					break;
 
 				case "3":
-					//employmentRecords
 					addUpdateEmploymentHistory(applicant);
 					break;
 
@@ -349,7 +360,11 @@ public class SystemHandler {
 					break;
 
 				case "6":
-					addUpdateAvailability(applicant);
+					addUpdateJobPreferences(applicant);
+					break;
+
+				case "7":
+					updateEmploymentStatus(applicant);
 					break;
 
 				case "9":
@@ -358,6 +373,10 @@ public class SystemHandler {
 
 				case "10":
 					respondToJobOffer(applicant);
+					break;
+
+				case "11":
+					changeCredentials(applicant);
 					break;
 
 				case "Q":
@@ -370,40 +389,438 @@ public class SystemHandler {
 
 	public void addUpdateQualification(Applicant applicant){
 		System.out.println("****** Qualifications ******");
-		String operation = subMenu();
 
-		if (operation.equals("add")){
-			addQualification(applicant);
-		} else if (operation.equals("update")){
-			//updateQualification(applicant);
-		} else if (operation.equals("view")){
-			showQualification(applicant);
-		} else {
-			System.out.println("Exiting Sub Menu");
-			return ;
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			String operation = showViewMenu();
+			if (operation.equals("view")) {
+				showQualification(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
+		}else {
+			String operation = subMenu();
+
+			if (operation.equals("add")) {
+				addQualification(applicant);
+			} else if (operation.equals("update")) {
+				updateQualification(applicant);
+			} else if (operation.equals("view")) {
+				showQualification(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
 		}
 	}
+
+	public void addUpdateReferences(Applicant applicant){
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			String operation = showViewMenu();
+			if (operation.equals("view")) {
+				showReferences(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
+		}else {
+			boolean continueMessageDisplay = true;
+			do {
+				try {
+					System.out.println("\n****** References ******");
+					String operation = subMenu();
+					if (operation.equals("add")) {
+						addReferences(applicant);
+					} else if (operation.equals("update")) {
+						updateReferences(applicant);
+					} else if (operation.equals("view")) {
+						showReferences(applicant);
+					} else {
+						System.out.println("Exiting Sub Menu");
+						return;
+					}
+				} catch (DuplicateEntryException duplicate) {
+					System.out.println("Reference Already exists. Please try again.");
+					//continueMessageDisplay= true;
+				}
+			} while (continueMessageDisplay);
+		}
+
+	}
+
 	public void addUpdateEmploymentHistory(Applicant applicant){
-		boolean continueMessageDisplay = true;
+
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			String operation = showViewMenu();
+			if (operation.equals("view")) {
+				showEmploymentRecords(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
+		}else {
+			boolean continueMessageDisplay = true;
+			do {
+				try {
+					System.out.println("\n****** Employment Records ******");
+					String operation = subMenu();
+					if (operation.equals("add")) {
+						addEmploymentHistory(applicant);
+					} else if (operation.equals("update")) {
+						updateEmploymentHistory(applicant);
+					} else if (operation.equals("view")) {
+						showEmploymentRecords(applicant);
+					} else {
+						System.out.println("Exiting Sub Menu");
+						return;
+					}
+				} catch (DuplicateEntryException duplicate) {
+					System.out.println("Employment Record Already exists. Please try again.");
+					//continueMessageDisplay= true;
+				}
+			} while (continueMessageDisplay);
+		}
+	}
+
+	public void updateEmploymentHistory(Applicant applicant){
+		String printStatement;
+
+		if(!showEmploymentRecords(applicant)){
+			return;
+		}
+		int numOfRecords = applicant.getEmploymentHistory().size();
+		printStatement = "Enter the Employment record number to update : ";
+		System.out.print(printStatement);
+		int recordNo = validInput(printStatement, numOfRecords) - 1;
+
+		String companyName, designation;
+		Date startDate, endDate;
+		boolean currentCompany;
+
+		EmploymentRecord updateEmpRec = applicant.getEmploymentHistory().get(recordNo);
+
+		companyName = updateEmpRec.getCompanyName();
+		designation = updateEmpRec.getDesignation();
+		startDate = updateEmpRec.getStartDate();
+		endDate = updateEmpRec.getEndDate();
+		currentCompany = updateEmpRec.getCurrentCompany();
+
+		boolean runLoop = true;
+
+		do{
+			System.out.println("\n===Details that can be updated===");
+			System.out.println("1. Company Name\n" +
+					"2. Start Date\n" +
+					"3. End Date\n" +
+					"4. Designation\n" +
+					"5. Current Company Status\n" +
+					"U. Update and exit.\n" +
+					"Q. Exit without updating");
+			System.out.print("Enter Option to update : ");
+			String choice = Global.scanner.nextLine();
+
+			switch(choice){
+				case "1":
+					System.out.print("Enter the Company name to update : ");
+					companyName = Global.scanner.nextLine();
+					break;
+				case "2":
+					System.out.print("Enter the start date to update : ");
+					startDate = getDateInput();
+					break;
+				case "3":
+					System.out.print("Enter the end date to update : ");
+					endDate = getDateInput();
+					break;
+				case "4":
+					System.out.print("Enter the Designation to update : ");
+					designation = Global.scanner.nextLine();
+					break;
+				case "5":
+					boolean exitLoop = true;
+					do{
+						System.out.print("Are you still working in this company?(Y/N): ");
+						String input= Global.scanner.nextLine();
+						if(input.equalsIgnoreCase("y")) {
+							currentCompany = true;
+							endDate = null;
+							exitLoop = true;
+						} else if (input.equalsIgnoreCase("n")){
+							currentCompany = false;
+							System.out.print("Enter the end date to update : ");
+							endDate = getDateInput();
+							exitLoop = true;
+						} else {
+							System.out.println("Wrong Input!! Enter Y or N");
+							exitLoop = false;
+						}
+					} while (!exitLoop);
+					break;
+				case "U":
+					EmploymentRecord updateEmpRecord = new EmploymentRecord(companyName, designation, startDate, endDate, currentCompany);
+					try {
+						applicant.updateEmploymentRecords(updateEmpRecord, recordNo);
+						System.out.println("Employment Record updated successfully.");
+						System.out.println(applicant.getEmploymentHistory().get(recordNo));
+					} catch (NoSuchRecordException | BadEmployeeRecordException e) {
+						System.out.println(e);
+					}
+					runLoop = false;
+					break;
+				case "Q":
+					System.out.println("Exiting without updating.");
+					runLoop = false;
+				default:
+					System.out.println("Wrong input!!!\nKindly check option and try again.");
+					break;
+			}
+		} while (runLoop);
+	}
+
+	public void updateQualification(Applicant applicant){
+		String printStatement;
+		List<Qualification> qualifications = applicant.getQualifications();
+		int numOfQualifications = qualifications.size();
+
+		if (numOfQualifications == 0){
+			System.out.println("No Qualification Exists. Please Add a Qualification to profile.");
+			return;
+		}
+
+		int recordNo;
+		for (int i =0 ; i < numOfQualifications; i++){
+			recordNo = i+1;
+			System.out.println(recordNo+". "+ qualifications.get(i));
+		}
+
+		printStatement = "Enter the qualification number to update : ";
+		System.out.print(printStatement);
+
+		recordNo = validInput(printStatement, numOfQualifications) - 1;
+		String qualificationLevel, fieldOfStudy;
+		double marks;
+		Date startDate, endDate;
+		Qualification updateQual = qualifications.get(recordNo);
+
+		qualificationLevel = updateQual.getQualificationLevel();
+		fieldOfStudy = updateQual.getFieldOfStudy();
+		marks = updateQual.getMarksObtained();
+		startDate = updateQual.getStartDate();
+		endDate = updateQual.getEndDate();
+
+		boolean exitLoop = false;
+
+		do{
+			System.out.println("\n===Details that can be updated===");
+			System.out.println("1. Qualification Level\n" +
+							"2. Start Date\n" +
+							"3. End Date\n" +
+							"4. Field of Study\n" +
+							"5. Marks Obtained\n" +
+							"U. Update and exit.\n" +
+							"Q. Exit without updating");
+			System.out.print("Enter Option to update : ");
+			Global.scanner.nextLine();
+			String choice = Global.scanner.nextLine();
+
+			switch(choice){
+				case "1":
+					System.out.print("Enter the Qualification to update : ");
+					qualificationLevel = Global.scanner.nextLine();
+					break;
+				case "2":
+					System.out.print("Enter the start date to update : ");
+					startDate = getDateInput();
+					break;
+				case "3":
+					System.out.print("Enter the end date to update : ");
+					endDate = getDateInput();
+					break;
+				case "4":
+					System.out.print("Enter the Field of Study to update : ");
+					fieldOfStudy = Global.scanner.nextLine();
+					break;
+				case "5":
+					printStatement = "Enter the marks Obtained : ";
+					System.out.print(printStatement);
+					marks = doubleInput(printStatement);
+				case "U":
+					Qualification updateQualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marks);
+					try {
+						applicant.updateQualifications(updateQualification, recordNo);
+						System.out.println("Qualification updated successfully.");
+						System.out.println(applicant.getQualifications().get(recordNo));
+					} catch (NoSuchRecordException | BadEntryException e) {
+						System.out.println(e);
+					}
+					exitLoop = true;
+					break;
+				case "Q":
+					System.out.println("Exiting without updating.");
+					exitLoop = true;
+				default:
+					System.out.println("Wrong input!!!\nKindly check option and try again.");
+					break;
+
+			}
+		}while(!exitLoop);
+	}
+
+	public int validInput(String printStatement, int maxValue){
+		int intInput = 0;
+		boolean flag = false;
 		do {
 			try {
-				System.out.println("****** Employment Records ******");
-				String operation = subMenu();
-				if (operation.equals("add")) {
-					addEmploymentHistory(applicant);
-				} else if (operation.equals("update")) {
-					//updateEmploymentHistory(applicant);
-				} else if (operation.equals("view")) {
-					showEmploymentRecords(applicant);
+				intInput = Global.scanner.nextInt();
+				if (intInput > maxValue || intInput <= 0){
+					System.out.println("Invalid Selection!!\n Please check list of options.\n"+ printStatement);
+					flag = false;
 				} else {
-					System.out.println("Exiting Sub Menu");
-					return;
+					flag = true;
 				}
-			} catch (DuplicateEntryException duplicate) {
-				System.out.println("Employment Record Already exists. Please try again.");
-				//continueMessageDisplay= true;
+
 			}
-		}while (continueMessageDisplay);
+			catch (InputMismatchException e) {
+				input.nextLine();
+				System.out.print("\nInvalid Input Type!!\nProgram is expecting an integer input.\n"+ printStatement);
+			}
+		} while (!flag);
+		return intInput;
+	}
+
+	public double doubleInput(String printStatement){
+		double doubleInput = 0.0;
+		boolean doubleFlag = false;
+		do {
+			try {
+				doubleInput = Global.scanner.nextDouble();
+				doubleFlag = true;
+			}
+			catch(InputMismatchException e) {
+				Global.scanner.nextLine();
+				System.out.print("\nInvalid Input Type!!\nApplication is expecting an decimal(double) input.\n" + printStatement);
+			}
+		} while (!doubleFlag);
+		return doubleInput;
+	}
+
+	public void updateEmploymentStatus(Applicant applicant){
+		System.out.println("***** Employment Status *****");
+		System.out.println("Your current employment status is "+ applicant.getEmploymentStatus());
+		System.out.println("Your status was last updated on "+ applicant.getLastStatusUpdateDate());
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			System.out.println("You cannot update your employment status in your current state");
+			return;
+		}
+		try {
+			Menu menu = new Menu("employmentStatus_menu_options");
+			boolean wrongOption = false;
+
+			do {
+				String choice = menu.show();
+				choice = choice.toUpperCase();
+
+				switch (choice) {
+					case "1":
+						updateEmploymentStatusOfApplicant(applicant);
+						break;
+
+					case "Q":
+						return;
+
+					default:
+						System.out.println("!! Wrong Option !! Kindly select the correct one");
+						wrongOption = true;
+				}
+			} while(wrongOption);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	public void updateEmploymentStatusOfApplicant(Applicant applicant){
+		System.out.println("Please choose from the below options to update for Employment Status");
+		try {
+			Menu menu = new Menu("menu_options/updateEmploymentStatus_menu_options");
+			boolean wrongOption = false;
+
+			do {
+				String choice = menu.show();
+				choice = choice.toUpperCase();
+
+				switch (choice) {
+					case "1":
+						applicant.setEmploymentStatus(EmploymentStatus.AVAILABLE);
+						applicant.setLastStatusUpdateDate(new Date());
+						break;
+
+					case "2":
+						applicant.setEmploymentStatus(EmploymentStatus.PENDING);
+						applicant.setLastStatusUpdateDate(new Date());
+						break;
+
+					case "3":
+						applicant.setEmploymentStatus(EmploymentStatus.EMPLOYED);
+						applicant.setLastStatusUpdateDate(new Date());
+						break;
+
+					case "4":
+						applicant.setEmploymentStatus(EmploymentStatus.UNKNOWN);
+						applicant.setLastStatusUpdateDate(new Date());
+						break;
+
+					case "Q":
+						return;
+
+					default:
+						System.out.println("!! Wrong Option !! Kindly select the correct one");
+						wrongOption = true;
+				}
+			} while(wrongOption);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		System.out.println(applicant.getEmploymentStatus());
+		System.out.println("Employment Status updated successfully");
+	}
+
+	private void changeStatusOfInactiveApplicants(){
+		Set<String> allUsers = allUsersList.keySet();
+
+		for(String userId : allUsers){
+			User user = allUsersList.get(userId);
+			if(user instanceof Applicant){
+				Applicant applicant = (Applicant) user;
+				Date currDate = new Date();
+				long noOfInactiveDays = findDifferenceInDays(currDate, applicant.getLastStatusUpdateDate());
+				if(noOfInactiveDays > 14){
+					applicant.setEmploymentStatus(EmploymentStatus.UNKNOWN);
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * @param firstDate
+	 * @param secondDate
+	 * @return firstDate - secondDate as no of days in long
+	 */
+	private long findDifferenceInDays(Date firstDate, Date secondDate){
+
+		long differenceInMilliseconds = Math.abs(firstDate.getTime() - secondDate.getTime());
+		long differenceInDays = TimeUnit.DAYS.convert(differenceInMilliseconds, TimeUnit.MILLISECONDS);
+
+		return differenceInDays;
 	}
 
 	public void uploadApplicantCV(Applicant applicant){
@@ -413,6 +830,12 @@ public class SystemHandler {
 			System.out.println("No CV uploaded.");
 		}else{
 			System.out.println("Current CV in the system: "+currentCV);
+		}
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			System.out.println("You cannot upload cv in current state");
+			return;
 		}
 		try {
 			Menu menu = new Menu("cv_menu_options");
@@ -458,42 +881,86 @@ public class SystemHandler {
 		}
 	}
 
-	private void addUpdateAvailability(Applicant applicant){
-		boolean continueMessageDisplay = true;
-		do {
-			try {
-				System.out.println("****** Employment Records ******");
-				String operation = subMenu();
-				if (operation.equals("add")) {
-					addAvailability(applicant);
-				} else if (operation.equals("update")) {
-					//updateAvailability(applicant);
-				} else if (operation.equals("view")) {
-					showEmploymentRecords(applicant);
-				} else {
-					System.out.println("Exiting Sub Menu");
-					return;
-				}
-			} catch (DuplicateEntryException duplicate) {
-				System.out.println("Availability Already exists. Please try again.");
-				//continueMessageDisplay= true;
+	private void addUpdateJobPreferences(Applicant applicant){
+
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			String operation = showViewMenu();
+			if (operation.equals("view")) {
+				showJobPreferences(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
 			}
-		}while (continueMessageDisplay);
+		}else {
+			boolean continueMessageDisplay = true;
+			do {
+				try {
+					System.out.println("\n****** Job Preferences ******");
+					String operation = subMenu();
+					if (operation.equals("add")) {
+						addJobPreference(applicant);
+					} else if (operation.equals("update")) {
+						updateJobPreference(applicant);
+					} else if (operation.equals("view")) {
+						showJobPreferences(applicant);
+					} else {
+						System.out.println("Exiting Sub Menu");
+						return;
+					}
+				} catch (DuplicateEntryException duplicate) {
+					System.out.println("Availability Already exists. Please try again.");
+					//continueMessageDisplay= true;
+				}
+			} while (continueMessageDisplay);
+		}
 
 	}
 
-	private void showEmploymentRecords(Applicant applicant){
+	private boolean showEmploymentRecords(Applicant applicant){
 		List<EmploymentRecord> allEmploymentHistory = applicant.getEmploymentHistory();
 
 		if(allEmploymentHistory.size() == 0){
-			System.out.println("No Employment Records present.");
+			System.out.println("No Employment Records present. Please add Employment history to profile.");
+			return false;
 		}else{
 			for(int i=0; i<allEmploymentHistory.size();i++){
 				System.out.println("Employment Record "+(i+1)+":");
 				System.out.println(allEmploymentHistory.get(i).toString());
 			}
+			return true;
 		}
+	}
 
+	public String showViewMenu(){
+
+		System.out.println("Kindly Select an operation to perform");
+
+		boolean wrongOption = false;
+		StringBuilder menu = new StringBuilder();
+		menu.append("1: View\n");
+		menu.append("2: Go back to previous menu\n");
+		menu.append("Choice: ");
+
+		do {
+			System.out.print(menu.toString());
+			String choice = Global.scanner.next();
+
+			switch (choice) {
+				case "1":
+					return "view";
+
+				case "2":
+					return "exit";
+
+				default:
+					System.out.println("!! Wrong Option !! Kindly select the correct one");
+					wrongOption = true;
+			}
+		} while(wrongOption);
+
+		return null;
 	}
 
 	public String subMenu(){
@@ -562,10 +1029,7 @@ public class SystemHandler {
 		try{
 			applicant.addQualifications(qualification);
 			System.out.println("Qualification added successfully");
-		} catch (BadQualificationException e){
-			System.out.println(e);
-			System.out.println("!! Adding qualification failed !!");
-		} catch (DuplicateEntryException e){
+		} catch (BadQualificationException | DuplicateEntryException | BadEntryException e){
 			System.out.println(e);
 			System.out.println("!! Adding qualification failed !!");
 		}
@@ -582,19 +1046,31 @@ public class SystemHandler {
 	}
 
 	public void addUpdateLicenses(Applicant applicant){
-		String operation = subMenu();
 
-		if (operation.equals("add")){
-			addLicense(applicant);
-		} else if (operation.equals("update")){
-			//updateLicense(applicant);
-		} else if (operation.equals("view")){
-			showLicenses(applicant);
-		} else {
-			System.out.println("Exiting Sub Menu");
-			return ;
+		//Check applicant status
+		BlacklistStatus currentStatus = applicant.getBlacklistStat();
+		if(currentStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			String operation = showViewMenu();
+			if (operation.equals("view")) {
+				showLicenses(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
+		}else {
+			String operation = subMenu();
+
+			if (operation.equals("add")) {
+				addLicense(applicant);
+			} else if (operation.equals("update")) {
+				updateLicense(applicant);
+			} else if (operation.equals("view")) {
+				showLicenses(applicant);
+			} else {
+				System.out.println("Exiting Sub Menu");
+				return;
+			}
 		}
-
 	}
 
 	public void addLicense(Applicant applicant) {
@@ -615,20 +1091,93 @@ public class SystemHandler {
 		try {
 			applicant.addLicenses(license);
 			System.out.println("License added successfully");
-		} catch (DuplicateEntryException e) {
+		} catch (DuplicateEntryException | BadEntryException e) {
 			System.out.println(e);
 			System.out.println("!! Adding License failed !!");
 		}
 	}
 
-	public void showLicenses(Applicant applicant){
+	public boolean showLicenses(Applicant applicant){
 		List<License> licenses = new ArrayList<License>();
 		licenses = applicant.getLicenses();
 
+		if (licenses.size() == 0){
+			System.out.println("No License Exist. Please add License to the profile.");
+			return false;
+		}
 		int i =1;
 		for (License license: licenses){
 			System.out.println("License "+ i++ + ". " + license);
 		}
+		return true;
+	}
+
+	public void updateLicense(Applicant applicant){
+		String printStatement;
+
+		if(!showLicenses(applicant)){
+			return;
+		}
+		int numOfLicenses = applicant.getLicenses().size();
+		printStatement = "Enter the License number to update : ";
+		System.out.print(printStatement);
+		int recordNo = validInput(printStatement, numOfLicenses) - 1;
+
+		String type, id;
+		Date validTill;
+
+		License updateLicense = applicant.getLicenses().get(recordNo);
+
+		type = updateLicense.getType();
+		id = updateLicense.getId();
+		validTill = updateLicense.getValidTill();
+
+		boolean runLoop = true;
+
+		do {
+			System.out.println("\n===Details that can be updated===");
+			System.out.println("1. Type\n" +
+					"2. Identification Number\n" +
+					"3. Validity\n" +
+					"U. Update and exit.\n" +
+					"Q. Exit without updating");
+			System.out.print("Enter Option to update : ");
+			String choice = Global.scanner.nextLine();
+
+			switch(choice){
+				case "1":
+					System.out.print("Enter the Type to update : ");
+					type = Global.scanner.nextLine();
+					break;
+				case "2":
+					System.out.print("Enter the ID to update : ");
+					id = Global.scanner.nextLine();
+					break;
+				case "3":
+					System.out.print("Enter the Valid till date to update : ");
+					validTill = getDateInput();
+					break;
+				case "U":
+					License newLicense = new License(type,id, validTill);
+					try {
+						applicant.updateLicense(newLicense, recordNo);
+						System.out.println("License updated successfully.");
+						System.out.println(applicant.getLicenses().get(recordNo));
+					} catch (NoSuchRecordException | BadEntryException e) {
+						System.out.println(e);
+					}
+					runLoop = false;
+					break;
+				case "Q":
+					System.out.println("Exiting without updating.");
+					runLoop = false;
+				default:
+					System.out.println("Wrong input!!!\nKindly check option and try again.");
+					break;
+			}
+
+		} while (runLoop);
+
 	}
 
 	public void addEmploymentHistory(Applicant applicant) throws DuplicateEntryException{
@@ -669,45 +1218,426 @@ public class SystemHandler {
 
 	}
 
-	public void addAvailability(Applicant applicant) throws DuplicateEntryException{
+	public AvailabilityType getAvailabilityType(){
+		boolean runLoop = true;
+		do{
+			System.out.print("Enter the Job Role: " +
+					"\nP --> Part time" +
+					"\nF --> Full Time" +
+					"\nI --> Internship" +
+					"\nChoice: ");
+			String input = Global.scanner.nextLine();
+			input.toUpperCase();
+			switch(input){
+				case "P":
+					return AvailabilityType.PART_TIME;
+				case "F":
+					return AvailabilityType.FULL_TIME;
+				case "I":
+					return AvailabilityType.INTERNSHIP;
+				default:
+					System.out.println("Invalid Input!!\n Kindly try again");
+					break;
+			}
+		}while(runLoop);
+		return null;
+	}
 
-		String companyName;
-		String designation;
-		Date startDate;
-		Date endDate;
-		boolean currentCompany;
+	public int getNoOfHours(){
+		System.out.print("Number of Hours per week: ");
+		 return Global.scanner.nextInt();
+	}
 
-		System.out.println("Enter Below details for adding Employment Record\n");
-		System.out.print("Company Name: ");
-		companyName = Global.scanner.nextLine();
-		System.out.print("Designation: ");
-		designation = Global.scanner.nextLine();
-		System.out.print("Start Date(DD/MM/YYYY): ");
-		startDate = getDateInput();
-		System.out.println("Are you still working in this company?(Y/N): ");
-		String answer= Global.scanner.nextLine();
-		if(answer.equalsIgnoreCase("y")){
-			currentCompany= true;
-			endDate= null;
-		}else {
-			currentCompany = false;
-			System.out.print("End Date(DD/MM/YYYY): ");
-			endDate = getDateInput();
+	public Date dateForAvailability(String date){
+		System.out.print(date);
+		return getDateInput();
+	}
+
+	public ArrayList<JobCategory> getJobCategoriesInputs(ArrayList arrayList){
+
+		ArrayList<JobCategory> selectedJobCategories = arrayList;
+		boolean repeatFlag = false;
+		boolean wrongFlag = false;
+
+		for (String key: allJobCategories.keySet()){
+			System.out.println(allJobCategories.get(key));
 		}
+		System.out.println("Add categories comma sepearted: ");
+		String options = Global.scanner.nextLine();
 
-		EmploymentRecord newRecord= new EmploymentRecord(companyName, designation, startDate, endDate, currentCompany);
+		List<String> ids = Arrays.asList(options.split(","));
+
+		for(String id : ids){
+			if (allJobCategories.get(id) != null){
+				if (!repetitiveID(id, selectedJobCategories))
+				 selectedJobCategories.add(allJobCategories.get(id));
+				else
+				 repeatFlag = true;
+			} else {
+				wrongFlag = true;
+			}
+		}
+		if (repeatFlag){
+			System.out.println("Same job category entered more than once");
+		} else if(wrongFlag){
+			System.out.println("Wrong categories entered");
+		}
+		return selectedJobCategories;
+	}
+
+	public ArrayList<JobCategory> getJobCategories(ArrayList arrayList){
+
+		ArrayList<JobCategory> applicableJobCategories  = new ArrayList<>();
+		boolean exit;
+		do{
+			exit = true;
+			applicableJobCategories = getJobCategoriesInputs(arrayList);
+
+			if (applicableJobCategories.size() == 0){
+				System.out.println("No Job categories entered");
+				String input = customScanner.readYesNo("Would you like to enter job categories again(yes/no): ");
+				if(input.equalsIgnoreCase("yes")){
+					exit = false;
+				} else {
+					System.out.println("Taking no Job categories for now. You can update later");
+					applicableJobCategories = null;
+				}
+			} else {
+				System.out.println("Selected Job Categories");
+				for (JobCategory category: applicableJobCategories){
+					System.out.println(category.getId());
+				}
+				System.out.println("Adding the Job Preference in the profile");
+			}
+		} while(!exit);
+		return applicableJobCategories;
+	}
+
+	public boolean repetitiveID(String id, List<JobCategory> jobCategories){
+
+		if (jobCategories.isEmpty()) return false;
+
+		for(JobCategory category: jobCategories){
+			if (id.equals(category.getId())){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void addJobPreference(Applicant applicant) throws DuplicateEntryException{
+
+		ArrayList<JobCategory> applicableJobCategories = new ArrayList<>();
+		AvailabilityType availabilityType;
+		int noOfHoursAWeek;
+		Date periodStartDate = null;
+		Date periodEndDate = null;
+
+		System.out.println("Enter Below details for adding Job Preference\n");
+
+		availabilityType = getAvailabilityType();
+		noOfHoursAWeek = getNoOfHours();
+		Global.scanner.nextLine();
+		periodStartDate = dateForAvailability("Start Date: ");
+		periodEndDate = dateForAvailability("End Date: ");
+		applicableJobCategories = getJobCategories(applicableJobCategories);
 
 		try {
-			applicant.addEmploymentRecords(newRecord);
-			System.out.println("Employment Record added successfully");
-		} catch (BadEmployeeRecordException e) {
-			System.out.println(e.getMessage());
-			System.out.println("Failed to add employment record. Please try again.");
+			applicant.addAvailability(availabilityType, applicableJobCategories, noOfHoursAWeek, periodStartDate, periodEndDate);
+			System.out.println("Job Preference added successfully. Below are the list of Job Preferences:-");
+			showJobPreferences(applicant);
+		} catch (BadEntryException | DuplicateEntryException e) {
+			System.out.println(e);
+			System.out.println("Adding Job Preference failed!!");
 		}
 
 	}
 
+	public boolean showJobPreferences(Applicant applicant){
+		List<UserAvailability> allJobPreferences = applicant.getUserAvailability();
+
+		if(allJobPreferences.size() == 0){
+			System.out.println("No Job preferences present. Please add job preferences to your profile.");
+			return false;
+		}else{
+			for(int i=0; i<allJobPreferences.size();i++){
+				System.out.println("Job Preference "+(i+1)+":");
+				System.out.println(allJobPreferences.get(i).toString());
+			}
+			return true;
+		}
+	}
+
+	public void updateJobPreference(Applicant applicant){
+		String printStatement;
+
+		if(!showJobPreferences(applicant)){
+			return;
+		}
+		int numOfRecords = applicant.getUserAvailability().size();
+		printStatement = "Enter the Job Preference number to update : ";
+		System.out.print(printStatement);
+		int recordNo = validInput(printStatement, numOfRecords) - 1;
+
+		UserAvailability updateAvailability = applicant.getUserAvailability().get(recordNo);
+
+		List<JobCategory> applicableJobCategories = updateAvailability.getApplicableJobCategories();
+		AvailabilityType availabilityType = updateAvailability.getAvailabilityType();
+		int noOfHoursAWeek = updateAvailability.getNoOfHoursAWeek();
+		Date periodStartDate = updateAvailability.getPeriodStartDate();
+		Date periodEndDate = updateAvailability.getPeriodEndDate();
+
+		boolean runLoop = true;
+
+		do{
+			System.out.println("\n===Details that can be updated===");
+			System.out.println("1. Availability Type\n" +
+					"2. Start Date\n" +
+					"3. End Date\n" +
+					"4. Working hours per week\n" +
+					"5. Edit Job Categories\n" +
+					"U. Update and exit.\n" +
+					"Q. Exit without updating");
+			System.out.print("Enter Option to update : ");
+			String choice = Global.scanner.nextLine();
+
+			switch(choice){
+				case "1":
+					availabilityType = getAvailabilityType();
+					break;
+				case "2":
+					periodStartDate = dateForAvailability("Period Start Date: ");
+					break;
+				case "3":
+					periodEndDate = dateForAvailability("Period End Date: ");
+
+					break;
+				case "4":
+					noOfHoursAWeek = getNoOfHours();
+					break;
+				case "5":
+					applicableJobCategories = getJobCategories((ArrayList) applicableJobCategories);
+					break;
+				case "U":
+					UserAvailability availability = new UserAvailability(applicableJobCategories, availabilityType, noOfHoursAWeek, periodStartDate, periodEndDate);
+					try {
+						applicant.updateAvailability(availability, recordNo);
+						System.out.println("Job Preference updated successfully.");
+						System.out.println(applicant.getUserAvailability().get(recordNo));
+					} catch (NoSuchRecordException |  BadEntryException e) {
+						System.out.println(e);
+					}
+					runLoop = false;
+					break;
+				case "Q":
+					System.out.println("Exiting without updating.");
+					runLoop = false;
+				default:
+					System.out.println("Wrong input!!!\nKindly check option and try again.");
+					break;
+			}
+		} while (runLoop);
+	}
+
+	private void addReferences(Applicant applicant) throws DuplicateEntryException {
+
+		System.out.println("Enter Below details for adding a new Reference\n");
+		Reference newReference = fetchNewReferenceFromUser();
+
+		if (newReference == null) {
+			return;
+		}
+
+		applicant.addReferences(newReference);
+		System.out.println("Reference added successfully");
+	}
+
+	private Reference fetchNewReferenceFromUser() {
+
+		System.out.println("Enter Q at any point to exit the form.");
+		System.out.print("Enter the First Name: ");
+		String firstName = Global.scanner.nextLine();
+		if(firstName.equalsIgnoreCase("q")){
+			return null;
+		}
+
+		System.out.print("Enter the Last Name: ");
+		String lastName = Global.scanner.nextLine();
+		if(lastName.equalsIgnoreCase("q")){
+			return null;
+		}
+
+		String email;
+		do {
+			System.out.print("Enter the email: ");
+			email = Global.scanner.nextLine();
+			if(email.equalsIgnoreCase("q")){
+				return null;
+			}
+			if(!validEmailCheck(email)){
+				System.out.println("Invalid email id. Please enter a valid email id.");
+				continue;
+			}else{
+				break;
+			}
+		} while(true);
+
+		System.out.print("Enter the Designation: ");
+		String designation = Global.scanner.nextLine();
+		if(designation.equalsIgnoreCase("q")){
+			return null;
+		}
+
+		System.out.print("Enter the Company Name: ");
+		String companyName = Global.scanner.nextLine();
+		if(companyName.equalsIgnoreCase("q")){
+			return null;
+		}
+
+		String phoneNumber;
+		do {
+			System.out.print("Enter the phone number: ");
+			phoneNumber = Global.scanner.nextLine();
+			if(phoneNumber.equalsIgnoreCase("q")){
+				return null;
+			}
+			if(!validPhoneNumberCheck(phoneNumber)){
+				System.out.println("Invalid phone number. Please enter a valid phone number.");
+				continue;
+			}else{
+				break;
+			}
+		} while(true);
+
+		Reference newReference = new Reference(firstName, lastName, email, designation, companyName, phoneNumber);
+		return newReference;
+	}
+
+	private void updateReferences(Applicant applicant) {
+		{
+			String printStatement;
+
+			if(!showReferences(applicant)){
+				return;
+			}
+			int numOfRecords = applicant.getReferences().size();
+			printStatement = "Enter the Reference number to update : ";
+			System.out.print(printStatement);
+			int recordNo = validInput(printStatement, numOfRecords) - 1;
+
+			Reference reference = applicant.getReferences().get(recordNo);
+
+			String firstname= reference.getFirstname();
+			String lastname= reference.getLastname();
+			String email = reference.getEmail();
+			String designation = reference.getDesignation();
+			String companyName = reference.getCompanyName();
+			String phoneNumber = reference.getPhoneNumber();
+
+			boolean runLoop = true;
+
+			do{
+				System.out.println("\n===Details that can be updated===");
+				System.out.println("1. Name\n" +
+						"2. Email\n" +
+						"3. Designation\n" +
+						"4. Company Name\n" +
+						"5. Phone Number\n" +
+						"U. Update and exit.\n" +
+						"Q. Exit without updating");
+				System.out.print("Enter Option to update : ");
+				String choice = Global.scanner.next();
+
+				switch(choice){
+					case "1":
+						System.out.print("Enter the First Name: ");
+						firstname = Global.scanner.next();
+						System.out.print("Enter the Last Name: ");
+						lastname = Global.scanner.next();
+						break;
+
+					case "2":
+						do {
+							System.out.print("Enter the email: ");
+							email = Global.scanner.next();
+							if(!validEmailCheck(email)){
+								System.out.println("Invalid email id. Please enter a valid email id.");
+								continue;
+							}else{
+								break;
+							}
+						} while(true);
+						break;
+
+					case "3":
+						System.out.print("Enter the Designation: ");
+						designation = Global.scanner.next();
+						break;
+
+					case "4":
+						System.out.print("Enter the Company Name: ");
+						companyName = Global.scanner.next();
+						break;
+
+					case "5":
+						do {
+							System.out.print("Enter the phone number: ");
+							phoneNumber = Global.scanner.next();
+							if(!validPhoneNumberCheck(phoneNumber)){
+								System.out.println("Invalid phone number. Please enter a valid phone number.");
+								continue;
+							}else{
+								break;
+							}
+						} while(true);
+						break;
+
+					case "U":
+						Reference updatedReference = new Reference(firstname, lastname, email, designation, companyName, phoneNumber);
+						try {
+							applicant.updateReferences(updatedReference, recordNo);
+							System.out.println("Job Preference updated successfully.");
+							System.out.println(applicant.getReferences().get(recordNo));
+						} catch (NoSuchRecordException e) {
+							System.out.println(e);
+						}
+						runLoop = false;
+						break;
+					case "Q":
+						System.out.println("Exiting without updating.");
+						runLoop = false;
+					default:
+						System.out.println("Wrong input!!!\nKindly check option and try again.");
+						break;
+				}
+			} while (runLoop);
+		}
+
+	}
+
+	private boolean showReferences(Applicant applicant) {
+		List<Reference> allReferences = applicant.getReferences();
+
+		if(allReferences.size() == 0){
+			System.out.println("No References present. Please add References to profile to view them.");
+			return false;
+		}else{
+			for(int i=0; i<allReferences.size();i++){
+				System.out.println("Reference "+(i+1)+":");
+				System.out.println(allReferences.get(i).toString());
+			}
+			return true;
+		}
+	}
+
 	public void selectInterviewTiming(Applicant applicant){
+
+		//Checking Blacklist status
+		if(applicant.getBlacklistStat() == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			System.out.println("You cannot select interview timings in your current state.");
+			return;
+		}
+
 		List<JobApplication> jobApplications = applicant.getJobApplications();
 		if(jobApplications.size() == 0){
 			System.out.println("You currently have no pending Interview Timings");
@@ -785,6 +1715,12 @@ public class SystemHandler {
 
 	public void respondToJobOffer(Applicant applicant){
 
+		//Checking Blacklist status
+		if(applicant.getBlacklistStat() == BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			System.out.println("You cannot respond to job offers timings in your current state.");
+			return;
+		}
+
 		List<JobApplication> jobApplications = applicant.getJobApplications();
 		if(applicant.getEmploymentStatus() == EmploymentStatus.EMPLOYED){
 			System.out.println("Employed applicants cannot accept more job offers");
@@ -836,6 +1772,90 @@ public class SystemHandler {
 				respondToJobOffer(applicant);
 			}
 		}
+	}
+
+	public void changeCredentials(Applicant applicant){
+
+		String printStatement;
+
+		System.out.println("1. Change User id\n" +
+				"2. Change password\n" +
+				"3. Go back to previous menu");
+		printStatement = "Enter the option to change : ";
+		System.out.print(printStatement);
+		int option = validInput(printStatement, 3);
+
+		switch(option) {
+			case 1:
+				changeUserId(applicant);
+				break;
+			case 2:
+				changePassword(applicant);
+				break;
+			case 3:
+				break;
+			default:
+				System.out.println("Wrong option selected!! Kindly try again");
+				break;
+		}
+	}
+
+	public void changeUserId(Applicant applicant){
+		boolean idFound;
+		do {
+			idFound = false;
+			Global.scanner.nextLine();
+			System.out.print("Enter the new User id: ");
+			id = Global.scanner.nextLine();
+			if (!freeIdCheck(id)){
+				System.out.println("This user id is already taken");
+				idFound = true;
+			}
+		}while(idFound);
+		allUsersList.remove(id);
+		allApplicantsList.remove(id);
+		applicant.setId(id);
+		allUsersList.put(applicant.getId(), applicant);
+		allApplicantsList.put(applicant.getId(),applicant);
+		System.out.println("User id changed to : "+ applicant.getId());
+
+	}
+
+	public void changePassword(Applicant applicant){
+		String statement = "\nNew Password must be different than the current password.\n";
+		System.out.println(statement +
+				"You must enter the current password to authenticate to make this change");
+		Global.scanner.nextLine();
+		String currentPassword = authenticate(applicant);
+		boolean runLoop;
+		do{
+			runLoop = true;
+
+			System.out.print("Enter new password : ");
+			String newPassword = Global.scanner.nextLine();
+			if (newPassword.equals(currentPassword)){
+				System.out.println(statement);
+			} else {
+				applicant.setPassword(newPassword);
+				System.out.println("**Password Change successful**");
+				runLoop = false;
+			}
+		}while(runLoop);
+	}
+
+	public String authenticate(Applicant applicant){
+		boolean runLoop;
+		do{
+			runLoop = true;
+			System.out.print("Enter current password : ");
+			String password = Global.scanner.nextLine();
+			if (password.equals(applicant.getPassword())){
+				return password;
+			} else {
+				System.out.println("Wrong Password");
+			}
+		} while(runLoop);
+		return null;
 	}
 
 	/**
@@ -1916,14 +2936,18 @@ public class SystemHandler {
 		//Added by Prodip Guha Roy for testing
 		Applicant a10 = new Applicant("app10", "chaudhari.yogesh20@gmail.com", "123", "John", "Snow", "048888888", "l");
 		Applicant a11 = new Applicant("app11", "chaudhari.yogesh20@gmail.com", "123", "Jane", "Doe", "048888888", "l");
+		Applicant a12 = new Applicant("app12", "chaudhari.yogesh20@gmail.com", "123", "Tim", "Gordon", "048888888", "l");
 		Employer employer = new Employer("emp1", "chaudhari.yogesh20@gmail.com", "123", "Yosha");
 		this.allUsersList.put("app10", a10);
 		this.allApplicantsList.put("app10", a10);
 		this.allUsersList.put("app11", a11);
 		this.allApplicantsList.put("app11", a11);
+		this.allUsersList.put("app12", a12);
+		this.allApplicantsList.put("app12", a12);
 		this.allUsersList.put("emp1", employer);
 		this.allEmployersList.put("emp1", employer);
 
+		a12.setLastStatusUpdateDate(new SimpleDateFormat("dd/MM/yyyy").parse("29/09/2020"));
 		try {
 			employer.createJob(new Job("job1", "Store Manager", "Store Manager role at Woolies","C1"));
 			employer.createJob(new Job("job2", "Team Member", "Team Member role at Woolies", "C1"));

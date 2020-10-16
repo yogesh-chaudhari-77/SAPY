@@ -23,6 +23,10 @@ public class Qualification {
         this.marksObtained = marksObtained;
     }
 
+    public String getFieldOfStudy() {
+        return fieldOfStudy;
+    }
+
     public String getQualificationLevel() {
         return qualificationLevel;
     }
@@ -34,6 +38,8 @@ public class Qualification {
     public Date getEndDate() {
         return endDate;
     }
+
+    public double getMarksObtained() { return marksObtained; }
 
     @Override
     public String toString() {
