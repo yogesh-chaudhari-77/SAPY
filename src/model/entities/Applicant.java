@@ -216,48 +216,32 @@ public class Applicant extends User implements Serializable {
     }
 
     public boolean addAvailability(AvailabilityType availabilityType, List<JobCategory> jobCategories, int hoursPerWeek, Date periodStartDate, Date periodEndDate) throws DuplicateEntryException, BadEntryException {
-        boolean duplicateAvailability= false;
-        String nullObjectExceptionMessage= "";
-        boolean nullObjectPassed = false;
-        if(availabilityType == null){
-            nullObjectExceptionMessage= "Availability Type passed points to null";
-            nullObjectPassed = true;
-        }
-        if(jobCategories == null){
-            nullObjectExceptionMessage= "List of JobCategories passed points to null";
-            nullObjectPassed = true;
-        }
-        if(periodStartDate == null){
-            nullObjectExceptionMessage= "Period Start Date passed points to null";
-            nullObjectPassed = true;
+
+        if(availabilityType == null || jobCategories == null || periodStartDate == null || periodEndDate == null){
+            throw new NullObjectException("Null values passed as input in addAvailability");
         }
 
-        if(periodEndDate == null){
-            nullObjectExceptionMessage= "Period End Date passed points to null";
-            nullObjectPassed = true;
-        }
+        boolean isDuplicate= checkDuplicateAvailability(availabilityType, hoursPerWeek);
 
-        if(nullObjectPassed){
-            throw new NullObjectException(nullObjectExceptionMessage);
+        if(isDuplicate) {
+            throw new DuplicateEntryException("User Availability already present");
         }
 
         UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
-
-            for(UserAvailability currentAvailability: userAvailability){
-                if((currentAvailability.getAvailabilityType() == availability.getAvailabilityType())
-                        && currentAvailability.getNoOfHoursAWeek() == availability.getNoOfHoursAWeek()){
-                    duplicateAvailability= true;
-                    break;
-                }
-            }
-
-            if(duplicateAvailability) {
-                throw new DuplicateEntryException("User Availability already present");
-            }
-
-            userAvailability.add(availability);
+        userAvailability.add(availability);
 
         return true;
+    }
+
+    public boolean checkDuplicateAvailability(AvailabilityType availabilityType, int hoursPerWeek){
+        for(UserAvailability currentAvailability: userAvailability){
+            if((currentAvailability.getAvailabilityType() == availabilityType)
+                    && currentAvailability.getNoOfHoursAWeek() == hoursPerWeek){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public boolean validAvailability(UserAvailability availability) throws BadEntryException {
