@@ -21,9 +21,6 @@ import java.util.regex.Pattern;
 public class MaintenanceStaff extends User implements Serializable {
 	
 	private JobCategory jobcategory;
-	
-
-
 	private int catgId = 1;
 
 	public MaintenanceStaff(String id, String userEmail, String password, String firstName, String lastName, String phoneNumber)
@@ -88,7 +85,10 @@ public class MaintenanceStaff extends User implements Serializable {
 		if (user instanceof Employer)
 		{
 			Employer emp = ((Employer) user);
-			if (emp.getBlacklistStat() == BlacklistStatus.PROVISIONAL_BLACKLISTED)
+			
+			BlacklistStatus status = emp.getBlacklistStat();
+			
+			if (status == BlacklistStatus.PROVISIONAL_BLACKLISTED)
 			{
 				emp.removeBlacklistStatus();
 				return true;
@@ -97,10 +97,13 @@ public class MaintenanceStaff extends User implements Serializable {
 				throw new NotProvisionallyBlacklistedUserException();
 		}
 			
-		else if (user instanceof Applicant)
+		else 
 		{
 			Applicant app = ((Applicant) user);
-			if(app.getBlacklistStat() == BlacklistStatus.PROVISIONAL_BLACKLISTED)
+			
+			BlacklistStatus status = app.getBlacklistStat();
+			
+			if(status == BlacklistStatus.PROVISIONAL_BLACKLISTED)
 			{
 				app.removeBlacklistStatus();
 				return true;
@@ -108,11 +111,7 @@ public class MaintenanceStaff extends User implements Serializable {
 			else
 				throw new NotProvisionallyBlacklistedUserException();
 		}
-		else
-		{
-			System.out.println("False");
-			return false;
-		}
+		
 	}
 
 	
@@ -122,7 +121,9 @@ public class MaintenanceStaff extends User implements Serializable {
 		if (user instanceof Employer)
 		{
 			Employer emp = ((Employer) user);
-			if (emp.getBlacklistStat() == BlacklistStatus.FULL_BLACKLISTED)
+			BlacklistStatus status = emp.getBlacklistStat();
+
+			if (status == BlacklistStatus.FULL_BLACKLISTED)
 			{
 				SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 				Date blacklistedDate = emp.getBlacklistStartDate();
@@ -143,7 +144,7 @@ public class MaintenanceStaff extends User implements Serializable {
 				throw new NotFullyBlacklistedUserException();
 		}
 
-		else if (user instanceof Applicant)
+		else 
 		{
 			Applicant app = ((Applicant) user);
 
@@ -167,12 +168,7 @@ public class MaintenanceStaff extends User implements Serializable {
 				throw new NotFullyBlacklistedUserException();
 
 		}
-		else
-		{
-			System.out.println("False");
-			return false;
-
-		}
+		
 	}
 	
 //	//Generation the reports to tune the system

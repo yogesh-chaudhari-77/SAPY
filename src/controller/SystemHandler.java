@@ -2150,8 +2150,11 @@ public class SystemHandler {
 						System.out.println("Enter the id of the user to be reactivated:  ");
 						user = input.nextLine();
 				
-						if(staff.revertBlacklistedUser((User)(allUsersList.get(user)), type))
-							blacklistedUsers.remove("E1");
+						if (this.allEmployersList.containsKey(user) || this.allApplicantsList.containsKey(user))
+						{
+							if(staff.revertBlacklistedUser((User)(allUsersList.get(user)), type))
+								blacklistedUsers.remove("E1");
+						}
 					}
 					catch(Exception e)
 					{

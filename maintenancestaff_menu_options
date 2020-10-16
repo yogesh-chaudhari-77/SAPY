@@ -5,6 +5,6 @@
 1 = Add New Job category
 2 = View BlacklistedUsers
 3 = Blacklist user
-4 = Reactivate blacklisted user
+4 = Revert blacklisted user
 5 = Generate Reports
 Q = quit
