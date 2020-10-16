@@ -22,6 +22,7 @@ public class Applicant extends User {
 
     // 07-10-2020 - Added by Yogeshwar - Employer needs to update employmentStatus if made an offer
     private EmploymentStatus employmentStatus;
+    private Date lastStatusUpdateDate;
     private List<JobApplication> jobApplications;
 
 
@@ -41,6 +42,7 @@ public class Applicant extends User {
         }
         this.cvPath = null;
         this.employmentStatus = EmploymentStatus.AVAILABLE;
+        this.lastStatusUpdateDate = new Date();
         this.jobApplications = new ArrayList<>();
     }
 
@@ -76,9 +78,10 @@ public class Applicant extends User {
         return true;
     }
 
+
     public boolean updateEmploymentRecords(EmploymentRecord record, int recordIndex) throws NoSuchRecordException, BadEmployeeRecordException {
         if (recordIndex > employmentHistory.size()){
-            throw new NoSuchRecordException("No Such Qualification Exists");
+            throw new NoSuchRecordException("No Such Employment Record Exists");
         }
 
         if (validEmploymentRecord(record)){
@@ -154,7 +157,7 @@ public class Applicant extends User {
 
     public boolean updateReferences(Reference reference, int recordIndex) throws NoSuchRecordException {
         if (recordIndex > references.size()){
-            throw new NoSuchRecordException("No Such License Exists");
+            throw new NoSuchRecordException("No Such Reference Exists");
         }
 
         references.set(recordIndex, reference);
@@ -261,7 +264,7 @@ public class Applicant extends User {
         return true;
     }
 
-    public boolean updateAvailability(UserAvailability availability, int recordIndex) throws BadEntryException, DuplicateEntryException, NoSuchRecordException {
+    public boolean updateAvailability(UserAvailability availability, int recordIndex) throws BadEntryException, NoSuchRecordException {
 
 
         //UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
@@ -481,5 +484,13 @@ public class Applicant extends User {
 
     public void setEmploymentStatus(EmploymentStatus employmentStatus) {
         this.employmentStatus = employmentStatus;
+    }
+
+    public Date getLastStatusUpdateDate() {
+        return lastStatusUpdateDate;
+    }
+
+    public void setLastStatusUpdateDate(Date lastStatusUpdateDate) {
+        this.lastStatusUpdateDate = lastStatusUpdateDate;
     }
 }
