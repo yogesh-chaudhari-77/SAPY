@@ -12,8 +12,8 @@ import global.*;
 
 public class Menu {
 
-	private LinkedHashMap<String, String> menu = new LinkedHashMap();
-	private int lengthLongestOption;
+	private final LinkedHashMap<String, String> menu = new LinkedHashMap();
+	private final int lengthLongestOption;
 	
 	
 	public Menu(String filename) throws Exception {
@@ -92,7 +92,7 @@ public class Menu {
 	// case insensitive.
 	
 	public String show() {
-		String format = "%-" + Integer.toString(lengthLongestOption) + "s: ";
+		String format = "%-" + lengthLongestOption + "s: ";
 		Set<String> keys = menu.keySet();
 		String choice;
 		

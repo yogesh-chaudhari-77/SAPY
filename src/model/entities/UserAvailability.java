@@ -13,7 +13,7 @@ public class UserAvailability implements Serializable {
 
 
     // 23-09-2020 - Multiple job categories can be specified by applicant
-    private List<JobCategory> applicableJobCategories = new ArrayList<JobCategory>();;
+    private List<JobCategory> applicableJobCategories = new ArrayList<JobCategory>();
 
     private AvailabilityType availabilityType;
     private int noOfHoursAWeek;

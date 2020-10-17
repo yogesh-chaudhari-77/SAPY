@@ -20,7 +20,7 @@ import model.entities.Job;
 
 public class testSystemHandler {
 	
-	private SystemHandler sysHandler = new SystemHandler();
+	private final SystemHandler sysHandler = new SystemHandler();
 
 	public testSystemHandler() throws FileNotFoundException, ParseException, BadEntryException, DuplicateEntryException {
 	}

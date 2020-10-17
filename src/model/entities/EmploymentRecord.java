@@ -9,11 +9,11 @@ import java.util.Date;
 
 public class EmploymentRecord implements Serializable {
 
-    private String companyName;
-    private String designation;
-    private Date startDate;
-    private Date endDate;
-    private boolean currentCompany;
+    private final String companyName;
+    private final String designation;
+    private final Date startDate;
+    private final Date endDate;
+    private final boolean currentCompany;
 
 
     public EmploymentRecord(String companyName, String designation, Date startDate, Date endDate, boolean currentCompany) {

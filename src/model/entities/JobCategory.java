@@ -7,8 +7,8 @@ import java.io.Serializable;
 
 public class JobCategory implements Serializable {
 
-	private String id;
-	private String categoryTitle;
+	private final String id;
+	private final String categoryTitle;
 	private static int idNo = 1;
 	private String status;
 	

@@ -25,9 +25,9 @@ public class Blacklist implements Serializable {
 	public void setBlacklistStatus(String type)
 	{
 		if (type.toUpperCase().contentEquals("P"))
-			this.blacklistStatus = blacklistStatus.PROVISIONAL_BLACKLISTED;
+			this.blacklistStatus = BlacklistStatus.PROVISIONAL_BLACKLISTED;
 		else
-			this.blacklistStatus = blacklistStatus.FULL_BLACKLISTED;
+			this.blacklistStatus = BlacklistStatus.FULL_BLACKLISTED;
 
 		startDate = new Date();
 		endDate = null;
@@ -37,7 +37,7 @@ public class Blacklist implements Serializable {
 	//Reactivating an user
 	public void removeBlacklistStatus()
 	{
-		this.blacklistStatus = blacklistStatus.NOT_BLACKLISTED;
+		this.blacklistStatus = BlacklistStatus.NOT_BLACKLISTED;
 		endDate = new Date();
 	}
 

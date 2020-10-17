@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 public class CheckEmploymentStatusThread implements Runnable{
 
-    private HashMap<String, User> allUsersList;
+    private final HashMap<String, User> allUsersList;
 
     public CheckEmploymentStatusThread(HashMap<String, User> allUsersList){
         this.allUsersList = allUsersList;

@@ -17,7 +17,7 @@ public class Applicant extends User implements Serializable {
     private List<License> licenses;
     private List<Reference> references;
     private List<Qualification> qualifications;
-    private Blacklist blacklistStatus;
+    private final Blacklist blacklistStatus;
     private ApplicantType applicantType;
     private String cvPath;
 
@@ -27,7 +27,7 @@ public class Applicant extends User implements Serializable {
     private List<JobApplication> jobApplications;
 
     //for synchronizing thread calls
-    private transient static Object mutex = new Object();
+    private final transient static Object mutex = new Object();
 
     public Applicant(String id,String email, String password, String firstName, String lastName, String phoneNumber, String applicantType) {
         super(id, email, password, firstName, lastName, phoneNumber);

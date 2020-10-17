@@ -135,18 +135,18 @@ public class Employer extends User implements Serializable {
 		}
 
 
-		HashMap<String, JobApplication> shortListedApplicants = jobRef.getShortListedApplicants();
-
 		// If an applicant is blacklisted, he/she should not be allowed to be shortlisted
-		if(applicant.getBlacklistStatus() != null && applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.FULL_BLACKLISTED)
+		if(applicant.getBlacklistStatus() != null && ( applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.FULL_BLACKLISTED || applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED ) )
 		{
 			throw new ApplicantIsBlackListedException("Blacklisted applicants can't be shortlisted.");
 		}
 
+		HashMap<String, JobApplication> shortListedApplicants = jobRef.getShortListedApplicants();
+
 		// Add the applicant only if it is not already present
 		if(! shortListedApplicants.containsKey(applicant.getId()) )
 		{
-			shortListedApplicants.put(applicant.getId(), new JobApplication(jobRef, applicant));
+			jobRef.shortListApplicant(applicant);
 		}
 		else {
 			throw new AlreadyPresentInYourShortListedListException("The applicant is already present in your shortlisted applicant's list.");
@@ -177,11 +177,7 @@ public class Employer extends User implements Serializable {
 	public boolean isBlackListed() {
 		if( this.blacklistStatus.getBlacklistStatus() == BlacklistStatus.PROVISIONAL_BLACKLISTED) {
 			return true;
-		}else if( this.blacklistStatus.getBlacklistStatus() == BlacklistStatus.FULL_BLACKLISTED) {
-			return true;
-		}
-
-		return false;
+		}else return this.blacklistStatus.getBlacklistStatus() == BlacklistStatus.FULL_BLACKLISTED;
 	}
 
 
@@ -311,13 +307,10 @@ public class Employer extends User implements Serializable {
 
 		matter.append("Please select any of the possible interview times from your SAPY dashboard.");
 
-		matter.append("");
 		for(Date date : jobRef.getAvailInterviewTimings()){
 			matter.append(""+date.toLocaleString()+"");
 		}
-		matter.append("");
 		matter.append("We wish you all the best.");
-		matter.append("");
 		matter.append("Best Regards,");
 		matter.append("Team SAPY");
 
@@ -346,7 +339,6 @@ public class Employer extends User implements Serializable {
 		matter.append("Please find employment details below. ");
 		matter.append("Job Title "+jobRef.getJobTitle()+". ");
 		matter.append("Desc "+jobRef.getJobDesc()+". ");
-		matter.append("");
 
 		matter.append("Your employemnt Status : PENDING ");
 		matter.append("Please either accept or reject this offer from your SAPY dashboard. You will not shortlisted for other jobs until you change update your employment status.");

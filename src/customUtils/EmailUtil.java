@@ -13,7 +13,7 @@ import javax.mail.MessagingException;
  */
 public class EmailUtil {
 
-    public static void sendEmail(EmailObject email) throws MessagingException, UnirestException, UnirestException {
+    public static void sendEmail(EmailObject email) throws MessagingException, UnirestException {
 
         Unirest.post("https://api.pepipost.com/v5/mail/send")
                 .header("api_key", "7643511c0216843e5c2ee340a035d49a")

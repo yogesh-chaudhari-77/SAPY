@@ -167,4 +167,14 @@ public class Job implements Serializable {
 		return "Job [jobId=" + jobId + ", jobTitle=" + jobTitle + ", jobDesc=" + jobDesc + ", jobPostedDateTime="
 				+ jobPostedDateTime + ", jobStatus=" + jobStatus + "]";
 	}
+
+	/**
+	 * 17-10-2020 - Adds the applicant to the jobs shortlisted members list
+	 * @param applicant
+	 */
+	public JobApplication shortListApplicant(Applicant applicant) {
+		JobApplication ja = new JobApplication(this, applicant);
+		shortListedApplicants.put(applicant.getId(), ja);
+		return ja;
+	}
 }
