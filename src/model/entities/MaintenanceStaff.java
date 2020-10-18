@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 public class MaintenanceStaff extends User implements Serializable {
 	
 	private JobCategory jobcategory;
-	private int catgId = 1;
+	private int catgId = 4;
 
 	public MaintenanceStaff(String id, String userEmail, String password, String firstName, String lastName, String phoneNumber)
 	{

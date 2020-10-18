@@ -72,9 +72,9 @@ public class SystemHandler {
 		allEmployersList = new HashMap<>();
 		allStaffList = new HashMap<>();
 
-		loadDummyDataForEmployeFunctions();
+		//loadDummyDataForEmployeFunctions();
 
-		//loadDummyDataFromFiles();
+		loadDummyDataFromFiles();
 
 		this.printApplicantList();
 		this.printEmployers();
@@ -126,6 +126,8 @@ public class SystemHandler {
 
 			fileHandler.setBinaryFile(this.prop.getProperty("allJobsCategoriesFilePath"), "read");
 			allJobCategories = (HashMap<String, JobCategory>) fileHandler.readSerializedObj();
+			int srNo = ( allJobCategories.size() == 0 ) ? 1 : allJobCategories.size()+1;
+			JobCategory.setIdNo(srNo);
 
 			fileHandler.setBinaryFile(this.prop.getProperty("allComplaintsFilePath"), "read");
 			allComplaints = (ArrayList<Complaints>) fileHandler.readSerializedObj();
