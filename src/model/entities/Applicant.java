@@ -13,17 +13,15 @@ public class Applicant extends User implements Serializable {
 
     private List<EmploymentRecord> employmentHistory;
     private List <UserAvailability> userAvailability;
-    private int complaintCount;
     private List<License> licenses;
     private List<Reference> references;
     private List<Qualification> qualifications;
     private Blacklist blacklistStatus;
     private ApplicantType applicantType;
     private String cvPath;
-
-    // 07-10-2020 - Added by Yogeshwar - Employer needs to update employmentStatus if made an offer
     private EmploymentStatus employmentStatus;
     private Date lastStatusUpdateDate;
+    private int complaintCount;
     private List<JobApplication> jobApplications;
 
     //for synchronizing thread calls

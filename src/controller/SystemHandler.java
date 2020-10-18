@@ -72,9 +72,10 @@ public class SystemHandler {
 		allEmployersList = new HashMap<>();
 		allStaffList = new HashMap<>();
 
-		loadDummyDataForEmployeFunctions();
+		//loadDummyDataForEmployeFunctions();
 
-		//loadDummyDataFromFiles();
+		loadDummyDataFromFiles();
+
 
 		this.printApplicantList();
 		this.printEmployers();
@@ -1097,8 +1098,11 @@ public class SystemHandler {
 
 		System.out.print("Field of Study: ");
 		fieldOfStudy = Global.scanner.nextLine();
+
 		System.out.print("Marks Obtained(in percentage): ");
-		marksObtained = Global.scanner.nextDouble();
+		marksObtained = doubleInput("Marks Obtained(in percentage): ");
+
+
 
 
 		Qualification qualification = new Qualification(qualificationLevel, startDate, endDate, fieldOfStudy, marksObtained);
@@ -1117,6 +1121,10 @@ public class SystemHandler {
 		List<Qualification> qualifications = new ArrayList<Qualification>();
 		qualifications = applicant.getQualifications();
 
+		if (qualifications.size() == 0){
+			System.out.println("No Qualification Exists. Please Add a Qualification to profile.");
+			return;
+		}
 		int i =1;
 		for (Qualification qualification: qualifications){
 			System.out.println("Qualification "+ i++ + ". " + qualification);
@@ -1326,6 +1334,7 @@ public class SystemHandler {
 			runLoop = false;
 			System.out.print("Number of Hours per week: ");
 			noOfHours = Global.scanner.nextInt();
+			System.out.println(noOfHours);
 			if(applicant.getApplicantType() == ApplicantType.INTERNATIONAL &&
 					type == AvailabilityType.PART_TIME){
 				if (noOfHours>20){
@@ -1426,6 +1435,7 @@ public class SystemHandler {
 		System.out.println("Enter Below details for adding Job Preference\n");
 
 		availabilityType = getAvailabilityType();
+		System.out.println(availabilityType);
 		noOfHoursAWeek = getNoOfHours(applicant,availabilityType);
 		Global.scanner.nextLine();
 		periodStartDate = dateForAvailability("Start Date: ");
