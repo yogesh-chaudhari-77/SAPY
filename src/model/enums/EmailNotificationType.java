@@ -1,6 +1,8 @@
 package model.enums;
 
 
-public enum EmailNotificationType {
-	INTERVIEW_CALL, SUCCESSFULLY_HIRED;
+import java.io.Serializable;
+
+public enum EmailNotificationType implements Serializable {
+	INTERVIEW_CALL, SUCCESSFULLY_HIRED
 }

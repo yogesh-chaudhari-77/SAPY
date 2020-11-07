@@ -1,7 +1,11 @@
 package testing;
 
+import java.io.FileNotFoundException;
+import java.text.ParseException;
 import java.util.HashMap;
 
+import model.exceptions.BadEntryException;
+import model.exceptions.DuplicateEntryException;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -16,8 +20,11 @@ import model.entities.Job;
 
 public class testSystemHandler {
 	
-	private SystemHandler sysHandler = new SystemHandler();
-	
+	private final SystemHandler sysHandler = new SystemHandler();
+
+	public testSystemHandler() throws FileNotFoundException, ParseException, BadEntryException, DuplicateEntryException {
+	}
+
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 	}

@@ -39,7 +39,7 @@ public class TestEmployer {
 		sysHandler.loadDummyDataForEmployeFunctions();
 
 		// Creating an employer
-		employer = new Employer("E1", "employer@gmail.com", "qwerty", "Sample", "Employer", "123456789");
+		employer = new Employer("E1", "employer@gmail.com", "qwerty","Microsoft", "Sample", "Employer", "123456789");
 
 		// With certain jobs
 		employer.createJob(new Job("job1", "Developer", "Developer Desc", "C2"));
@@ -230,7 +230,7 @@ public class TestEmployer {
 		Assert.assertEquals("Validating Posted Jobs List Count Before : ", 4, this.employer.getPostedJobs().size());
 
 		// Also validate that the added job that is being added is exactly what is being supplied
-		//Assert.assertEquals("validating Obj", j1, this.employer.getPostedJobs().get("j1"));
+		Assert.assertEquals("validating Obj", j1, this.employer.getPostedJobs().get("j1"));
 	}
 
 

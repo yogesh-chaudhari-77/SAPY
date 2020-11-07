@@ -20,7 +20,7 @@ public class TestMaintenanceStaff {
 	Blacklist suspend;
 	Applicant testApplicant;
 	BlacklistStatus blacklistStatus;
-	HashMap<String, User> allUsersList  = new HashMap<String, User>();;
+	HashMap<String, User> allUsersList  = new HashMap<String, User>();
 	HashMap<String, User> blacklistedUsers = new HashMap<String, User>();
 	HashMap<String, JobCategory> allJobCategories = new HashMap<String, JobCategory>();
 	SimpleDateFormat dateFormat;
@@ -30,9 +30,9 @@ public class TestMaintenanceStaff {
 	public void setUp() throws Exception 
 	{
 		staff = new MaintenanceStaff("Staff001", "maintenancestaff@mail.com", "test123", "System", "Admin", "415414478");
-		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
+		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Company1","Test" ,"Employer", "123"));
 		allUsersList.put("S001", new Applicant("S001", "S@mail.com", "stud123", "Test" ,"Applicant", "123",""));
-		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2", "Test" ,"Employer2", "123"));
+		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2","Company2", "Test" ,"Employer2", "123"));
 		
 		dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 		
@@ -71,9 +71,9 @@ public class TestMaintenanceStaff {
 	@Test
 	public void testBlackListingProvisoinally() throws ParseException
 	{
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.NOT_BLACKLISTED);
 		staff.blacklistUser(allUsersList.get("E001"), "P");
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.PROVISIONAL_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.PROVISIONAL_BLACKLISTED);
 
 	}
 	
@@ -85,9 +85,9 @@ public class TestMaintenanceStaff {
 	@Test
 	public void testBlackListingFully() throws ParseException
 	{
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.NOT_BLACKLISTED);
 		staff.blacklistUser(allUsersList.get("E001"), "F");
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.FULL_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.FULL_BLACKLISTED);
 
 	}
 	
@@ -111,13 +111,13 @@ public class TestMaintenanceStaff {
 		//Pre condition
 		staff.blacklistUser(allUsersList.get("E001"), "F");
 		((Employer)allUsersList.get("E001")).setBlacklistStartDate(dateFormat.parse("24/06/2020 15:42:42"));
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.FULL_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.FULL_BLACKLISTED);
 		
 		//Operation
 		staff.revertBlacklistedUser(allUsersList.get("E001"),"F");
 		
 		//Post Condition
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.NOT_BLACKLISTED);
 	}
 	
 	
@@ -133,13 +133,13 @@ public class TestMaintenanceStaff {
 		
 		//Pre condition
 		staff.blacklistUser(allUsersList.get("E001"), "P");
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.PROVISIONAL_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.PROVISIONAL_BLACKLISTED);
 		
 		//Operation
 		staff.revertBlacklistedUser(allUsersList.get("E001"),"P");
 		
 		//Post Condition
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.NOT_BLACKLISTED);
 	}
 
 	
@@ -156,7 +156,7 @@ public class TestMaintenanceStaff {
 	{
 		
 		//Pre condition
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.NOT_BLACKLISTED);
 		
 		//Operation - Exception is expected
 		staff.revertBlacklistedUser(allUsersList.get("E001"),"P");
@@ -176,7 +176,7 @@ public class TestMaintenanceStaff {
 	{
 		
 		//Pre condition
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.NOT_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.NOT_BLACKLISTED);
 		
 		//Operation - Exception is expected
 		staff.revertBlacklistedUser(allUsersList.get("E001"),"F");
@@ -199,7 +199,7 @@ public class TestMaintenanceStaff {
 		//Pre condition
 		staff.blacklistUser(allUsersList.get("E001"), "F");
 		((Employer)allUsersList.get("E001")).setBlacklistStartDate(dateFormat.parse("15/09/2020 15:42:42"));
-		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(),blacklistStatus.FULL_BLACKLISTED);
+		assertEquals(((Employer)allUsersList.get("E001")).getBlacklistStat(), BlacklistStatus.FULL_BLACKLISTED);
 		
 		
 		//Operation - Exception is expected

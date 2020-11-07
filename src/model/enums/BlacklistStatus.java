@@ -1,5 +1,7 @@
 package model.enums;
 
-public enum BlacklistStatus {
+import java.io.Serializable;
+
+public enum BlacklistStatus implements Serializable {
     PROVISIONAL_BLACKLISTED, FULL_BLACKLISTED, NOT_BLACKLISTED
 }

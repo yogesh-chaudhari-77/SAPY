@@ -1,5 +1,6 @@
 package model.entities;
 import java.io.File;
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,26 +9,27 @@ import java.util.List;
 import model.enums.*;
 import model.exceptions.*;
 
-public class Applicant extends User {
+public class Applicant extends User implements Serializable {
 
     private List<EmploymentRecord> employmentHistory;
     private List <UserAvailability> userAvailability;
-    private int complaintCount;
     private List<License> licenses;
     private List<Reference> references;
     private List<Qualification> qualifications;
     private Blacklist blacklistStatus;
     private ApplicantType applicantType;
     private String cvPath;
-
-    // 07-10-2020 - Added by Yogeshwar - Employer needs to update employmentStatus if made an offer
     private EmploymentStatus employmentStatus;
     private Date lastStatusUpdateDate;
+    private int complaintCount;
     private List<JobApplication> jobApplications;
 
+    //for synchronizing thread calls
+    private transient static Object mutex = new Object();
 
     public Applicant(String id,String email, String password, String firstName, String lastName, String phoneNumber, String applicantType) {
         super(id, email, password, firstName, lastName, phoneNumber);
+        System.out.println("Constructor");
         this.employmentHistory = new ArrayList<>();
         this.userAvailability = new ArrayList<>();
         this.complaintCount = 0;
@@ -212,59 +214,49 @@ public class Applicant extends User {
     }
 
     public boolean addAvailability(AvailabilityType availabilityType, List<JobCategory> jobCategories, int hoursPerWeek, Date periodStartDate, Date periodEndDate) throws DuplicateEntryException, BadEntryException {
-        boolean duplicateAvailability= false;
-        String nullObjectExceptionMessage= "";
-        if(availabilityType == null){
-            nullObjectExceptionMessage= "Availability Type passed points to null";
-        }
-        if(jobCategories == null){
-            nullObjectExceptionMessage= "List of JobCategories passed points to null";
-        }
-        if(periodStartDate == null){
-            nullObjectExceptionMessage= "Period Start Date passed points to null";
+
+        if(availabilityType == null || jobCategories == null || periodStartDate == null || periodEndDate == null){
+            throw new NullObjectException("Null values passed as input in addAvailability");
         }
 
-        if(periodEndDate == null){
-            nullObjectExceptionMessage= "Period End Date passed points to null";
-        }
+        boolean isDuplicate= checkDuplicateAvailability(availabilityType, hoursPerWeek);
 
-        if(!nullObjectExceptionMessage.isEmpty()){
-            throw new NullObjectException(nullObjectExceptionMessage);
+        if(isDuplicate) {
+            throw new DuplicateEntryException("User Availability already present");
         }
 
         UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
-
-        if(validAvailability(availability)){
-            for(UserAvailability currentAvailability: userAvailability){
-                if((currentAvailability.getAvailabilityType() == availability.getAvailabilityType())
-                        && currentAvailability.getNoOfHoursAWeek() == availability.getNoOfHoursAWeek()){
-                    duplicateAvailability= true;
-                    break;
-                }
-            }
-
-            if(duplicateAvailability) {
-                throw new DuplicateEntryException("User Availability already present");
-            }
-
-            userAvailability.add(availability);
-        }
+        userAvailability.add(availability);
 
         return true;
+    }
+
+    public boolean checkDuplicateAvailability(AvailabilityType availabilityType, int hoursPerWeek){
+
+
+        for(UserAvailability currentAvailability: userAvailability){
+            if((currentAvailability.getAvailabilityType() == availabilityType)
+                    && currentAvailability.getNoOfHoursAWeek() == hoursPerWeek){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public boolean validAvailability(UserAvailability availability) throws BadEntryException {
 
+        Date startDate = availability.getPeriodStartDate();
+        Date endDate = availability.getPeriodEndDate();
 
-        if(availability.getPeriodStartDate().after(availability.getPeriodEndDate())
-                || availability.getPeriodStartDate().equals(availability.getPeriodEndDate())){
+        if(startDate.after(endDate) || startDate.equals(endDate)){
             throw new BadEntryException("Start date must be less than end date");
+        }else {
+            return true;
         }
-
-        return true;
     }
 
-    public boolean updateAvailability(UserAvailability availability, int recordIndex) throws BadEntryException, NoSuchRecordException {
+    public void updateAvailability(UserAvailability availability, int recordIndex) throws BadEntryException, NoSuchRecordException {
 
 
         //UserAvailability availability = new UserAvailability(jobCategories, availabilityType, hoursPerWeek, periodStartDate, periodEndDate);
@@ -273,13 +265,14 @@ public class Applicant extends User {
             throw new NoSuchRecordException("No Such Job Preference");
         }
 
-        if(validAvailability(availability)){
+        boolean ifValid = validAvailability(availability);
+
+        if(ifValid){
             //userAvailability.remove(recordIndex);
             userAvailability.set(recordIndex,availability);
-            return true;
         }
 
-       return false;
+
     }
 
     public boolean uploadCV(String cvPath) throws InvalidCVPathException{
@@ -323,13 +316,42 @@ public class Applicant extends User {
         boolean update = false;
         if(decision == 1){
             jobApplication.getOfferRef().setOfferStatus(OfferStatus.ACCEPTED);
-            this.employmentStatus = EmploymentStatus.EMPLOYED;
+            setEmploymentStatus(EmploymentStatus.EMPLOYED);
             update = true;
         }else if(decision == 0){
             jobApplication.getOfferRef().setOfferStatus(OfferStatus.REJECTED);
             update = true;
         }
         return update;
+    }
+
+    public boolean incrementComplaintCountAndUpdateStatus(){
+
+        this.complaintCount++;
+
+        if(complaintCount >= 3 && blacklistStatus.getBlacklistStatus() != BlacklistStatus.PROVISIONAL_BLACKLISTED){
+            blacklistStatus.setBlacklistStatus("P");
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Employer registers complaint against any employer
+     * @param employer
+     * @param message
+     * @return Complaints : The newly formed complaint
+     * @throws NullObjectException : Thrown when a null reference employer has been passed
+     */
+    public Complaints registerComplaintAgainstEmployer(Employer employer, String message) throws NullObjectException{
+
+        // Basic error checking
+        if(employer == null) {
+            throw new NullObjectException("Invalid employer ID. Please verify employer ID and try again.");
+        }
+
+        Complaints tempComplaint = new Complaints(this, employer, message);
+        return tempComplaint;
     }
 
     public boolean changeBlacklistStatus(BlacklistStatus status){
@@ -360,6 +382,7 @@ public class Applicant extends User {
 	public void removeBlacklistStatus()
 	{
 		blacklistStatus.removeBlacklistStatus();
+		this.complaintCount = 0;
 	}
 
     /**
@@ -369,7 +392,15 @@ public class Applicant extends User {
     public List<String> getJobPreferences(){
         List<String> jobPreferences= new ArrayList<>();
         for(UserAvailability availability : userAvailability){
+
             if(availability.getAvailabilityType() != AvailabilityType.UNKNOWN) {
+
+                for(JobCategory jobCategory : availability.getApplicableJobCategories()){
+                    if(!jobPreferences.contains(jobCategory.getId())){
+                        jobPreferences.add(jobCategory.getId());
+                    }
+                }
+
                 //String preference = availability.getApplicableJobCategory().getCategoryTitle();
 //                if(!jobPreferences.contains(preference)){
 //                    jobPreferences.add(preference);
@@ -479,18 +510,27 @@ public class Applicant extends User {
 
     // 07-10-2020 - Yogeshwar Chaudhari - Employer needs employementStatus while searching, shortlisting and making an offer
     public EmploymentStatus getEmploymentStatus() {
-        return employmentStatus;
+        synchronized (mutex) {
+            return employmentStatus;
+        }
     }
 
     public void setEmploymentStatus(EmploymentStatus employmentStatus) {
-        this.employmentStatus = employmentStatus;
+        synchronized (mutex) {
+            this.employmentStatus = employmentStatus;
+            this.lastStatusUpdateDate = new Date();
+        }
     }
 
     public Date getLastStatusUpdateDate() {
-        return lastStatusUpdateDate;
+        synchronized (mutex) {
+            return lastStatusUpdateDate;
+        }
     }
 
     public void setLastStatusUpdateDate(Date lastStatusUpdateDate) {
-        this.lastStatusUpdateDate = lastStatusUpdateDate;
+        synchronized (mutex) {
+            this.lastStatusUpdateDate = lastStatusUpdateDate;
+        }
     }
 }

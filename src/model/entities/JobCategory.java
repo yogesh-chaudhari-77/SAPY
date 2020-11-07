@@ -3,11 +3,13 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
-public class JobCategory {
+import java.io.Serializable;
+
+public class JobCategory implements Serializable {
 
 	private String id;
 	private String categoryTitle;
-	private static int idNo = 1;
+	private static int idNo;
 	private String status;
 	
 	public JobCategory(String newCategory, String status, int id)
@@ -40,5 +42,13 @@ public class JobCategory {
 
 	public void setStatus(String status) {
 		this.status = status;
+	}
+
+	public static int getIdNo() {
+		return idNo;
+	}
+
+	public static void setIdNo(int idNo) {
+		JobCategory.idNo = idNo;
 	}
 }

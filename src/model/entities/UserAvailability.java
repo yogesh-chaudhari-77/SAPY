@@ -1,5 +1,6 @@
 package model.entities;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,24 +9,14 @@ import java.util.List;
 import model.enums.AvailabilityType;
 
 
-public class UserAvailability {
+public class UserAvailability implements Serializable {
 
 
-    // 23-09-2020 - Multiple job categories can be specified by applicant
-    private List<JobCategory> applicableJobCategories = new ArrayList<JobCategory>();;
-
+    private List<JobCategory> applicableJobCategories;
     private AvailabilityType availabilityType;
     private int noOfHoursAWeek;
-
-    // Added by Yogeshwar on 23-09-2020 - After discussion with Pradip
-    // User availability also needs to store the period for which this is available
-    private Date periodStartDate = null;
-    private Date periodEndDate = null;
-
-//    public UserAvailability(JobCategory applicableJobCategory, AvailabilityType availabilityType, int noOfHoursAWeek) {
-//        this.availabilityType = availabilityType;
-//        this.noOfHoursAWeek = noOfHoursAWeek;
-//    }
+    private Date periodStartDate;
+    private Date periodEndDate;
 
 
     /**

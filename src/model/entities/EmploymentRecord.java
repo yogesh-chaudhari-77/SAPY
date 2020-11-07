@@ -3,10 +3,11 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class EmploymentRecord {
+public class EmploymentRecord implements Serializable {
 
     private String companyName;
     private String designation;

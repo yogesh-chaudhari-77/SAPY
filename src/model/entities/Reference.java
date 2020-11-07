@@ -3,7 +3,9 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
-public class Reference {
+import java.io.Serializable;
+
+public class Reference implements Serializable {
 
     private String firstname;
     private String lastname;

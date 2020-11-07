@@ -1,25 +1,20 @@
 package model.entities;
 
-//import com.mashape.unirest.http.exceptions.UnirestException;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import customUtils.EmailUtil;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.io.Serializable;
 import java.text.ParseException;
-import java.util.ArrayList;
+
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Set;
-
-//import org.apache.commons.lang3.StringEscapeUtils;
-
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.JSONObject;
 
 import com.sun.jdi.InvalidTypeException;
 
-//import javax.mail.MessagingException;
 import javax.mail.MessagingException;
 import javax.management.InvalidApplicationException;
 
@@ -27,7 +22,7 @@ import javax.management.InvalidApplicationException;
  * Class implements all employer related functionality
  */
 
-public class Employer extends User {
+public class Employer extends User implements Serializable {
 
 	private String companyName = null;
 	private String address = null;
@@ -49,11 +44,11 @@ public class Employer extends User {
 	/*
 	 * Default constructor
 	 */
-	public Employer(String id, String userEmail, String password, String firstName, String lastName, String phoneNumber)
-	{
-		super(id, userEmail, password, firstName, lastName, phoneNumber);
-		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
-	}
+//	public Employer(String id, String userEmail, String password, String firstName, String lastName, String phoneNumber)
+//	{
+//		super(id, userEmail, password, firstName, lastName, phoneNumber);
+//		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
+//	}
 
 	/*
 	 *
@@ -61,6 +56,13 @@ public class Employer extends User {
 	public Employer(String id, String userEmail, String password, String companyName)
 	{
 		super(id, userEmail, password);
+		this.companyName = companyName;
+		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
+	}
+
+	public Employer(String id, String userEmail, String password, String companyName,String firstname, String lastname, String phoneNumber)
+	{
+		super(id, userEmail, password, firstname, lastname, phoneNumber);
 		this.companyName = companyName;
 		blacklistStatus.setBlacklistStatus(BlacklistStatus.NOT_BLACKLISTED);
 	}
@@ -133,18 +135,18 @@ public class Employer extends User {
 		}
 
 
-		HashMap<String, JobApplication> shortListedApplicants = jobRef.getShortListedApplicants();
-
 		// If an applicant is blacklisted, he/she should not be allowed to be shortlisted
-		if(applicant.getBlacklistStatus() != null && applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.FULL_BLACKLISTED)
+		if(applicant.getBlacklistStatus() != null && ( applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.FULL_BLACKLISTED || applicant.getBlacklistStatus().blacklistStatus == BlacklistStatus.PROVISIONAL_BLACKLISTED ) )
 		{
 			throw new ApplicantIsBlackListedException("Blacklisted applicants can't be shortlisted.");
 		}
 
+		HashMap<String, JobApplication> shortListedApplicants = jobRef.getShortListedApplicants();
+
 		// Add the applicant only if it is not already present
 		if(! shortListedApplicants.containsKey(applicant.getId()) )
 		{
-			shortListedApplicants.put(applicant.getId(), new JobApplication(jobRef, applicant));
+			jobRef.shortListApplicant(applicant);
 		}
 		else {
 			throw new AlreadyPresentInYourShortListedListException("The applicant is already present in your shortlisted applicant's list.");
@@ -175,11 +177,7 @@ public class Employer extends User {
 	public boolean isBlackListed() {
 		if( this.blacklistStatus.getBlacklistStatus() == BlacklistStatus.PROVISIONAL_BLACKLISTED) {
 			return true;
-		}else if( this.blacklistStatus.getBlacklistStatus() == BlacklistStatus.FULL_BLACKLISTED) {
-			return true;
-		}
-
-		return false;
+		}else return this.blacklistStatus.getBlacklistStatus() == BlacklistStatus.FULL_BLACKLISTED;
 	}
 
 
@@ -300,23 +298,6 @@ public class Employer extends User {
 		String toEmail = appRef.getUserEmail().trim().strip();
 		String toName = appRef.getFirstName();
 
-//		StringBuilder matter = new StringBuilder();
-//		matter.append("<p>Hello "+appRef.getFirstName()+",<BR/><BR/>");
-//		matter.append("You have been shortlisted for the interview at "+this.companyName+"<BR/>");
-//		matter.append("Job Title "+jobRef.getJobTitle()+"<BR/>");
-//		matter.append("Desc "+jobRef.getJobDesc()+"<BR/>");
-//		matter.append("You are among "+jobRef.getShortListedApplicants().size()+" first shortlisted applicants<BR/>");
-//
-//		matter.append("Please select any of the possible interview times from your SAPY dashboard.<BR/>");
-//
-//		matter.append("<ul>");
-//		for(Date date : jobRef.getAvailInterviewTimings()){
-//			matter.append("<li>"+date.toLocaleString()+"<li>");
-//		}
-//		matter.append("</ul>");
-//		matter.append("</br> We wish you all the best.");
-//		matter.append("</p>");
-
 		StringBuilder matter = new StringBuilder();
 		matter.append("Hello "+appRef.getFirstName()+",");
 		matter.append("You have been shortlisted for the interview at "+this.companyName+"");
@@ -326,13 +307,10 @@ public class Employer extends User {
 
 		matter.append("Please select any of the possible interview times from your SAPY dashboard.");
 
-		matter.append("");
 		for(Date date : jobRef.getAvailInterviewTimings()){
 			matter.append(""+date.toLocaleString()+"");
 		}
-		matter.append("");
 		matter.append("We wish you all the best.");
-		matter.append("");
 		matter.append("Best Regards,");
 		matter.append("Team SAPY");
 
@@ -361,7 +339,6 @@ public class Employer extends User {
 		matter.append("Please find employment details below. ");
 		matter.append("Job Title "+jobRef.getJobTitle()+". ");
 		matter.append("Desc "+jobRef.getJobDesc()+". ");
-		matter.append("");
 
 		matter.append("Your employemnt Status : PENDING ");
 		matter.append("Please either accept or reject this offer from your SAPY dashboard. You will not shortlisted for other jobs until you change update your employment status.");
@@ -377,6 +354,17 @@ public class Employer extends User {
 		} catch (MessagingException | UnirestException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public boolean incrementComplaintCountAndUpdateStatus(){
+
+		this.complaintsCount++;
+
+		if(complaintsCount >= 3 && blacklistStatus.getBlacklistStatus() != BlacklistStatus.PROVISIONAL_BLACKLISTED){
+			blacklistStatus.setBlacklistStatus("P");
+			return true;
+		}
+		return false;
 	}
 
 
@@ -482,6 +470,7 @@ public class Employer extends User {
 	public void removeBlacklistStatus()
 	{
 		blacklistStatus.removeBlacklistStatus();
+		this.complaintsCount = 0;
 	}
 	
 	public Date getBlacklistStartDate()

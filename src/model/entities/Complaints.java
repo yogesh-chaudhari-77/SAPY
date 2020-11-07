@@ -3,7 +3,9 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
-public class Complaints {
+import java.io.Serializable;
+
+public class Complaints implements Serializable {
 	
 	private String complaintMessage;
 	User complainingUser;

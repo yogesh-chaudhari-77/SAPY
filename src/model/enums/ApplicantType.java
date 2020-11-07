@@ -1,5 +1,7 @@
 package model.enums;
 
-public enum ApplicantType {
+import java.io.Serializable;
+
+public enum ApplicantType implements Serializable {
     LOCAL, INTERNATIONAL
 }

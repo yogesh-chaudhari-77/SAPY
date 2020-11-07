@@ -1,11 +1,12 @@
 package model.entities;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import model.enums.PostedJobJStatus;
 
-public class Job {
+public class Job implements Serializable {
 
 	// System identifier
 	private String jobId;
@@ -165,5 +166,15 @@ public class Job {
 	public String toString() {
 		return "Job [jobId=" + jobId + ", jobTitle=" + jobTitle + ", jobDesc=" + jobDesc + ", jobPostedDateTime="
 				+ jobPostedDateTime + ", jobStatus=" + jobStatus + "]";
+	}
+
+	/**
+	 * 17-10-2020 - Adds the applicant to the jobs shortlisted members list
+	 * @param applicant
+	 */
+	public JobApplication shortListApplicant(Applicant applicant) {
+		JobApplication ja = new JobApplication(this, applicant);
+		shortListedApplicants.put(applicant.getId(), ja);
+		return ja;
 	}
 }

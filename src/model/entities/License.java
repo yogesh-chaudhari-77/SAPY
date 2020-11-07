@@ -3,10 +3,11 @@ package model.entities;
 import model.enums.*;
 import model.exceptions.*;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class License {
+public class License implements Serializable {
 
     private String type;
     private String id;

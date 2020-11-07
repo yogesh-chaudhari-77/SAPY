@@ -11,22 +11,25 @@ import model.enums.*;
 
 
 import java.io.FileNotFoundException;
-import java.sql.SQLOutput;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import com.sun.jdi.InvalidTypeException;
 
-//import javax.mail.MessagingException;
 import javax.management.InvalidApplicationException;
 
-// Commenting should be enough
-// Methods should be in there own classes
 
+
+/**
+ * Fascade Class that delegates the control to the respective class
+ */
 public class SystemHandler {
 
 	//Menu menu;
@@ -50,22 +53,127 @@ public class SystemHandler {
 	Scanner input = new Scanner(System.in);
 	ScannerUtil customScanner = ScannerUtil.createInstance().consoleReader();
 
+	// 16-10-2020 - Yogeshwar - Support for serialization
+	FileHandlingHelper fileHandler = FileHandlingHelper.init();
+
+	// [1] 16-10-2020 - Yogeshwar - Support for properties - Bonus points
+	Properties prop = new Properties();
+	public static final String propertiesFilePath = "src/global/constants.properties";
+
 	MaintenanceStaff staff = new MaintenanceStaff("Staff001", "maintenancestaff@mail.com", "test123", "System", "Admin", "415414478");
 
 
+	public SystemHandler() throws ParseException, FileNotFoundException, BadEntryException, DuplicateEntryException {
 
-	public SystemHandler() {
+		loadProperties();
 
 		allUsersList = new HashMap<>();
 		allApplicantsList = new HashMap<>();
 		allEmployersList = new HashMap<>();
 		allStaffList = new HashMap<>();
 
+		//loadDummyDataForEmployeFunctions();
+
+		loadDummyDataFromFiles();
+
+		this.printApplicantList();
+		this.printEmployers();
+	}
+
+
+	/**
+	 * Reference : [1]
+	 * @author : Yogeshwar Chaudhari
+	 * Loads the current properties file
+	 * This properties file have the constants data like, file paths
+	 */
+	public void loadProperties() throws FileNotFoundException {
+
+		InputStream inputStream = SystemHandler.class.getClassLoader().getResourceAsStream(SystemHandler.propertiesFilePath);
+
+		if (inputStream != null) {
+			try {
+				this.prop.load(inputStream);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			throw new FileNotFoundException("Could not locate '" + SystemHandler.propertiesFilePath + "' ");
+		}
+	}
+
+
+	/**
+	 * Reading data from persistent storage.
+	 * Using serialization for this.
+	 * Data is located under project path/storage/
+	 * configuration path : global/constants.properties
+	 */
+	public void loadDummyDataFromFiles(){
+
 		try {
-			loadDummyDataForEmployeFunctions();
-		} catch (ParseException e) {
+			fileHandler.setBinaryFile(this.prop.getProperty("allUsersListFilePath"), "read");
+			allUsersList = (HashMap<String, User>) fileHandler.readSerializedObj();
+
+			fileHandler.setBinaryFile(this.prop.getProperty("allApplicantsFilePath"), "read");
+			allApplicantsList = (HashMap<String, Applicant>) fileHandler.readSerializedObj();
+
+			fileHandler.setBinaryFile(this.prop.getProperty("allEmployersFilePath"), "read");
+			allEmployersList = (HashMap<String, Employer>) fileHandler.readSerializedObj();
+
+			fileHandler.setBinaryFile(this.prop.getProperty("allStaffsFilePath"), "read");
+			allStaffList = (HashMap<String, MaintenanceStaff>) fileHandler.readSerializedObj();
+
+			fileHandler.setBinaryFile(this.prop.getProperty("allJobsCategoriesFilePath"), "read");
+			allJobCategories = (HashMap<String, JobCategory>) fileHandler.readSerializedObj();
+			int srNo = ( allJobCategories.size() == 0 ) ? 1 : allJobCategories.size()+1;
+			JobCategory.setIdNo(srNo);
+
+			fileHandler.setBinaryFile(this.prop.getProperty("allComplaintsFilePath"), "read");
+			allComplaints = (ArrayList<Complaints>) fileHandler.readSerializedObj();
+
+			fileHandler.setBinaryFile(this.prop.getProperty("allBlacklistedUsersFilePath"), "read");
+			blacklistedUsers = (HashMap<String, User>) fileHandler.readSerializedObj();
+
+		}
+		catch (ClassNotFoundException | IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * @author : Yogeshwar Chaudhari
+	 * Serialize the data into the files. File paths are maintained under global/constant.properties
+	 */
+	public void saveDataToFiles(){
+
+		fileHandler.clearFileContents(this.prop.getProperty("allUsersListFilePath"));
+		fileHandler.setBinaryFile(this.prop.getProperty("allUsersListFilePath"), "write");
+		fileHandler.writeOp(allUsersList);
+
+		fileHandler.clearFileContents(this.prop.getProperty("allApplicantsFilePath"));
+		fileHandler.setBinaryFile(this.prop.getProperty("allApplicantsFilePath"), "write");
+		fileHandler.writeOp(allApplicantsList);
+
+		fileHandler.clearFileContents(this.prop.getProperty("allEmployersFilePath"));
+		fileHandler.setBinaryFile(this.prop.getProperty("allEmployersFilePath"), "write");
+		fileHandler.writeOp(allEmployersList);
+
+		fileHandler.clearFileContents(this.prop.getProperty("allStaffsFilePath"));
+		fileHandler.setBinaryFile(this.prop.getProperty("allStaffsFilePath"), "write");
+		fileHandler.writeOp(allStaffList);
+
+		fileHandler.clearFileContents(this.prop.getProperty("allJobsCategoriesFilePath"));
+		fileHandler.setBinaryFile(this.prop.getProperty("allJobsCategoriesFilePath"), "write");
+		fileHandler.writeOp(allJobCategories);
+
+		fileHandler.clearFileContents(this.prop.getProperty("allComplaintsFilePath"));
+		fileHandler.setBinaryFile(this.prop.getProperty("allComplaintsFilePath"), "write");
+		fileHandler.writeOp(allComplaints);
+
+		fileHandler.clearFileContents(this.prop.getProperty("allBlacklistedUsersFilePath"));
+		fileHandler.setBinaryFile(this.prop.getProperty("allBlacklistedUsersFilePath"), "write");
+		fileHandler.writeOp(blacklistedUsers);
 	}
 
 		
@@ -75,7 +183,10 @@ public class SystemHandler {
 
 
 		allUsersList.put("Staff001", staff);
-		changeStatusOfInactiveApplicants();
+
+		CheckEmploymentStatusThread checkEmploymentStatusThread = new CheckEmploymentStatusThread(allUsersList);
+		ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+		executorService.scheduleAtFixedRate(checkEmploymentStatusThread,0,24, TimeUnit.HOURS);
 
 		try {
 			menu = new Menu("main_menu_options");
@@ -112,6 +223,9 @@ public class SystemHandler {
 			}
 
 		} while (!quit);
+
+		executorService.shutdown();
+		saveDataToFiles();
 	}
 
 	public void register() throws ParseException {
@@ -367,6 +481,10 @@ public class SystemHandler {
 					updateEmploymentStatus(applicant);
 					break;
 
+				case "8":
+					registerComplaintAgaintEmployer(applicant);
+					break;
+
 				case "9":
 					selectInterviewTiming(applicant);
 					break;
@@ -531,12 +649,10 @@ public class SystemHandler {
 					companyName = Global.scanner.nextLine();
 					break;
 				case "2":
-					System.out.print("Enter the start date to update : ");
-					startDate = getDateInput();
+					startDate = customScanner.readDateInput("Enter the start date to update : ");
 					break;
 				case "3":
-					System.out.print("Enter the end date to update : ");
-					endDate = getDateInput();
+					endDate = customScanner.readDateInput("Enter the end date to update : ");
 					break;
 				case "4":
 					System.out.print("Enter the Designation to update : ");
@@ -553,8 +669,7 @@ public class SystemHandler {
 							exitLoop = true;
 						} else if (input.equalsIgnoreCase("n")){
 							currentCompany = false;
-							System.out.print("Enter the end date to update : ");
-							endDate = getDateInput();
+							endDate = customScanner.readDateInput("Enter the end date to update : ");
 							exitLoop = true;
 						} else {
 							System.out.println("Wrong Input!! Enter Y or N");
@@ -635,12 +750,10 @@ public class SystemHandler {
 					qualificationLevel = Global.scanner.nextLine();
 					break;
 				case "2":
-					System.out.print("Enter the start date to update : ");
-					startDate = getDateInput();
+					startDate = customScanner.readDateInput("Enter the start date to update : ");
 					break;
 				case "3":
-					System.out.print("Enter the end date to update : ");
-					endDate = getDateInput();
+					endDate = customScanner.readDateInput("Enter the end date to update : ");
 					break;
 				case "4":
 					System.out.print("Enter the Field of Study to update : ");
@@ -760,22 +873,18 @@ public class SystemHandler {
 				switch (choice) {
 					case "1":
 						applicant.setEmploymentStatus(EmploymentStatus.AVAILABLE);
-						applicant.setLastStatusUpdateDate(new Date());
 						break;
 
 					case "2":
 						applicant.setEmploymentStatus(EmploymentStatus.PENDING);
-						applicant.setLastStatusUpdateDate(new Date());
 						break;
 
 					case "3":
 						applicant.setEmploymentStatus(EmploymentStatus.EMPLOYED);
-						applicant.setLastStatusUpdateDate(new Date());
 						break;
 
 					case "4":
 						applicant.setEmploymentStatus(EmploymentStatus.UNKNOWN);
-						applicant.setLastStatusUpdateDate(new Date());
 						break;
 
 					case "Q":
@@ -793,35 +902,6 @@ public class SystemHandler {
 		System.out.println("Employment Status updated successfully");
 	}
 
-	private void changeStatusOfInactiveApplicants(){
-		Set<String> allUsers = allUsersList.keySet();
-
-		for(String userId : allUsers){
-			User user = allUsersList.get(userId);
-			if(user instanceof Applicant){
-				Applicant applicant = (Applicant) user;
-				Date currDate = new Date();
-				long noOfInactiveDays = findDifferenceInDays(currDate, applicant.getLastStatusUpdateDate());
-				if(noOfInactiveDays > 14){
-					applicant.setEmploymentStatus(EmploymentStatus.UNKNOWN);
-				}
-			}
-		}
-
-	}
-
-	/**
-	 * @param firstDate
-	 * @param secondDate
-	 * @return firstDate - secondDate as no of days in long
-	 */
-	private long findDifferenceInDays(Date firstDate, Date secondDate){
-
-		long differenceInMilliseconds = Math.abs(firstDate.getTime() - secondDate.getTime());
-		long differenceInDays = TimeUnit.DAYS.convert(differenceInMilliseconds, TimeUnit.MILLISECONDS);
-
-		return differenceInDays;
-	}
 
 	public void uploadApplicantCV(Applicant applicant){
 		System.out.println("***** Upload CV *****");
@@ -1013,10 +1093,10 @@ public class SystemHandler {
 		System.out.print("Enter Below details for adding qualification\n");
 		System.out.print("Qualification Level: ");
 		qualificationLevel = Global.scanner.nextLine();
-		System.out.print("Start Date(DD/MM/YYYY): ");
-		startDate = getDateInput();
-		System.out.print("End Date(DD/MM/YYYY): ");
-		endDate = getDateInput();
+
+		startDate = customScanner.readDateInput("Start Date(DD/MM/YYYY): ");
+		endDate = customScanner.readDateInput("End Date(DD/MM/YYYY): ");
+
 		System.out.print("Field of Study: ");
 		fieldOfStudy = Global.scanner.nextLine();
 		System.out.print("Marks Obtained(in percentage): ");
@@ -1083,8 +1163,7 @@ public class SystemHandler {
 		type = Global.scanner.nextLine();
 		System.out.print("License ID: ");
 		id = Global.scanner.nextLine();
-		System.out.print("Validity(DD/MM/YYYY): ");
-		validTill = getDateInput();
+		validTill = customScanner.readDateInput("Validity (DD/MM/YYYY): ");
 
 		License license = new License(type, id, validTill);
 
@@ -1154,8 +1233,7 @@ public class SystemHandler {
 					id = Global.scanner.nextLine();
 					break;
 				case "3":
-					System.out.print("Enter the Valid till date to update : ");
-					validTill = getDateInput();
+					validTill = customScanner.readDateInput("Enter the Valid till date to update : ");
 					break;
 				case "U":
 					License newLicense = new License(type,id, validTill);
@@ -1193,8 +1271,9 @@ public class SystemHandler {
 		companyName = Global.scanner.nextLine();
 		System.out.print("Designation: ");
 		designation = Global.scanner.nextLine();
-		System.out.print("Start Date(DD/MM/YYYY): ");
-		startDate = getDateInput();
+
+		startDate = customScanner.readDateInput("Start Date(DD/MM/YYYY): ");
+
 		System.out.println("Are you still working in this company?(Y/N): ");
 		String answer= Global.scanner.nextLine();
 		if(answer.equalsIgnoreCase("y")){
@@ -1202,8 +1281,7 @@ public class SystemHandler {
 			endDate= null;
 		}else {
 			currentCompany = false;
-			System.out.print("End Date(DD/MM/YYYY): ");
-			endDate = getDateInput();
+			endDate = customScanner.readDateInput("End Date(DD/MM/YYYY): ");
 		}
 
 		EmploymentRecord newRecord= new EmploymentRecord(companyName, designation, startDate, endDate, currentCompany);
@@ -1243,9 +1321,23 @@ public class SystemHandler {
 		return null;
 	}
 
-	public int getNoOfHours(){
-		System.out.print("Number of Hours per week: ");
-		 return Global.scanner.nextInt();
+	public int getNoOfHours(Applicant applicant, AvailabilityType type){
+		boolean runLoop;
+		int noOfHours;
+		do{
+			runLoop = false;
+			System.out.print("Number of Hours per week: ");
+			noOfHours = Global.scanner.nextInt();
+			if(applicant.getApplicantType() == ApplicantType.INTERNATIONAL &&
+					type == AvailabilityType.PART_TIME){
+				if (noOfHours>20){
+					System.out.println("International student are not allowed to work more than 20 hours per week for Part-Time employment.\n" +
+							"Please provide less than 20 hours availability");
+					runLoop = true;
+				}
+			}
+		}while(runLoop);
+		return noOfHours;
 	}
 
 	public Date dateForAvailability(String date){
@@ -1265,7 +1357,7 @@ public class SystemHandler {
 		System.out.println("Add categories comma sepearted: ");
 		String options = Global.scanner.nextLine();
 
-		List<String> ids = Arrays.asList(options.split(","));
+		String[] ids = options.split(",");
 
 		for(String id : ids){
 			if (allJobCategories.get(id) != null){
@@ -1336,10 +1428,18 @@ public class SystemHandler {
 		System.out.println("Enter Below details for adding Job Preference\n");
 
 		availabilityType = getAvailabilityType();
-		noOfHoursAWeek = getNoOfHours();
+		noOfHoursAWeek = getNoOfHours(applicant,availabilityType);
 		Global.scanner.nextLine();
 		periodStartDate = dateForAvailability("Start Date: ");
-		periodEndDate = dateForAvailability("End Date: ");
+		do {
+			periodEndDate = dateForAvailability("End Date: ");
+			if (periodStartDate.after(periodEndDate) || periodStartDate.equals(periodEndDate)) {
+				System.out.println("Start date must be less than end date. Please try again.");
+				continue;
+			}
+			break;
+		}while(true);
+
 		applicableJobCategories = getJobCategories(applicableJobCategories);
 
 		try {
@@ -1371,13 +1471,22 @@ public class SystemHandler {
 	public void updateJobPreference(Applicant applicant){
 		String printStatement;
 
-		if(!showJobPreferences(applicant)){
+		boolean preferencesPresent = showJobPreferences(applicant);
+
+		if(!preferencesPresent){
 			return;
 		}
 		int numOfRecords = applicant.getUserAvailability().size();
-		printStatement = "Enter the Job Preference number to update : ";
+		printStatement = "Enter the Job Preference number to update (or 0 to exit): ";
 		System.out.print(printStatement);
-		int recordNo = validInput(printStatement, numOfRecords) - 1;
+		int input = validInput(printStatement, numOfRecords);
+
+		if (input == 0) {
+			System.out.println("Exiting Update Job Preference");
+			return;
+		}
+
+		int recordNo = input - 1;
 
 		UserAvailability updateAvailability = applicant.getUserAvailability().get(recordNo);
 
@@ -1388,7 +1497,7 @@ public class SystemHandler {
 		Date periodEndDate = updateAvailability.getPeriodEndDate();
 
 		boolean runLoop = true;
-
+		String choice;
 		do{
 			System.out.println("\n===Details that can be updated===");
 			System.out.println("1. Availability Type\n" +
@@ -1399,11 +1508,19 @@ public class SystemHandler {
 					"U. Update and exit.\n" +
 					"Q. Exit without updating");
 			System.out.print("Enter Option to update : ");
-			String choice = Global.scanner.nextLine();
+			choice = Global.scanner.nextLine();
 
 			switch(choice){
 				case "1":
 					availabilityType = getAvailabilityType();
+					if (availabilityType == AvailabilityType.PART_TIME &&
+							applicant.getApplicantType() == ApplicantType.INTERNATIONAL){
+						if(noOfHoursAWeek > 20 ){
+							System.out.println("International student are not allowed to work more than 20 hours per week for Part-Time employment.\n" +
+									"Please provide less than 20 hours availability");
+							noOfHoursAWeek = getNoOfHours(applicant,availabilityType);
+						}
+					}
 					break;
 				case "2":
 					periodStartDate = dateForAvailability("Period Start Date: ");
@@ -1413,20 +1530,12 @@ public class SystemHandler {
 
 					break;
 				case "4":
-					noOfHoursAWeek = getNoOfHours();
+					noOfHoursAWeek = getNoOfHours(applicant,availabilityType);
 					break;
 				case "5":
 					applicableJobCategories = getJobCategories((ArrayList) applicableJobCategories);
 					break;
 				case "U":
-					UserAvailability availability = new UserAvailability(applicableJobCategories, availabilityType, noOfHoursAWeek, periodStartDate, periodEndDate);
-					try {
-						applicant.updateAvailability(availability, recordNo);
-						System.out.println("Job Preference updated successfully.");
-						System.out.println(applicant.getUserAvailability().get(recordNo));
-					} catch (NoSuchRecordException |  BadEntryException e) {
-						System.out.println(e);
-					}
 					runLoop = false;
 					break;
 				case "Q":
@@ -1437,6 +1546,16 @@ public class SystemHandler {
 					break;
 			}
 		} while (runLoop);
+
+		if(choice.equals("U")){
+			UserAvailability availability = new UserAvailability(applicableJobCategories, availabilityType, noOfHoursAWeek, periodStartDate, periodEndDate);
+			try {
+				applicant.updateAvailability(availability, recordNo);
+				System.out.println("Job Preference updated successfully.");
+			} catch (NoSuchRecordException |  BadEntryException e) {
+				System.out.println(e);
+			}
+		}
 	}
 
 	private void addReferences(Applicant applicant) throws DuplicateEntryException {
@@ -1933,9 +2052,9 @@ public class SystemHandler {
 
 		BlacklistStatus blacklistStatus = BlacklistStatus.NOT_BLACKLISTED ;
 
-		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
-		allUsersList.put("E003", new Employer("E003", "E@mail.com", "Emp123", "Test" ,"Employer", "123"));
-		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2", "Test" ,"Employer2", "123"));
+		allUsersList.put("E001", new Employer("E001", "E@mail.com", "Emp123", "Company1","Test" ,"Employer", "123"));
+		allUsersList.put("E003", new Employer("E003", "E@mail.com", "Emp123","Company2", "Test" ,"Employer", "123"));
+		allUsersList.put("E002", new Employer("E002", "E2@mail.com", "Employer2","Company3", "Test" ,"Employer2", "123"));
 
 		allEmployersList.put(allUsersList.get("E001").getId(),(Employer)allUsersList.get("E001"));
 		allEmployersList.put(allUsersList.get("E002").getId(),(Employer)allUsersList.get("E002"));
@@ -1943,7 +2062,6 @@ public class SystemHandler {
 		try {
 			this.allEmployersList.get("E001").createJob(new Job("job1", "Developer", "Developer Desc","C1"));
 		} catch (DuplicateJobIdException e3) {
-// TODO Auto-generated catch block
 			e3.printStackTrace();
 		}
 
@@ -1956,13 +2074,13 @@ public class SystemHandler {
 
 
 		try {
-			this.allEmployersList.get("e").shortListCandidate(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app5"));
-			this.allEmployersList.get("e").shortListCandidate(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app2"));
-			this.allEmployersList.get("e").shortListCandidate(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app1"));
+			this.allEmployersList.get("e").shortListCandidate(this.allEmployersList.get("e").getPostedJobs().get("job3"), this.allApplicantsList.get("app5"));
+			this.allEmployersList.get("e").shortListCandidate(this.allEmployersList.get("e").getPostedJobs().get("job3"), this.allApplicantsList.get("app2"));
+			this.allEmployersList.get("e").shortListCandidate(this.allEmployersList.get("e").getPostedJobs().get("job3"), this.allApplicantsList.get("app1"));
 
-			this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app5"));
-			this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app2"));
-			this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app1"));
+			this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), this.allApplicantsList.get("app5"));
+			this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), this.allApplicantsList.get("app2"));
+			this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), this.allApplicantsList.get("app1"));
 
 			this.allEmployersList.get("E001").shortListCandidate(this.allEmployersList.get("E001").getPostedJobs().get("job1"), this.allApplicantsList.get("app5"));
 			this.allEmployersList.get("E001").shortListCandidate(this.allEmployersList.get("E001").getPostedJobs().get("job1"), this.allApplicantsList.get("app2"));
@@ -1970,31 +2088,9 @@ public class SystemHandler {
 			this.allEmployersList.get("E001").createJobOffer(this.allEmployersList.get("E001").getPostedJobs().get("job1"), this.allApplicantsList.get("app5"));
 			this.allEmployersList.get("E001").createJobOffer(this.allEmployersList.get("E001").getPostedJobs().get("job1"), this.allApplicantsList.get("app2"));
 
-		} catch (AlreadyPresentInYourShortListedListException e2) {
-			// TODO Auto-generated catch block
-			//e2.printStackTrace();
-		} catch (ApplicantIsBlackListedException e2) {
-			// TODO Auto-generated catch block
-			//e2.printStackTrace();
-		} catch (NullApplicantException e2) {
-			// TODO Auto-generated catch block
-			//e2.printStackTrace();
-		} catch (NullJobReferenceException e2) {
-			// TODO Auto-generated catch block
-			//e2.printStackTrace();
+		} catch (AlreadyPresentInYourShortListedListException | ApplicantIsBlackListedException | NullApplicantException | NullJobReferenceException e2) {
+			//System.err.println(e2.getMessage());
 		}
-
-
-// this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app5"));
-// this.allEmployersList.get("e").createJobOffer(this.allEmployersList.get("e").getPostedJobs().get("job3"), (Applicant)this.allApplicantsList.get("app2"));
-//		try {
-//			this.allEmployersList.get("e").createJob(new Job("job5", "Designer", "Designer Required", "C2"));
-//		} catch (DuplicateJobIdException e1) {
-//// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-// this.allEmployersList.get("e1").createJobOffer(this.allEmployersList.get("e1").getPostedJobs().get("job2"), this.allApplicantsList.get("app1"));
-// this.allEmployersList.get("e1").createJobOffer(this.allEmployersList.get("e1").getPostedJobs().get("job2"), this.allApplicantsList.get("app2"));
 
 
 		// Create some job categories
@@ -2006,7 +2102,7 @@ public class SystemHandler {
 		this.allJobCategories.put("C1", j1);
 		this.allJobCategories.put("C2", j2);
 		this.allJobCategories.put("C3", j3);
-// Add to all complaint's list
+		// Add to all complaint's list
 		this.allComplaints.add(testComplaint1);
 		this.allComplaints.add(testComplaint2);
 		this.allComplaints.add(testComplaint3);
@@ -2048,7 +2144,7 @@ public class SystemHandler {
 				break;
 
 				case "2":
-					staff.viewBlackListedMembers(blacklistedUsers);
+					this.viewBlackListedMembers(blacklistedUsers);
 					break;
 
 				case "3":
@@ -2089,8 +2185,11 @@ public class SystemHandler {
 						System.out.println("Enter the id of the user to be reactivated:  ");
 						user = input.nextLine();
 				
-						if(staff.revertBlacklistedUser((User)(allUsersList.get(user)), type))
-							blacklistedUsers.remove("E1");
+						if (this.allEmployersList.containsKey(user) || this.allApplicantsList.containsKey(user))
+						{
+							if(staff.revertBlacklistedUser(allUsersList.get(user), type))
+								blacklistedUsers.remove("E1");
+						}
 					}
 					catch(Exception e)
 					{
@@ -2103,7 +2202,8 @@ public class SystemHandler {
 
 				case "5" :
 				{
-					staff.generateReport(this.allUsersList, this.allEmployersList, this.allApplicantsList,this.allComplaints, this.allJobCategories);
+					this.generateReport(staff);
+					//staff.generateReport(this.allUsersList, this.allEmployersList, this.allApplicantsList,this.allComplaints, this.allJobCategories);
 				}
 				case "Q":
 					quit = true;
@@ -2111,6 +2211,97 @@ public class SystemHandler {
 			}
 		} while (!quit);
 
+	}
+	
+
+	/* Report creation process - Function of Maintenance Staff */
+	//Generation the reports to tune the system
+	public void generateReport(MaintenanceStaff staff)
+	{
+		int choice = 0;
+		
+		do
+		{
+			System.out.println("The Following reports can be generated in the System."
+					+ "\n 1. List of employers making offers, number of offers made in the specified period"
+					+ "\n 2. List of complaints about specific applicant or employer"
+					+ "\n 3. Jobs offered and accepted by a specific applicant"
+					+ "\n 4. All past offers for a particular Job Category" 
+					+ "\n 5. Exit"
+					+ "\n Enter your choice (1,2,3,4,5) : ");
+			try
+			{
+				choice = Integer.parseInt(Global.scanner.nextLine());
+			}
+			catch (Exception e)
+			{
+				System.out.println("You have entered an invlid input.Please try again!");
+			}
+
+		} while (choice < 1 && choice > 5);
+
+		//			System.out.println("Choice: " + choice);
+		//			System.out.println("allUsersList: " + this.allUsersList);
+		//			if (this.allComplaints != null)
+		//			System.out.println("allComplaints: " + this.allComplaints);
+
+
+		switch (choice)
+		{
+			case 1 : 
+				{
+					Date fromDate, toDate;
+					
+					System.out.println("Please enter specific period for which thw report needs to be generated."
+							+ " \nEnter the Starting date (Format: dd/MM/yyyy) ");
+					fromDate = getDateInput();
+					
+					System.out.println("\nEnter the Ending date (Format: dd/MM/yyyy) ");
+					toDate = getDateInput();
+					
+					staff.generateReport1(this.allEmployersList,fromDate,toDate);
+				}
+					break;
+					
+			case 2 :
+			{
+				String user;
+				System.out.println("Enter the id of the user :  ");
+				user = Global.scanner.nextLine();
+				if (this.allUsersList.get(user) == null)
+					System.out.println("The entered user does not exist");
+				else
+					staff.generateReport2(this.allUsersList,this.allComplaints,user);	
+				break;
+			}
+	
+			case 3 : 
+			{
+				String user;
+				System.out.println("Enter the id of the Applicant :  ");
+				user = Global.scanner.nextLine();
+				if (this.allUsersList.get(user) == null)
+					System.out.println("The entered user does not exist");
+				else
+					staff.generateReport3(this.allApplicantsList,this.allEmployersList, user);
+				break;
+			}
+			
+			case 4 : 
+			{
+				String jobID;
+				System.out.println("Enter the id of the Job Category :  ");
+				jobID = Global.scanner.nextLine();
+				if (!allJobCategories.containsKey(jobID))
+					System.out.println("The entered Job Category goes not exist in the system");
+				else
+					staff.generateReport4(jobID, this.allJobCategories, this.allEmployersList);
+				break;
+	
+			}
+			
+			case 5 : break;
+		}
 	}
 
 
@@ -2206,12 +2397,11 @@ public class SystemHandler {
 //						e.printStackTrace();
 //					}
 				}
+				break;
 
 				case "Q":
 					quit = true;
 			}
-			break;
-
 		} while (!quit);
 
 	}
@@ -2302,57 +2492,28 @@ public class SystemHandler {
 		
 		String jobCategory = customScanner.readString("Job Category ID : ");
 		if(this.allJobCategories.get(jobCategory) != null)
-		{	
-		
+		{
+			// Create new job
+			Job tempJob = new Job(jobId, jobTitle, jobDesc, jobCategory);
 
+			// Add that job to the employer
+			try {
+				Job newJob = employer.createJob(tempJob);
 
-		// This is kind of accepting required userAvailability
-//		printAllAvailabilityTypes();
-//		int aTypePos = customScanner.readInt("Provide availability type [0-2] : ", 0, 2);
-//		AvailabilityType aType = (AvailabilityType.values())[aTypePos];
-//
-//		int perWeekAvailability = customScanner.readInt("Provide Availability Per Week : ", 4, 80);
-//
-//		System.out.print("Starting From : ");
-//		Date startingFrom = this.getDateInput();
-//
-//		System.out.print("End Date : ");
-//		Date endingOn = this.getDateInput();
-//
-//		printJobCategories("Active"); String [] reqJobCategoriesIds =
-//		inputJobCategories(); List<JobCategory> reqJobCateObjs = new ArrayList<JobCategory>();
-//
-//		for(String cId : reqJobCategoriesIds)
-//		{
-//			reqJobCateObjs.add( this.allJobCategories.get(cId) );
-//		}
-//
-//		UserAvailability requirements = new UserAvailability(null, aType, perWeekAvailability, startingFrom, endingOn);
-//		requirements.setApplicableJobCategories( reqJobCateObjs );
+				// Validate
+				if(newJob != null) {
 
-
-		// Create new job
-		Job tempJob = new Job(jobId, jobTitle, jobDesc, jobCategory);
-
-		// Add that job to the employer
-		try {
-			Job newJob = employer.createJob(tempJob);
-
-			// Validate
-			if(newJob != null) {
-
-				System.out.println("Job has been successfully added");
-				System.out.println(newJob.toString());
+					System.out.println("Job has been successfully added");
+					System.out.println(newJob.toString());
+				}
+			}catch(DuplicateJobIdException d) {
+				System.err.println(d.getMessage());
 			}
-		}catch(DuplicateJobIdException d) {
-			System.err.println(d.getMessage());
-		}
 
-
-		printPostedJobs( employer.getId() );
+			printPostedJobs( employer.getId() );
 		}
 		else
-			System.out.println("Entered Job category does not exist.Please try again");
+			System.err.println("Entered Job category does not exist.Please try again");
 	}
 
 
@@ -2363,6 +2524,7 @@ public class SystemHandler {
 	public HashMap<String, Applicant> searchApplicants(Employer employer) {
 
 		HashMap<String, Applicant> searchResults = new HashMap<String, Applicant>();
+		printJobCategories("Active");
 
 		boolean jobCValidated = true;
 		String [] jobPreferencesArr = null;
@@ -2378,16 +2540,18 @@ public class SystemHandler {
 			}
 
 			// 23-09-2020 - Validate entered job categories
-//			for(int c = 0; c < jobPreferencesArr.length; c++) {
-//				if (allJobCategories.get(jobPreferencesArr[c]) == null) {
-//					jobCValidated = false;
-//					break;
-//				}
-//			}
+			for(int c = 0; c < jobPreferencesArr.length; c++) {
+				if (allJobCategories.get(jobPreferencesArr[c]) == null) {
+					jobCValidated = false;
+					System.err.println("Invalid Job Category : "+jobPreferencesArr[c]);
+					break;
+				}
+			}
 
+			System.out.println(jobCValidated);
 		}while(!jobCValidated);
 
-
+		// Accepting Availability Starts Here
 		int perWeekAvailability = customScanner.readInt("Provide Availability Per Week : ", 4, 80);
 
 		printAllAvailabilityTypes();
@@ -2397,17 +2561,15 @@ public class SystemHandler {
 
 		System.out.println(aType);
 
-		System.out.print("Starting From : ");
-		Date startingFrom = getDateInput();
-		System.out.print("Preferred Ending date : ");
-		Date endingOn = getDateInput();
-
+		Date startingFrom = customScanner.readDateInput("Starting From : ");
+		Date endingOn = customScanner.readDateInput("Preferred Ending date : ");
+		// Availability ends here
 
 		// Iterating over the applicant's list to find the matching candidates
 		for(Applicant applicantRef : allApplicantsList.values()) {
 
 			// Applicants with pending status cant be viewed for shortlisted by the employer
-			if(applicantRef.getEmploymentStatus() == EmploymentStatus.PENDING){
+			if(applicantRef.getEmploymentStatus() == EmploymentStatus.PENDING || applicantRef.getEmploymentStatus() == EmploymentStatus.EMPLOYED || applicantRef.getEmploymentStatus() == EmploymentStatus.UNKNOWN){
 				continue;
 			}
 			// Check the preferences and availability
@@ -2453,20 +2615,20 @@ public class SystemHandler {
 
 			// Validating that the period covers start and end date of job requirement
 			if (oneAvail.getPeriodStartDate().after(availableFrom) || oneAvail.getPeriodEndDate().before(availableTill))  {
-				System.out.println(applcntRef.getId());
-				System.out.println(oneAvail.getPeriodStartDate().toString() + " -- "+availableFrom);
-				System.out.println(oneAvail.getPeriodEndDate().toString() + " -- "+availableTill);
+				//System.out.println(applcntRef.getId());
+				//System.out.println(oneAvail.getPeriodStartDate().toString() + " -- "+availableFrom);
+				//System.out.println(oneAvail.getPeriodEndDate().toString() + " -- "+availableTill);
 				continue;
 			}
 
-			System.out.println(applcntRef.getId()+" -- "+oneAvail.getApplicableJobCategoriesIds());
+			//System.out.println(applcntRef.getId()+" -- "+oneAvail.getApplicableJobCategoriesIds());
 
 			// If atleast one job preference matches with given requirment, then takeThisApplicnt
 			for(String sp : jobPreferencesArr) {
 
 				if(oneAvail.getApplicableJobCategoriesIds().contains(sp)) {
 					takeThisApplicnt = true;
-					System.out.println(true+" for "+applcntRef.getId());
+					//System.out.println(true+" for "+applcntRef.getId());
 					break;
 				}
 			}
@@ -2559,6 +2721,12 @@ public class SystemHandler {
 
 		printApplicantList(searchResults);
 
+		// 17-10-2020 - Yogeshwar
+		if(searchResults.size() == 0){
+			System.out.println("No applicants found with supplied search criteria. Returning");
+			return;
+		}
+
 		String repeat;
 		do{
 			String applicantId = customScanner.readString("Applicant Id : ");
@@ -2572,6 +2740,11 @@ public class SystemHandler {
 
 			} catch (AlreadyPresentInYourShortListedListException | ApplicantIsBlackListedException | NullApplicantException | NullJobReferenceException e) {
 				System.err.println(e.getMessage());
+
+				// 17-10-2020 - Yogeshwar Chaudhari - As per Activity Diagram
+				if(e instanceof NullJobReferenceException){
+					return;
+				}
 			}
 
 			repeat = customScanner.readYesNo("Do you want to add one more ?");
@@ -2673,6 +2846,7 @@ public class SystemHandler {
 	 */
 	public void registerComplaintAgaintApplicnt(Employer emp) {
 
+		printApplicantList();
 		String appcntId = this.customScanner.readString("Please enter applicant ID: ");
 
 		Applicant applcntRef = (Applicant) this.allUsersList.get(appcntId);
@@ -2686,12 +2860,73 @@ public class SystemHandler {
 			// Add to all complaint's list
 			this.allComplaints.add(newComplaint);
 
-			((Applicant)applcntRef).setComplaintCount( ((Applicant)applcntRef).getComplaintCount() + 1 );
-
+			//((Applicant)applcntRef).setComplaintCount( ((Applicant)applcntRef).getComplaintCount() + 1 );
+			applcntRef.incrementComplaintCountAndUpdateStatus();
 			// Call provisionally blacklisting login here which accepts applicant's reference
 
 		} catch (NullApplicantException | InvalidTypeException e) {
 			System.err.println(e.getMessage());
+		}
+
+	}
+
+	/**
+	 * 16/10/2020
+	 * @author Prodip
+	 * Applicant can register compaint against any Employer.
+	 */
+	public void registerComplaintAgaintEmployer(Applicant applicant) {
+
+
+		printEmployers();
+		User user;
+		do {
+			String empId = this.customScanner.readString("Please enter employer ID (or Q to exit): ");
+			if(empId.equalsIgnoreCase("q")){
+				return;
+			}
+			user = this.allUsersList.get(empId);
+			if ((user instanceof Employer)) {
+				break;
+			}
+			System.out.println("Entered id does not belong to any employer. Please try again.");
+		}while(true);
+		Employer employer = (Employer) user;
+
+		String message = customScanner.readString("*Enter Message : ");
+		try {
+
+			// Create new complaint
+			Complaints newComplaint = applicant.registerComplaintAgainstEmployer(employer, message);
+
+			// Add to all complaint's list
+			this.allComplaints.add(newComplaint);
+
+			employer.incrementComplaintCountAndUpdateStatus();
+
+		} catch (NullObjectException e) {
+			System.err.println(e.getMessage());
+		}
+
+	}
+
+	/**
+	 * @author Prodip
+	 * Prints the list of all Employers in the system
+	 */
+	public void printEmployers() {
+
+		System.out.println("List of all employers");
+
+		System.out.format("%3s%10s%32s%13s\n", "---+","----------+","--------------------------------+","-------------+");
+		System.out.format("%-3s|%-10s|%-32s|%-13s|\n", "Sr", "ID", "Full Name", "Company Name");
+		System.out.format("%3s%10s%32s%13s\n", "---+","----------+","--------------------------------+","-------------+");
+
+		int i = 1;
+		for(Employer emp : this.allEmployersList.values()) {
+			System.out.format("%-3s|%-10s|%-32s|%-13s|\n", i, emp.getId(), emp.getFirstName()+" "+emp.getLastName(), emp.getCompanyName());
+			System.out.format("%3s%10s%32s%13s\n", "---+","----------+","--------------------------------+","-------------+");
+			i++;
 		}
 
 	}
@@ -2716,7 +2951,7 @@ public class SystemHandler {
 
 		printShortListedApplicntsForJob(e, jobRef);
 
-		String enteredDates = this.customScanner.readString("Please enter all possible dates.");
+		String enteredDates = this.customScanner.readString("Please enter all possible dates : [e.g. 28/10/2020,01/11/2020,02/11/2020] ");
 		String [] singleDates = enteredDates.split(",");
 
 		for(String dateStr : singleDates){
@@ -2832,6 +3067,9 @@ public class SystemHandler {
 			try {
 				e.createJobOffer(jobRef, (Applicant) this.allUsersList.get( applntIdTokens[i]));
 
+				// 16-10-2020 - If the offer has been made, then the applicant status should be changed to employed
+				((Applicant) this.allUsersList.get( applntIdTokens[i])).setEmploymentStatus(EmploymentStatus.PENDING);
+
 				// On successing at interview, automated email notification will be sent to the applicant
 				e.sendJobOfferEmail(jobRef, (Applicant) this.allUsersList.get( applntIdTokens[i] ));
 
@@ -2851,9 +3089,9 @@ public class SystemHandler {
 	 * Praparing data for demonstrating Employer functionalities
 	 * @throws ParseException
 	 */
-	public void loadDummyDataForEmployeFunctions() throws ParseException {
+	public void loadDummyDataForEmployeFunctions() throws ParseException, BadEntryException, DuplicateEntryException {
 
-		Employer e = new Employer("e", "chaudhari.yogesh20@gmail.com", "123", "Yosha");
+		Employer e = new Employer("e", "chaudhari.yogesh20@gmail.com", "123", "Yosha", "Yogesh", "Chaudhari", "0488236421");
 		try {
 			e.createJob(new Job("job1", "Developer", "Developer Desc","C1"));
 			e.createJob(new Job("job2", "Analyst", "Analyst Required", "C1"));
@@ -2903,12 +3141,19 @@ public class SystemHandler {
 		this.allJobCategories.put("C3", j3);
 
 		// Updating user availability
-//		a1.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.FULL_TIME, 40, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2021"))));
-//		a2.getUserAvailability().add(new UserAvailability(j2, AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("11/11/2021"))));
-//		a3.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.INTERNSHIP, 30, (new SimpleDateFormat("dd/MM/yyyy").parse("10/11/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("10/03/2021"))));
-//		a4.getUserAvailability().add(new UserAvailability(j3, AvailabilityType.FULL_TIME, 40, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020"))));
-//		a5.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("23/12/2020"))));
-//		a6.getUserAvailability().add(new UserAvailability(j1, AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/10/2020"))));
+		a1.addAvailability(AvailabilityType.FULL_TIME, Arrays.asList(j1), 40, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("12/12/2021")));
+		a2.addAvailability(AvailabilityType.PART_TIME, Arrays.asList(j2), 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("12/12/2021")));
+		a3.addAvailability( AvailabilityType.INTERNSHIP, Arrays.asList(j3),30, (new SimpleDateFormat("dd/MM/yyyy").parse("10/11/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("12/12/2021")));
+		a4.addAvailability( AvailabilityType.FULL_TIME, Arrays.asList(j3),40, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("12/12/2020")));
+		a5.addAvailability( AvailabilityType.PART_TIME, Arrays.asList(j1),20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("12/12/2020")));
+		a6.addAvailability( AvailabilityType.PART_TIME, Arrays.asList(j1),20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("12/10/2020")));
+
+//		a1.getUserAvailability().add(new UserAvailability( Arrays.asList(j1), AvailabilityType.FULL_TIME, 40, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2021"))));
+//		a2.getUserAvailability().add(new UserAvailability( Arrays.asList(j2), AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("11/11/2021"))));
+//		a3.getUserAvailability().add(new UserAvailability( Arrays.asList(j3), AvailabilityType.INTERNSHIP, 30, (new SimpleDateFormat("dd/MM/yyyy").parse("10/11/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("10/03/2021"))));
+//		a4.getUserAvailability().add(new UserAvailability( Arrays.asList(j3), AvailabilityType.FULL_TIME, 40, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020"))));
+//		a5.getUserAvailability().add(new UserAvailability( Arrays.asList(j1), AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("23/12/2020"))));
+//		a6.getUserAvailability().add(new UserAvailability( Arrays.asList(j1), AvailabilityType.PART_TIME, 20, (new SimpleDateFormat("dd/MM/yyyy").parse("20/09/2020")), (new SimpleDateFormat("dd/MM/yyyy").parse("20/10/2020"))));
 
 		// Populating all users list with dummy users
 		this.allUsersList.put("app1", a1);
@@ -2929,15 +3174,12 @@ public class SystemHandler {
 		this.allUsersList.put("e", e);
 		this.allEmployersList.put("e", e);
 
-		printApplicantList();
-		printPostedJobs(e.getId());
-
 
 		//Added by Prodip Guha Roy for testing
 		Applicant a10 = new Applicant("app10", "chaudhari.yogesh20@gmail.com", "123", "John", "Snow", "048888888", "l");
 		Applicant a11 = new Applicant("app11", "chaudhari.yogesh20@gmail.com", "123", "Jane", "Doe", "048888888", "l");
 		Applicant a12 = new Applicant("app12", "chaudhari.yogesh20@gmail.com", "123", "Tim", "Gordon", "048888888", "l");
-		Employer employer = new Employer("emp1", "chaudhari.yogesh20@gmail.com", "123", "Yosha");
+		Employer employer = new Employer("emp1", "chaudhari.yogesh20@gmail.com", "123", "ProBhai", "Prodip", "Roy", "0444623421");
 		this.allUsersList.put("app10", a10);
 		this.allApplicantsList.put("app10", a10);
 		this.allUsersList.put("app11", a11);
@@ -2948,6 +3190,7 @@ public class SystemHandler {
 		this.allEmployersList.put("emp1", employer);
 
 		a12.setLastStatusUpdateDate(new SimpleDateFormat("dd/MM/yyyy").parse("29/09/2020"));
+
 		try {
 			employer.createJob(new Job("job1", "Store Manager", "Store Manager role at Woolies","C1"));
 			employer.createJob(new Job("job2", "Team Member", "Team Member role at Woolies", "C1"));
@@ -2976,8 +3219,9 @@ public class SystemHandler {
 			e1.printStackTrace();
 		}
 
-
-
+		printApplicantList();
+		printEmployers();
+		printPostedJobs(e.getId());
 
 	}
 
@@ -3198,10 +3442,36 @@ public class SystemHandler {
 
 	}
 
+
+	//Viewing the list of all Blacklisted Users
+	public void viewBlackListedMembers(HashMap<String, User> blacklistedUsers)
+	{
+		System.out.format("\n%111s\n","|-------------------------------------------------------------------------------------------------------------|");
+		System.out.format("|%-20s%-89s|\n","","BlackListed Users");
+		System.out.format("%111s\n","|-------------------------------------------------------------------------------------------------------------|");
+		System.out.format("|%-20s|%-20s|%-36s|%-30s|\n","User Id", "User Type", "Blacklisted Type", "Blacklisted Date");
+		System.out.format("%20s%20s%36s%30s\n","|--------------------|","--------------------|","------------------------------------|","------------------------------|");
+
+
+		for (String s : blacklistedUsers.keySet())
+		{
+			if(blacklistedUsers.get(s) instanceof Employer )
+			{
+				if (((Employer)blacklistedUsers.get(s)).getBlacklistStat() != BlacklistStatus.NOT_BLACKLISTED)
+					System.out.format("|%-20s|%-20s|%-36s|%-30s|\n",blacklistedUsers.get(s).getId(), "Employer", ((Employer)blacklistedUsers.get(s)).getBlacklistStat(),((Employer)blacklistedUsers.get(s)).getBlacklistStartDate());
+			}
+			else
+			{
+				if (((Applicant)blacklistedUsers.get(s)).getBlacklistStat() != BlacklistStatus.NOT_BLACKLISTED)
+					System.out.format("|%-20s|%-20s|%-36s|%-30s|\n",blacklistedUsers.get(s).getId(), "Applicant", ((Applicant)blacklistedUsers.get(s)).getBlacklistStat(),((Applicant)blacklistedUsers.get(s)).getBlacklistStartDate());
+			}
+		}
+		System.out.format("%20s%20s%36s%30s\n","|--------------------|","--------------------|","------------------------------------|","------------------------------|");
+	}
+
 	public HashMap<String, Applicant> getAllApplicantsList() {
 		return allApplicantsList;
 	}
-
 
 
 	public void setAllApplicantsList(HashMap<String, Applicant> allApplicantsList) {
@@ -3209,11 +3479,9 @@ public class SystemHandler {
 	}
 
 
-
 	public HashMap<String, Employer> getAllEmployersList() {
 		return allEmployersList;
 	}
-
 
 
 	public void setAllEmployersList(HashMap<String, Employer> allEmployersList) {
@@ -3229,6 +3497,12 @@ public class SystemHandler {
 		this.allJobCategories = allJobCategories;
 	}
 
+	// 16-10-2020 - Yogeshwar - Support for properties
+	public Properties getProp() {
+		return prop;
+	}
 
+	public void setProp(Properties prop) {
+		this.prop = prop;
+	}
 }
-
